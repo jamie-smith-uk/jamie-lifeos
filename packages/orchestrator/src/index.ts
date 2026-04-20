@@ -17,6 +17,48 @@ import type { IncomingMessage as BotMessage, IncomingCallback } from "@lifeos/sh
 import { runAgent } from "./agent.js";
 
 // ---------------------------------------------------------------------------
+// Logger child (declared early so helpers below can use it)
+// ---------------------------------------------------------------------------
+
+const log = logger.child({ service: "orchestrator" });
+
+// ---------------------------------------------------------------------------
+// Typing indicator — fire-and-forget helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Send a `typing` chat action to the given chat via the Telegram Bot API.
+ *
+ * This is intentionally fire-and-forget: the promise is never awaited so it
+ * cannot block or delay the agent response. Any network / API error is logged
+ * at warn level and silently discarded — failure must NOT prevent the agent
+ * from replying.
+ */
+function sendTypingIndicator(chatId: number): void {
+  const url =
+    `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendChatAction`;
+
+  fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, action: "typing" }),
+  })
+    .then((res) => {
+      if (!res.ok) {
+        res.text().catch(() => "(unreadable)").then((text) => {
+          log.warn(
+            { chat_id: chatId, status: res.status, body: text },
+            "sendChatAction typing returned non-OK status",
+          );
+        });
+      }
+    })
+    .catch((err: unknown) => {
+      log.warn({ err, chat_id: chatId }, "Failed to send typing indicator");
+    });
+}
+
+// ---------------------------------------------------------------------------
 // Message handler — delegates to the agent core (T-10).
 // ---------------------------------------------------------------------------
 
@@ -82,12 +124,6 @@ async function handleCallback(
   log.warn({ chat_id: callback.chat_id, callback_data: data }, "Unknown callback_data");
   return { status: 400, text: "Unknown callback action." };
 }
-
-// ---------------------------------------------------------------------------
-// Logger child
-// ---------------------------------------------------------------------------
-
-const log = logger.child({ service: "orchestrator" });
 
 // ---------------------------------------------------------------------------
 // HTTP utilities
@@ -191,6 +227,10 @@ async function requestHandler(
     const msg = parsed as BotMessage;
 
     log.info({ chat_id: msg.chat_id, message_id: msg.message_id }, "POST /message received");
+
+    // Send typing indicator before invoking the agent. Fire-and-forget:
+    // failure must not block or prevent the agent from responding.
+    sendTypingIndicator(msg.chat_id);
 
     let replyText: string;
     try {
