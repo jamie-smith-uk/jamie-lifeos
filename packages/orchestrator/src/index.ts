@@ -14,13 +14,21 @@
  *   The /message handler propagates show_confirmation_keyboard from AgentResult
  *   so the bot knows to render the inline keyboard.
  *
+ * T-18: Edit callback handler wired end-to-end.
+ *   edit    — loads the current ConfirmationPayload, clears it, then re-invokes
+ *             runAgent with a synthetic message that includes the prior proposal
+ *             context so the agent can refine the proposed change. The agent
+ *             will propose again (via update_event or create_event interception)
+ *             and showConfirmationKeyboard will be set to true in the reply so
+ *             the bot renders the inline keyboard again for the revised proposal.
+ *
  * Environment:
  *   PORT  — TCP port to listen on (default: 3001).
  */
 
 import http from "http";
 import { env, logger, runMigrations } from "@lifeos/shared";
-import type { IncomingMessage as BotMessage, IncomingCallback, CreateEventData } from "@lifeos/shared";
+import type { IncomingMessage as BotMessage, IncomingCallback, CreateEventData, UpdateEventData } from "@lifeos/shared";
 import { runAgent, loadConfirmation, clearConfirmation } from "./agent.js";
 import { executeCalendarTool } from "./tools/calendar.js";
 
@@ -99,17 +107,21 @@ async function handleMessage(
  * Supported callback_data values:
  *   confirm  — load pending ConfirmationPayload, execute the calendar tool,
  *              clear the confirmation, and return a success message.
- *   edit     — re-prompt the agent with an edit request (T-18 stub).
+ *   edit     — load the pending ConfirmationPayload, clear it, re-invoke
+ *              runAgent with a synthetic edit-intent message so the agent can
+ *              refine and re-propose the change. Returns the agent's new
+ *              proposal text and show_confirmation_keyboard flag.
  *   cancel   — clear the pending confirmation and notify the user.
  *   dismiss:<nudgeId> — dismiss a nudge notification.
  *
  * All other values are rejected with a 400 response.
  *
  * T-17: confirm and cancel are fully implemented.
+ * T-18: edit is fully implemented.
  */
 async function handleCallback(
   callback: IncomingCallback,
-): Promise<{ status: number; text: string }> {
+): Promise<{ status: number; text: string; show_confirmation_keyboard?: boolean }> {
   const data = callback.callback_data;
 
   if (data === "confirm") {
@@ -146,7 +158,7 @@ async function handleCallback(
       });
       return {
         status: 200,
-        text: "Something went wrong while creating the event. Please try again.",
+        text: "Something went wrong while applying the change. Please try again.",
       };
     }
 
@@ -157,15 +169,17 @@ async function handleCallback(
 
     // Build a user-friendly success message.
     let successText: string;
+
+    // Try to parse the tool result as JSON (may contain an error field).
+    let toolResultObj: { error?: string } | null = null;
+    try {
+      toolResultObj = JSON.parse(toolResult) as { error?: string };
+    } catch {
+      // Not JSON — treat as plain success text from the MCP server.
+    }
+
     if (payload.action === "create_event") {
       const eventData = payload.data as CreateEventData;
-      // Check if the tool result contains an error.
-      let toolResultObj: { error?: string } | null = null;
-      try {
-        toolResultObj = JSON.parse(toolResult) as { error?: string };
-      } catch {
-        // Not JSON — treat as success text from the MCP server.
-      }
 
       if (toolResultObj?.error) {
         successText = `Failed to create event: ${toolResultObj.error}`;
@@ -173,6 +187,18 @@ async function handleCallback(
         successText = `Event "${eventData.title}" has been added to your calendar.`;
         if (toolResult && toolResult.trim() !== "" && !toolResultObj?.error) {
           // Append any detail the MCP server returned.
+          successText += `\n\n${toolResult}`;
+        }
+      }
+    } else if (payload.action === "update_event") {
+      // T-18: Build a success message for update_event.
+      const updateData = payload.data as UpdateEventData;
+
+      if (toolResultObj?.error) {
+        successText = `Failed to update event: ${toolResultObj.error}`;
+      } else {
+        successText = `Event (ID: ${updateData.eventId}) has been updated in your calendar.`;
+        if (toolResult && toolResult.trim() !== "" && !toolResultObj?.error) {
           successText += `\n\n${toolResult}`;
         }
       }
@@ -185,9 +211,63 @@ async function handleCallback(
   }
 
   if (data === "edit") {
-    // TODO(T-18): re-prompt agent with edit intent.
-    log.info({ chat_id: callback.chat_id }, "Callback: edit (stub)");
-    return { status: 200, text: "Please describe your changes." };
+    log.info({ chat_id: callback.chat_id }, "Callback: edit");
+
+    // T-18: Load the pending confirmation so we can include context in the
+    // re-prompt message. Then clear it — the agent will create a fresh
+    // confirmation when it proposes the revised change.
+    const existingPayload = await loadConfirmation(callback.chat_id).catch((err: unknown) => {
+      log.warn({ err, chat_id: callback.chat_id }, "Edit callback: failed to load confirmation");
+      return null;
+    });
+
+    // Clear the existing confirmation so we start fresh.
+    await clearConfirmation(callback.chat_id).catch((clearErr: unknown) => {
+      log.error({ err: clearErr }, "Failed to clear confirmation on edit");
+    });
+
+    // Build a context-aware re-prompt message that includes the prior proposal
+    // so the agent knows what was proposed and can offer to change specific fields.
+    let rePromptText: string;
+    if (existingPayload !== null) {
+      rePromptText =
+        `I'd like to make some changes to the proposed ${existingPayload.action === "update_event" ? "event update" : "event"}. ` +
+        `Here is what was proposed:\n\n<untrusted>${existingPayload.summary}</untrusted>\n\n` +
+        `Please tell me what you would like to change about this proposal.`;
+    } else {
+      rePromptText =
+        "I'd like to make some changes. Please tell me what you would like to adjust.";
+    }
+
+    // Re-invoke the agent with the edit-intent message so it can re-propose.
+    let agentResult: { text: string; showConfirmationKeyboard: boolean };
+    try {
+      agentResult = await runAgent({
+        chat_id: callback.chat_id,
+        text: rePromptText,
+        message_id: callback.message_id,
+      });
+    } catch (err) {
+      log.error({ err, chat_id: callback.chat_id }, "Agent error during edit re-prompt");
+      return {
+        status: 200,
+        text: "Something went wrong while processing your edit request. Please describe your changes again.",
+      };
+    }
+
+    log.info(
+      { chat_id: callback.chat_id, showConfirmationKeyboard: agentResult.showConfirmationKeyboard },
+      "Edit re-prompt agent response ready",
+    );
+
+    const editResult: { status: number; text: string; show_confirmation_keyboard?: boolean } = {
+      status: 200,
+      text: agentResult.text,
+    };
+    if (agentResult.showConfirmationKeyboard) {
+      editResult.show_confirmation_keyboard = true;
+    }
+    return editResult;
   }
 
   if (data === "cancel") {
@@ -318,6 +398,12 @@ async function requestHandler(
 
     const msg = parsed as BotMessage;
 
+    if (msg.chat_id !== Number(env.TELEGRAM_ALLOWED_CHAT_ID)) {
+      log.warn({ chat_id: msg.chat_id }, "Rejected message from unauthorised chat_id");
+      sendError(res, 403, "Forbidden");
+      return;
+    }
+
     log.info({ chat_id: msg.chat_id, message_id: msg.message_id }, "POST /message received");
 
     // Send typing indicator before invoking the agent. Fire-and-forget:
@@ -382,12 +468,18 @@ async function requestHandler(
 
     const callback = parsed as IncomingCallback;
 
+    if (callback.chat_id !== Number(env.TELEGRAM_ALLOWED_CHAT_ID)) {
+      log.warn({ chat_id: callback.chat_id }, "Rejected callback from unauthorised chat_id");
+      sendError(res, 403, "Forbidden");
+      return;
+    }
+
     log.info(
       { chat_id: callback.chat_id, callback_data: callback.callback_data },
       "POST /callback received",
     );
 
-    let result: { status: number; text: string };
+    let result: { status: number; text: string; show_confirmation_keyboard?: boolean };
     try {
       result = await handleCallback(callback);
     } catch (err) {
@@ -396,7 +488,16 @@ async function requestHandler(
       return;
     }
 
-    sendJson(res, result.status, { text: result.text });
+    // T-18: Propagate show_confirmation_keyboard from callback result so the
+    // bot renders inline keyboard buttons when the edit re-prompt proposes again.
+    const callbackResponsePayload: { text: string; show_confirmation_keyboard?: boolean } = {
+      text: result.text,
+    };
+    if (result.show_confirmation_keyboard) {
+      callbackResponsePayload.show_confirmation_keyboard = true;
+    }
+
+    sendJson(res, result.status, callbackResponsePayload);
     return;
   }
 

@@ -270,7 +270,7 @@ describe("AC1 — typing indicator is sent to Telegram before agent response arr
         // Simulate a tiny async delay to make ordering observable
         await new Promise((r) => setTimeout(r, 10));
         agentResolveTimestamp = Date.now();
-        return "Agent reply for typing test.";
+        return { text: "Agent reply for typing test.", showConfirmationKeyboard: false };
       }),
     }));
 
@@ -404,7 +404,7 @@ describe("AC1 — typing indicator is sent to Telegram before agent response arr
     }));
 
     vi.doMock("../agent.js", () => ({
-      runAgent: vi.fn().mockResolvedValue("Reply."),
+      runAgent: vi.fn().mockResolvedValue({ text: "Reply.", showConfirmationKeyboard: false }),
     }));
 
     await import("../index.js");
@@ -481,7 +481,7 @@ describe("AC2 — typing action is sent before the Anthropic API call is initiat
       runAgent: vi.fn().mockImplementation(async () => {
         callOrder.push("runAgent");
         await new Promise((r) => setTimeout(r, 5));
-        return "Typed response.";
+        return { text: "Typed response.", showConfirmationKeyboard: false };
       }),
     }));
 
@@ -545,7 +545,7 @@ describe("AC2 — typing action is sent before the Anthropic API call is initiat
     vi.doMock("../agent.js", () => ({
       runAgent: vi.fn().mockImplementation(async () => {
         events.push("agent_started");
-        return "Dispatch order check.";
+        return { text: "Dispatch order check.", showConfirmationKeyboard: false };
       }),
     }));
 
@@ -608,7 +608,7 @@ describe("AC2 — typing action is sent before the Anthropic API call is initiat
     }));
 
     vi.doMock("../agent.js", () => ({
-      runAgent: vi.fn().mockResolvedValue("OK"),
+      runAgent: vi.fn().mockResolvedValue({ text: "OK", showConfirmationKeyboard: false }),
     }));
 
     await import("../index.js");
@@ -668,7 +668,7 @@ describe("AC2 — typing action is sent before the Anthropic API call is initiat
     }));
 
     vi.doMock("../agent.js", () => ({
-      runAgent: vi.fn().mockResolvedValue("One typing call expected."),
+      runAgent: vi.fn().mockResolvedValue({ text: "One typing call expected.", showConfirmationKeyboard: false }),
     }));
 
     await import("../index.js");
@@ -736,7 +736,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
       }));
 
       vi.doMock("../agent.js", () => ({
-        runAgent: vi.fn().mockResolvedValue("Reply despite typing failure."),
+        runAgent: vi.fn().mockResolvedValue({ text: "Reply despite typing failure.", showConfirmationKeyboard: false }),
       }));
 
       await import("../index.js");
@@ -822,7 +822,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
       }));
 
       vi.doMock("../agent.js", () => ({
-        runAgent: vi.fn().mockResolvedValue("Reply despite 403."),
+        runAgent: vi.fn().mockResolvedValue({ text: "Reply despite 403.", showConfirmationKeyboard: false }),
       }));
 
       await import("../index.js");
@@ -897,7 +897,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
       }));
 
       vi.doMock("../agent.js", () => ({
-        runAgent: vi.fn().mockResolvedValue("Reply despite Telegram 500."),
+        runAgent: vi.fn().mockResolvedValue({ text: "Reply despite Telegram 500.", showConfirmationKeyboard: false }),
       }));
 
       await import("../index.js");
@@ -987,7 +987,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
       vi.doMock("../agent.js", () => ({
         runAgent: vi.fn().mockImplementation(async () => {
           await new Promise((r) => setTimeout(r, 50));
-          return "Fast agent reply.";
+          return { text: "Fast agent reply.", showConfirmationKeyboard: false };
         }),
       }));
 

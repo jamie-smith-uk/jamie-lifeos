@@ -49,6 +49,20 @@
  *   proposal text.  showConfirmationKeyboard is set to true so the bot
  *   renders Confirm / Edit / Cancel inline buttons alongside the reply.
  *
+ * T-18: Update event confirmation flow:
+ *
+ *   When the agent calls update_event in the tool loop, the call is
+ *   intercepted just like create_event. A before/after summary is built from
+ *   the tool input fields (the agent first calls get_events_range to identify
+ *   the event, then passes the eventId and changed fields to update_event).
+ *   A ConfirmationPayload { action: 'update_event', eventId, data } is
+ *   persisted via saveConfirmation and a synthetic tool_result is returned.
+ *   showConfirmationKeyboard is set to true.
+ *
+ *   On Edit: the orchestrator re-invokes runAgent with a synthetic edit-intent
+ *   message containing the current proposal context so the agent can propose
+ *   a revised change.
+ *
  * All SQL uses parameterised queries ($1, $2, …) — no string interpolation.
  *
  * Database connection is obtained from the shared `pool` singleton which
@@ -61,7 +75,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { pool, env, logger } from "@lifeos/shared";
-import type { MessageRole, ConversationMessage, ConfirmationPayload, IncomingMessage, CreateEventData } from "@lifeos/shared";
+import type { MessageRole, ConversationMessage, ConfirmationPayload, IncomingMessage, CreateEventData, UpdateEventData } from "@lifeos/shared";
 import {
   calendarReadToolDefinitions,
   calendarWriteToolDefinitions,
@@ -348,6 +362,85 @@ function buildCreateEventSummary(data: CreateEventData): string {
 }
 
 // ---------------------------------------------------------------------------
+// Proposal summary formatter for update_event (T-18)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a human-readable before/after proposal summary for an update_event.
+ *
+ * Shows only the fields that are being changed (present in `changes`).
+ *
+ * Format:
+ *   Event ID: <eventId>
+ *   Changes:
+ *     Start: <new start>          ← only when start is being changed
+ *     End:   <new end>            ← only when end is being changed
+ *     Title: <new title>          ← only when title is being changed
+ *     Location: <new location>    ← only when location is being changed
+ *     Description: <new desc>     ← only when description is being changed
+ *
+ * All datetime values are formatted using the configured TZ.
+ */
+function buildUpdateEventSummary(data: UpdateEventData): string {
+  const tz = env.TZ;
+  const lines: string[] = [`Event ID: ${data.eventId}`, "Changes:"];
+
+  if (data.title !== undefined) {
+    lines.push(`  Title: ${data.title}`);
+  }
+
+  if (data.start !== undefined) {
+    const startDate = new Date(data.start);
+    const startDateStr = startDate.toLocaleDateString("en-GB", {
+      timeZone: tz,
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const startTimeStr = startDate.toLocaleTimeString("en-GB", {
+      timeZone: tz,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    lines.push(`  Start: ${startDateStr} at ${startTimeStr}`);
+  }
+
+  if (data.end !== undefined) {
+    const endDate = new Date(data.end);
+    const endDateStr = endDate.toLocaleDateString("en-GB", {
+      timeZone: tz,
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const endTimeStr = endDate.toLocaleTimeString("en-GB", {
+      timeZone: tz,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    lines.push(`  End: ${endDateStr} at ${endTimeStr}`);
+  }
+
+  if (data.location !== undefined) {
+    lines.push(`  Location: ${data.location}`);
+  }
+
+  if (data.description !== undefined) {
+    lines.push(`  Description: ${data.description}`);
+  }
+
+  if (data.attendees !== undefined && data.attendees.length > 0) {
+    lines.push(`  Attendees: ${data.attendees.join(", ")}`);
+  }
+
+  return lines.join("\n");
+}
+
+// ---------------------------------------------------------------------------
 // Agent loop
 // ---------------------------------------------------------------------------
 
@@ -497,8 +590,56 @@ export async function runAgent(msg: IncomingMessage): Promise<AgentResult> {
                 });
               }
             }
+          } else if (toolUse.name === "update_event") {
+            // ------------------------------------------------------------------
+            // T-18: Intercept update_event — build before/after summary and
+            // save ConfirmationPayload { action: 'update_event', eventId, data }.
+            // ------------------------------------------------------------------
+            const eventId =
+              typeof toolInput["eventId"] === "string" ? toolInput["eventId"] : "";
+
+            if (!eventId) {
+              syntheticResult = JSON.stringify({
+                error: "update_event requires an 'eventId' parameter",
+              });
+            } else {
+              // Build UpdateEventData from partial tool input fields.
+              const updateData: UpdateEventData = { eventId };
+              if (typeof toolInput["title"] === "string") updateData.title = toolInput["title"];
+              if (typeof toolInput["start"] === "string") updateData.start = toolInput["start"];
+              if (typeof toolInput["end"] === "string") updateData.end = toolInput["end"];
+              if (typeof toolInput["location"] === "string") updateData.location = toolInput["location"];
+              if (typeof toolInput["description"] === "string") updateData.description = toolInput["description"];
+              if (Array.isArray(toolInput["attendees"])) updateData.attendees = toolInput["attendees"] as string[];
+
+              const summary = buildUpdateEventSummary(updateData);
+
+              const payload: ConfirmationPayload = {
+                action: "update_event",
+                proposed_at: new Date().toISOString(),
+                data: updateData,
+                summary,
+              };
+
+              try {
+                await saveConfirmation(msg.chat_id, payload);
+                showConfirmationKeyboard = true;
+                syntheticResult = JSON.stringify({
+                  status: "pending_confirmation",
+                  message:
+                    "The following update has been noted. Present this before/after proposal " +
+                    "to the user and ask them to Confirm, Edit, or Cancel using the buttons below:\n\n" +
+                    summary,
+                });
+              } catch (saveErr) {
+                log.error({ err: saveErr }, "Failed to save update_event confirmation payload");
+                syntheticResult = JSON.stringify({
+                  error: "Failed to save event update proposal — please try again",
+                });
+              }
+            }
           } else {
-            // Other confirmation-gated tools (update_event, delete_event) —
+            // Other confirmation-gated tools (delete_event) —
             // placeholder until their dedicated tasks are implemented.
             syntheticResult = JSON.stringify({
               status: "pending_confirmation",

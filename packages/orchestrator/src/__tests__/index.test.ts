@@ -158,9 +158,11 @@ async function startServer(port: number): Promise<ServerHandle> {
   // Mock the agent module so runAgent returns a stub response without
   // hitting the real Anthropic API or database.
   vi.doMock("../agent.js", () => ({
-    runAgent: vi.fn().mockResolvedValue({ text: "Agent not yet implemented.", showConfirmationKeyboard: false }),
+      runAgent: vi.fn().mockResolvedValue({ text: "Agent not yet implemented.", showConfirmationKeyboard: false }),
     loadContext: vi.fn().mockResolvedValue([]),
     saveMessage: vi.fn().mockResolvedValue(undefined),
+    loadConfirmation: vi.fn().mockResolvedValue(null),
+    clearConfirmation: vi.fn().mockResolvedValue(undefined),
   }));
 
   // Dynamically import index.ts — this triggers main() immediately.
@@ -575,6 +577,8 @@ describe("AC3 — migrations run before server accepts requests", () => {
       runAgent: vi.fn().mockResolvedValue({ text: "stub response", showConfirmationKeyboard: false }),
       loadContext: vi.fn().mockResolvedValue([]),
       saveMessage: vi.fn().mockResolvedValue(undefined),
+      loadConfirmation: vi.fn().mockResolvedValue(null),
+      clearConfirmation: vi.fn().mockResolvedValue(undefined),
     }));
 
     await import("../index.js");
@@ -646,9 +650,11 @@ describe("AC3 — migrations run before server accepts requests", () => {
     }));
 
     vi.doMock("../agent.js", () => ({
-      runAgent: vi.fn().mockResolvedValue("stub response"),
+      runAgent: vi.fn().mockResolvedValue({ text: "stub response", showConfirmationKeyboard: false }),
       loadContext: vi.fn().mockResolvedValue([]),
       saveMessage: vi.fn().mockResolvedValue(undefined),
+      loadConfirmation: vi.fn().mockResolvedValue(null),
+      clearConfirmation: vi.fn().mockResolvedValue(undefined),
     }));
 
     await import("../index.js");
@@ -717,9 +723,11 @@ describe("AC3 — migrations run before server accepts requests", () => {
     }));
 
     vi.doMock("../agent.js", () => ({
-      runAgent: vi.fn().mockResolvedValue("stub response"),
+      runAgent: vi.fn().mockResolvedValue({ text: "stub response", showConfirmationKeyboard: false }),
       loadContext: vi.fn().mockResolvedValue([]),
       saveMessage: vi.fn().mockResolvedValue(undefined),
+      loadConfirmation: vi.fn().mockResolvedValue(null),
+      clearConfirmation: vi.fn().mockResolvedValue(undefined),
     }));
 
     await import("../index.js");
@@ -800,9 +808,11 @@ describe("AC4 — server listens on PORT env var, defaults to 3001", () => {
     }));
 
     vi.doMock("../agent.js", () => ({
-      runAgent: vi.fn().mockResolvedValue("stub response"),
+      runAgent: vi.fn().mockResolvedValue({ text: "stub response", showConfirmationKeyboard: false }),
       loadContext: vi.fn().mockResolvedValue([]),
       saveMessage: vi.fn().mockResolvedValue(undefined),
+      loadConfirmation: vi.fn().mockResolvedValue(null),
+      clearConfirmation: vi.fn().mockResolvedValue(undefined),
     }));
 
     await import("../index.js");
@@ -884,9 +894,11 @@ describe("AC4 — server listens on PORT env var, defaults to 3001", () => {
     }));
 
     vi.doMock("../agent.js", () => ({
-      runAgent: vi.fn().mockResolvedValue("stub response"),
+      runAgent: vi.fn().mockResolvedValue({ text: "stub response", showConfirmationKeyboard: false }),
       loadContext: vi.fn().mockResolvedValue([]),
       saveMessage: vi.fn().mockResolvedValue(undefined),
+      loadConfirmation: vi.fn().mockResolvedValue(null),
+      clearConfirmation: vi.fn().mockResolvedValue(undefined),
     }));
 
     await import("../index.js");

@@ -79,11 +79,16 @@ class FakeTelegramBot {
     this._eventHandlers.get(event)!.push(handler);
   }
 
-  async sendMessage(chatId: number, text: string): Promise<void> {
+  async sendMessage(chatId: number, text: string, _options?: unknown): Promise<void> {
     if (this.sendMessageMock) {
       return this.sendMessageMock();
     }
     this.sendMessageCalls.push({ chatId, text });
+  }
+
+  /** T-17: Answer a callback query (no-op in tests) */
+  async answerCallbackQuery(_callbackQueryId: string, _options?: unknown): Promise<void> {
+    // No-op — tests do not assert on answerCallbackQuery calls unless explicitly needed.
   }
 
   /** Trigger a text message on all registered onText handlers */

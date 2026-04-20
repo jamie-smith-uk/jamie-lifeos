@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-# ── Life OS, a personal AI assistant built on Telegram, Claude Pipeline Runner ───────────────────────────────────────────
+# ── Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude Pipeline Runner ───────────────────────────────────────────
 # Usage: ./orchestrator/run-phase.sh --phase 1
 # Requires: opencode CLI, ANTHROPIC_API_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_ALLOWED_CHAT_ID
 
@@ -46,7 +46,8 @@ fi
 
 mkdir -p "$PIPELINE_DIR"
 PHASE_STARTED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-CONTEXT_MAX_CHARS=4000  # max context.md chars injected into agent prompts (~1k tokens)
+CONTEXT_MAX_CHARS=4000   # max context.md chars injected into agent prompts (~1k tokens)
+ARCH_DOC_MAX_CHARS=6000  # include full architecture doc below this size; tier above it
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
@@ -87,6 +88,23 @@ run_agent() {
 
   if [ $exit_code -ne 0 ]; then
     halt "Agent invocation failed (exit $exit_code)" "$agent_id" "$(cat "$output_file")"
+  fi
+
+  # Opportunistic token cost capture — records if opencode emits usage data.
+  # Format varies by opencode version; extend this pattern as needed.
+  local usage_line
+  usage_line=$(grep -iE "tokens?[: ]+[0-9]|input[_: ]+[0-9]+.*output[_: ]+[0-9]+" \
+    "$output_file" 2>/dev/null | tail -1 || true)
+  if [ -n "$usage_line" ] && [ -f "$PIPELINE_DIR/metrics.json" ]; then
+    python3 -c "
+import json, sys, re
+f, agent, usage = sys.argv[1], sys.argv[2], sys.argv[3]
+data = json.load(open(f))
+token_log = data.setdefault('token_log', [])
+token_log.append({'agent': agent, 'usage': usage})
+with open(f, 'w') as fp:
+    json.dump(data, fp, indent=2)
+" "$PIPELINE_DIR/metrics.json" "$agent_id" "$usage_line" 2>/dev/null || true
   fi
 
   log "[$agent_id] Complete"
@@ -149,7 +167,7 @@ print('*(Earlier tasks omitted — see context.md for full history)*\n\n' + tail
 " <<< "$content")
   fi
 
-  printf "## Context from completed tasks in this phase\n\n%s\n" "$content"
+  printf "<build-context>\n## Context from completed tasks in this phase\n\n%s\n</build-context>\n" "$content"
 }
 
 # Appends one phase entry to pipeline/phase-N/metrics.json (creates file if absent).
@@ -294,6 +312,196 @@ if violated:
 PYEOF
 }
 
+# Trajectory evaluation: verifies the Tester wrote real test files with assertions.
+# Logs warnings — does not halt. Called after RED phase.
+check_tester_trajectory() {
+  local task_dir="$1" tests_written_file="$2"
+  local ac_count="$3"  # number of acceptance criteria (minimum test count target)
+  local issues=""
+
+  # Find test files created since tests-written.txt (proxy for "written this task")
+  local test_count=0
+  local files_without_assertions=()
+  while IFS= read -r tf; do
+    [[ -f "$tf" ]] || continue
+    test_count=$(( test_count + 1 ))
+    if ! grep -qE "expect\(|it\(|test\(|describe\(" "$tf" 2>/dev/null; then
+      files_without_assertions+=("$(basename "$tf")")
+    fi
+  done < <(find "$REPO_ROOT" \( -name "*.test.ts" -o -name "*.spec.ts" \) \
+    -newer "$tests_written_file" 2>/dev/null)
+
+  if [ "$test_count" -eq 0 ]; then
+    issues+="No test files found after RED phase — Tester may not have written any tests\n"
+  else
+    if [ ${#files_without_assertions[@]} -gt 0 ]; then
+      issues+="Test files with no assertions: ${files_without_assertions[*]}\n"
+    fi
+    if [ -n "$ac_count" ] && [ "$test_count" -lt "$ac_count" ]; then
+      issues+="$test_count test file(s) for $ac_count acceptance criteria — some ACs may be uncovered\n"
+    fi
+  fi
+
+  if [ -n "$issues" ]; then
+    log "  Tester trajectory warnings:"
+    printf "%b" "$issues" | while IFS= read -r line; do
+      [[ -n "$line" ]] && log "    ⚠ $line"
+    done
+  fi
+}
+
+# Trajectory evaluation: verifies the Security PASS report mentions all known rules.
+# Logs warnings — does not halt. Called after security PASS.
+check_security_trajectory() {
+  local task_dir="$1"
+  local sec_report="$task_dir/security-report.md"
+  local rules_file="$REPO_ROOT/.opencode/agents/security-rules.md"
+
+  [[ -f "$sec_report" ]] && [[ -f "$rules_file" ]] || return 0
+
+  local missing
+  missing=$(python3 - "$sec_report" "$rules_file" <<'PYEOF'
+import re, sys
+report = open(sys.argv[1]).read().lower()
+rules = open(sys.argv[2]).read()
+rule_names = re.findall(r'### ([^\n]+)', rules)
+missing = [r for r in rule_names if r.lower() not in report]
+if missing:
+    print(f"{len(missing)} rule(s) not mentioned in security report: "
+          f"{', '.join(missing[:4])}{'...' if len(missing) > 4 else ''}")
+PYEOF
+)
+  if [ -n "$missing" ]; then
+    log "  Security trajectory warning: $missing"
+  fi
+}
+
+# Runs code health checks (duplication, coverage, complexity) on files_in_scope.
+# Optional 4th arg "pre-refactor" writes health-report-pre.json for before/after comparison.
+# Logs results immediately. Informational only — does not gate the pipeline.
+run_code_health_checks() {
+  local task_id="$1" task_dir="$2" files_in_scope_json="$3"
+  local label="${4:-}"
+  local report_file
+  if [ "$label" = "pre-refactor" ]; then
+    report_file="$task_dir/health-report-pre.json"
+  else
+    report_file="$task_dir/health-report.json"
+  fi
+
+  python3 - "$REPO_ROOT" "$PIPELINE_DIR/metrics.json" \
+    "$task_id" "$files_in_scope_json" "$report_file" "$label" <<'PYEOF'
+import json, os, re, subprocess, sys
+
+repo_root, metrics_file = sys.argv[1], sys.argv[2]
+task_id, files_json, report_file = sys.argv[3], sys.argv[4], sys.argv[5]
+label = sys.argv[6] if len(sys.argv) > 6 else ''
+
+files = [f for f in json.loads(files_json)
+         if os.path.isfile(os.path.join(repo_root, f))]
+ts_files = [os.path.join(repo_root, f) for f in files
+            if f.endswith('.ts') or f.endswith('.tsx')]
+
+report = {'task_id': task_id, 'files_checked': files}
+
+# ── Complexity: flag functions > 20 lines ────────────────────────────────────
+complex_fns = []
+for fp in ts_files:
+    try:
+        content = open(fp).read()
+        # Simple heuristic: find function/method bodies by counting lines between braces
+        for m in re.finditer(r'(?:function\s+\w+|(?:async\s+)?\w+\s*\([^)]*\)\s*(?::\s*\S+\s*)?)\s*\{',
+                             content):
+            start_line = content[:m.start()].count('\n') + 1
+            # Count to matching closing brace
+            depth, i = 1, m.end()
+            while i < len(content) and depth > 0:
+                if content[i] == '{':
+                    depth += 1
+                elif content[i] == '}':
+                    depth -= 1
+                i += 1
+            end_line = content[:i].count('\n') + 1
+            length = end_line - start_line
+            if length > 20:
+                rel = os.path.relpath(fp, repo_root)
+                complex_fns.append({'file': rel, 'line': start_line, 'lines': length})
+    except Exception:
+        pass
+report['complex_functions'] = complex_fns[:10]  # cap at 10
+
+# ── Duplication: run jscpd if available ──────────────────────────────────────
+duplication_pct = None
+if ts_files:
+    try:
+        r = subprocess.run(
+            ['npx', '--yes', 'jscpd', '--min-lines', '5', '--reporters', 'json',
+             '--output', '/tmp/jscpd-out', *ts_files],
+            capture_output=True, text=True, cwd=repo_root, timeout=30
+        )
+        jscpd_json = '/tmp/jscpd-out/jscpd-report.json'
+        if os.path.exists(jscpd_json):
+            d = json.load(open(jscpd_json))
+            stats = d.get('statistics', {}).get('total', {})
+            duplication_pct = round(stats.get('percentage', 0), 1)
+    except Exception:
+        pass
+report['duplication_pct'] = duplication_pct
+
+# ── Coverage: run vitest --coverage if available ─────────────────────────────
+coverage_pct = None
+try:
+    r = subprocess.run(
+        ['pnpm', 'test', '--run', '--coverage', '--coverage.reporter=json-summary'],
+        capture_output=True, text=True, cwd=repo_root, timeout=120
+    )
+    summary_file = os.path.join(repo_root, 'coverage', 'coverage-summary.json')
+    if os.path.exists(summary_file):
+        s = json.load(open(summary_file))
+        total = s.get('total', {})
+        lines = total.get('lines', {})
+        if 'pct' in lines:
+            coverage_pct = round(lines['pct'], 1)
+except Exception:
+    pass
+report['coverage_pct'] = coverage_pct
+
+# ── Write report ─────────────────────────────────────────────────────────────
+with open(report_file, 'w') as fp:
+    json.dump(report, fp, indent=2)
+
+# ── Log immediately to terminal ───────────────────────────────────────────────
+prefix = 'pre-refactor: ' if label == 'pre-refactor' else ''
+parts = []
+if coverage_pct is not None:
+    parts.append(f'coverage {coverage_pct}%')
+if duplication_pct is not None:
+    parts.append(f'dup {duplication_pct}%')
+if complex_fns:
+    parts.append(f'{len(complex_fns)} complex fn(s)')
+    for fn in complex_fns[:3]:
+        parts_detail = f"    {fn['file']}:{fn['line']} ({fn['lines']} lines)"
+        print(parts_detail)
+if parts:
+    print(f'  {prefix}' + ' · '.join(parts))
+elif files:
+    print(f'  {prefix}(coverage/duplication tools not available)')
+
+# ── Record in metrics (final report only, not pre-refactor baseline) ──────────
+if label == 'pre-refactor' or not os.path.exists(metrics_file):
+    sys.exit(0)
+data = json.load(open(metrics_file))
+if task_id in data.get('tasks', {}):
+    data['tasks'][task_id]['health'] = {
+        'complex_fn_count': len(complex_fns),
+        'duplication_pct': duplication_pct,
+        'coverage_pct': coverage_pct,
+    }
+    with open(metrics_file, 'w') as fp:
+        json.dump(data, fp, indent=2)
+PYEOF
+}
+
 # Runs tsc --noEmit, ESLint on files that exist from files_in_scope, and pnpm test.
 # Prints combined failure output to stdout (empty on full pass).
 # Returns 0 if all checks pass, 1 if any fail.
@@ -380,6 +588,9 @@ revert_scope_violations() {
   done
 }
 
+# When sourced with PIPELINE_LIB_ONLY=1, stop here — caller gets the functions above.
+[[ "${PIPELINE_LIB_ONLY:-}" == "1" ]] && return 0 2>/dev/null || true
+
 # ── Phase gate ────────────────────────────────────────────────────────────────
 if [ "$PHASE" -gt 1 ]; then
   PREV_PHASE=$(( PHASE - 1 ))
@@ -396,7 +607,7 @@ fi
 
 # ── Header ────────────────────────────────────────────────────────────────────
 log "========================================"
-log "Life OS, a personal AI assistant built on Telegram, Claude Pipeline — Phase $PHASE"
+log "Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude Pipeline — Phase $PHASE"
 log "========================================"
 
 # ── AG-01 Architect ───────────────────────────────────────────────────────────
@@ -430,10 +641,54 @@ print(result.strip() if result.strip() else content)
 PYEOF
 )
 
-ARCH_DOC=$(cat "$REPO_ROOT/docs/architecture.md" 2>/dev/null \
-  || echo "(docs/architecture.md not found — create it before running the pipeline)")
+# Tiered architecture doc: inject in full if small; extract relevant sections if large.
+# Keywords are drawn from the phase PRD content so only in-scope sections are included.
+ARCH_DOC=$(python3 - "$REPO_ROOT/docs/architecture.md" \
+  "$ARCH_DOC_MAX_CHARS" "$PHASE_PRD_CONTENT" <<'PYEOF'
+import re, sys
+try:
+    content = open(sys.argv[1]).read()
+except FileNotFoundError:
+    print("(docs/architecture.md not found — create it before running the pipeline)")
+    sys.exit(0)
 
-ARCH_PROMPT="You are running as AG-01 Architect for Life OS, a personal AI assistant built on Telegram, Claude.
+max_chars, prd_content = int(sys.argv[2]), sys.argv[3]
+
+if len(content) <= max_chars:
+    print(content)
+    sys.exit(0)
+
+# Extract sections: split on ## headings
+parts = re.split(r'\n(## [^\n]+)', content)
+intro = parts[0]  # content before first ## heading
+
+# Always include overview/structure sections regardless of keywords
+always = {'overview', 'system', 'component', 'repository', 'structure', 'stack', 'non-functional'}
+
+# Keywords from phase PRD content (file paths, module names, significant words)
+keywords = set(w for w in re.findall(r'\b[a-z][a-z0-9/_-]{3,}\b', prd_content.lower())
+               if w not in {'this', 'that', 'with', 'from', 'have', 'will', 'each', 'must',
+                            'should', 'phase', 'task', 'file', 'code', 'test', 'spec'})
+
+included = [intro] if intro.strip() else []
+i = 1
+while i < len(parts) - 1:
+    heading, body = parts[i], parts[i + 1]
+    heading_lower = heading.lower()
+    if any(kw in heading_lower for kw in always) or \
+       any(kw in heading_lower or kw in body[:400].lower() for kw in keywords):
+        included.append(heading + body)
+    i += 2
+
+result = '\n'.join(included)
+if len(result) < len(content):
+    result = '*(Architecture doc filtered for relevance — full doc at docs/architecture.md)*\n\n' \
+             + result
+print(result)
+PYEOF
+)
+
+ARCH_PROMPT="You are running as AG-01 Architect for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
 
 Here is the PRD content for Phase $PHASE:
 <prd-phase>
@@ -463,6 +718,62 @@ if [ ! -f "$PIPELINE_DIR/task-manifest.json" ]; then
   halt "task-manifest.json not produced" "AG-01" "Architect did not write task-manifest.json"
 fi
 
+# ── Manifest schema validation ────────────────────────────────────────────────
+SCHEMA_ERRORS=$(python3 - "$PIPELINE_DIR/task-manifest.json" <<'PYEOF'
+import json, sys
+
+try:
+    data = json.load(open(sys.argv[1]))
+except json.JSONDecodeError as e:
+    print(f"Invalid JSON: {e}")
+    sys.exit(0)
+
+tasks = data if isinstance(data, list) else data.get('tasks', [])
+tasks = [t for t in tasks if isinstance(t, dict)]
+
+if not tasks:
+    print("Manifest contains no tasks")
+    sys.exit(0)
+
+required = ['id', 'title', 'description', 'files_in_scope',
+            'acceptance_criteria', 'security_sensitive', 'estimated_complexity']
+valid_complexity = {'low', 'medium', 'high'}
+all_ids = [t.get('id') for t in tasks]
+errors = []
+
+for t in tasks:
+    tid = t.get('id', '(missing id)')
+    for field in required:
+        if field not in t:
+            errors.append(f"{tid}: missing required field '{field}'")
+    if isinstance(t.get('acceptance_criteria'), list) and \
+       len(t.get('acceptance_criteria', [])) == 0:
+        errors.append(f"{tid}: acceptance_criteria is empty")
+    if isinstance(t.get('files_in_scope'), list) and \
+       len(t.get('files_in_scope', [])) == 0:
+        errors.append(f"{tid}: files_in_scope is empty")
+    if t.get('estimated_complexity') not in valid_complexity:
+        errors.append(f"{tid}: estimated_complexity must be low/medium/high, "
+                      f"got '{t.get('estimated_complexity')}'")
+    for dep in t.get('dependencies', []):
+        if dep not in all_ids:
+            errors.append(f"{tid}: dependency '{dep}' is not a valid task id")
+
+if len(all_ids) != len(set(all_ids)):
+    dupes = [i for i in set(all_ids) if all_ids.count(i) > 1]
+    errors.append(f"Duplicate task ids: {', '.join(dupes)}")
+
+for e in errors:
+    print(e)
+PYEOF
+)
+
+if [ -n "$SCHEMA_ERRORS" ]; then
+  halt "task-manifest.json failed schema validation" "AG-01" \
+    "Fix these issues in the manifest before proceeding:
+$SCHEMA_ERRORS"
+fi
+
 log "Manifest produced. Tasks:"
 python3 -c "
 import json
@@ -476,31 +787,73 @@ for t in tasks:
         print(f\"  {t['id']}: {t['title']}{flag}\")
 "
 
-# ── Acceptance criteria quality gate ─────────────────────────────────────────
-AC_ISSUES=$(python3 - "$PIPELINE_DIR/task-manifest.json" <<'PYEOF'
-import json, re, sys
+# ── Acceptance criteria quality gate (LLM judge with regex fallback) ─────────
+AC_ISSUES=$(python3 - "$PIPELINE_DIR/task-manifest.json" "${ANTHROPIC_API_KEY:-}" <<'PYEOF'
+import json, re, sys, urllib.request
+
 data = json.load(open(sys.argv[1]))
 tasks = data if isinstance(data, list) else data.get('tasks', [])
+tasks = [t for t in tasks if isinstance(t, dict)]
+api_key = sys.argv[2]
+
+# ── Regex pass: structural issues caught regardless of LLM ───────────────────
 vague = re.compile(
     r'\b(works?(?: correctly| properly| as expected)?|is (?:done|complete|working|functional)|'
     r'functions?(?: properly| correctly)|it works|should work|is (?:implemented|added|created))\b',
     re.IGNORECASE
 )
-issues = []
-for t in (t for t in tasks if isinstance(t, dict)):
+structural = []
+criteria_for_llm = []
+for t in tasks:
     tid = t.get('id', '?')
-    criteria = t.get('acceptance_criteria', [])
-    if not criteria:
-        issues.append(f"{tid}: no acceptance criteria defined")
-        continue
-    for i, c in enumerate(criteria, 1):
+    for i, c in enumerate(t.get('acceptance_criteria', []), 1):
         c = c.strip()
         if len(c) < 10:
-            issues.append(f"{tid} AC-{i}: too short to be testable — '{c}'")
+            structural.append(f"{tid} AC-{i}: too short to be testable — '{c}'")
         elif vague.search(c):
-            issues.append(f"{tid} AC-{i}: non-testable language — '{c[:80]}'")
-for issue in issues:
-    print(issue)
+            structural.append(f"{tid} AC-{i}: vague language — '{c[:80]}'")
+        else:
+            criteria_for_llm.append(f"{tid} AC-{i}: {c}")
+
+for s in structural:
+    print(s)
+
+# ── LLM judge: deeper testability check via Claude Haiku ─────────────────────
+if not criteria_for_llm or not api_key:
+    sys.exit(0)
+
+criteria_text = "\n".join(criteria_for_llm)
+prompt = (f"Review these software acceptance criteria for testability.\n"
+          f"A criterion is testable if it describes a specific, verifiable outcome "
+          f"with no ambiguity about how to confirm it passed or failed.\n\n"
+          f"Criteria:\n{criteria_text}\n\n"
+          f"Reply with ONLY a JSON array of non-testable criteria. "
+          f"Each entry: {{\"id\": \"task-1 AC-2\", \"issue\": \"reason\"}}. "
+          f"If all are testable, reply with: []")
+
+try:
+    req = urllib.request.Request(
+        "https://api.anthropic.com/v1/messages",
+        data=json.dumps({
+            "model": "claude-haiku-4-5-20251001",
+            "max_tokens": 600,
+            "messages": [{"role": "user", "content": prompt}]
+        }).encode(),
+        headers={
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        }
+    )
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        text = json.load(resp)["content"][0]["text"].strip()
+        # Extract JSON array even if surrounded by markdown fences
+        m = re.search(r'\[.*\]', text, re.DOTALL)
+        if m:
+            for issue in json.loads(m.group(0)):
+                print(f"{issue.get('id','?')}: {issue.get('issue','?')}")
+except Exception:
+    pass  # LLM unavailable — structural check above is sufficient
 PYEOF
 )
 
@@ -513,7 +866,7 @@ fi
 log ""
 log "AG-02 Reviewer — preparing human review..."
 
-REVIEW_PROMPT="You are running as AG-02 Reviewer for Life OS, a personal AI assistant built on Telegram, Claude.
+REVIEW_PROMPT="You are running as AG-02 Reviewer for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
 
 Read pipeline/phase-$PHASE/task-manifest.json and pipeline/phase-$PHASE/manifest-summary.md.
 
@@ -539,7 +892,7 @@ fi
 SUMMARY_TEXT=$(head -c 3000 "$SUMMARY_FILE")
 
 curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-  --data-urlencode "text=🔍 Life OS, a personal AI assistant built on Telegram, Claude Pipeline — Phase ${PHASE} Review
+  --data-urlencode "text=🔍 Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude Pipeline — Phase ${PHASE} Review
 
 ${SUMMARY_TEXT}
 
@@ -582,7 +935,7 @@ Revise the manifest accordingly and rewrite task-manifest.json and manifest-summ
 
   run_agent "ag-01-architect" "$ARCH_PROMPT_REVISED" "$PIPELINE_DIR/ag01-output-revised-$REVISION.md"
 
-  REVIEW_PROMPT_REVISED="You are running as AG-02 Reviewer for Life OS, a personal AI assistant built on Telegram, Claude.
+  REVIEW_PROMPT_REVISED="You are running as AG-02 Reviewer for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
 
 This is revision $REVISION of the manifest. The user requested: $CHANGES
 
@@ -602,7 +955,7 @@ Do not send any Telegram messages. Do not make any API calls. Just write the fil
   fi
   SUMMARY_TEXT=$(head -c 3000 "$SUMMARY_FILE")
   curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-    --data-urlencode "text=🔄 Life OS, a personal AI assistant built on Telegram, Claude Pipeline — Phase ${PHASE} Review (Revision ${REVISION})
+    --data-urlencode "text=🔄 Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude Pipeline — Phase ${PHASE} Review (Revision ${REVISION})
 
 ${SUMMARY_TEXT}
 
@@ -714,7 +1067,7 @@ print('true' if task.get('security_sensitive') else 'false')
     RED_START=$(date +%s)
     log "RED phase — Tester writing failing tests..."
 
-    RED_PROMPT="You are AG-03 Tester for Life OS, a personal AI assistant built on Telegram, Claude.
+    RED_PROMPT="You are AG-03 Tester for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
 
 This is the RED phase of TDD. The Developer has not yet written implementation code.
 
@@ -748,6 +1101,15 @@ Follow your system prompt exactly."
     else
       log "RED confirmed — tests fail as expected"
     fi
+    # Trajectory check: verify test files have real assertions
+    AC_COUNT=$(python3 -c "
+import json
+data = json.load(open('$PIPELINE_DIR/task-manifest.json'))
+tasks = data if isinstance(data, list) else data.get('tasks', [])
+task = next(t for t in tasks if isinstance(t, dict) and t['id'] == '$TASK_ID')
+print(len(task.get('acceptance_criteria', [])))
+")
+    check_tester_trajectory "$TASK_DIR" "$TESTS_WRITTEN_FILE" "$AC_COUNT"
     record_task_metrics "$TASK_ID" "$TASK_TITLE" "red" $(( $(date +%s) - RED_START )) 1 "pass"
   else
     log "RED phase already complete — skipping"
@@ -766,7 +1128,7 @@ Follow your system prompt exactly."
       DEV_ATTEMPTS=$(( DEV_ATTEMPTS + 1 ))
       log "GREEN phase — Developer attempt $DEV_ATTEMPTS/3..."
 
-      DEV_PROMPT="You are AG-04 Developer for Life OS, a personal AI assistant built on Telegram, Claude.
+      DEV_PROMPT="You are AG-04 Developer for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
 
 Implement this task to make the failing tests pass:
 $TASK_SPEC
@@ -786,7 +1148,9 @@ Use process.env.DATABASE_URL for any database connections — do not read .env d
 
 ## Previous attempt failed the hard gate — fix every item below before marking done:
 
-$GATE_FAILURES"
+<gate-failures>
+$GATE_FAILURES
+</gate-failures>"
       fi
 
       run_agent "ag-04-developer" "$DEV_PROMPT" "$TASK_DIR/dev-output-$DEV_ATTEMPTS.md"
@@ -827,6 +1191,8 @@ Verified by orchestrator hard gate after Developer attempt $DEV_ATTEMPTS.
 $(cat "$TASK_DIR/test-red-output.txt" 2>/dev/null | head -20 || true)
 REPORT
         record_task_metrics "$TASK_ID" "$TASK_TITLE" "green" $(( $(date +%s) - GREEN_START )) "$DEV_ATTEMPTS" "pass"
+        log "Code health (pre-refactor baseline):"
+        run_code_health_checks "$TASK_ID" "$TASK_DIR" "$FILES_IN_SCOPE_JSON" "pre-refactor"
         log "GREEN phase: PASS"
       else
         log "Hard gate: FAIL (attempt $DEV_ATTEMPTS/3)"
@@ -861,7 +1227,7 @@ REPORT
       MIGRATION_START=$(date +%s)
       log "MIGRATION phase — AG-05 Migration..."
 
-      MIGRATION_PROMPT="You are AG-05 Migration for Life OS, a personal AI assistant built on Telegram, Claude.
+      MIGRATION_PROMPT="You are AG-05 Migration for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
 
 The Developer has written migration files for task $TASK_ID.
 Task spec:
@@ -899,7 +1265,7 @@ Follow your system prompt exactly."
     REFACTOR_START=$(date +%s)
     log "REFACTOR phase — AG-06 Refactor..."
 
-    REFACTOR_PROMPT="You are AG-06 Refactor for Life OS, a personal AI assistant built on Telegram, Claude.
+    REFACTOR_PROMPT="You are AG-06 Refactor for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
 
 The Developer has implemented task $TASK_ID and all tests pass.
 Your job is to improve the code without changing its behaviour.
@@ -934,6 +1300,50 @@ $REFACTOR_FAILURES"
 
     echo "refactor-verified" > "$REFACTOR_VERIFIED_FILE"
     record_task_metrics "$TASK_ID" "$TASK_TITLE" "refactor" $(( $(date +%s) - REFACTOR_START )) 1 "pass"
+
+    # Post-refactor health check + delta vs baseline
+    log "Code health (post-refactor):"
+    run_code_health_checks "$TASK_ID" "$TASK_DIR" "$FILES_IN_SCOPE_JSON"
+
+    if [ -f "$TASK_DIR/health-report-pre.json" ] && [ -f "$TASK_DIR/health-report.json" ]; then
+      python3 - "$TASK_DIR/health-report-pre.json" "$TASK_DIR/health-report.json" \
+        "$PIPELINE_DIR/metrics.json" "$TASK_ID" <<'PYEOF'
+import json, sys
+pre  = json.load(open(sys.argv[1]))
+post = json.load(open(sys.argv[2]))
+metrics_file, task_id = sys.argv[3], sys.argv[4]
+
+deltas = []
+if pre.get('coverage_pct') is not None and post.get('coverage_pct') is not None:
+    d = round(post['coverage_pct'] - pre['coverage_pct'], 1)
+    if d != 0:
+        deltas.append(f"coverage {'↑' if d > 0 else '↓'}{abs(d)}%")
+if pre.get('duplication_pct') is not None and post.get('duplication_pct') is not None:
+    d = round(post['duplication_pct'] - pre['duplication_pct'], 1)
+    if d != 0:
+        deltas.append(f"dup {'↓' if d < 0 else '↑'}{abs(d)}%")
+pre_cx  = len(pre.get('complex_functions', []))
+post_cx = len(post.get('complex_functions', []))
+if pre_cx != post_cx:
+    deltas.append(f"complex fns {pre_cx}→{post_cx}")
+
+summary = ' · '.join(deltas) if deltas else 'no measurable change'
+print(f'  Refactor delta: {summary}')
+
+# Store delta in metrics for health-summary.md
+try:
+    import os as _os
+    if _os.path.exists(metrics_file):
+        data = json.load(open(metrics_file))
+        if task_id in data.get('tasks', {}):
+            data['tasks'][task_id]['health_delta'] = summary
+            with open(metrics_file, 'w') as fp:
+                json.dump(data, fp, indent=2)
+except Exception:
+    pass
+PYEOF
+    fi
+
     log "REFACTOR phase: PASS"
   else
     log "REFACTOR phase already complete — skipping"
@@ -962,7 +1372,7 @@ $REFACTOR_FAILURES"
     SECURITY_ATTEMPTS=$(( SECURITY_ATTEMPTS + 1 ))
     log "Security attempt $SECURITY_ATTEMPTS/3..."
 
-    SEC_PROMPT="You are AG-07 Security Agent for Life OS, a personal AI assistant built on Telegram, Claude.
+    SEC_PROMPT="You are AG-07 Security Agent for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
 
 Review all code written for task $TASK_ID.
 Task spec:
@@ -978,6 +1388,7 @@ Return PASS or FAIL with specific findings."
       SECURITY_PASSED=true
       record_task_metrics "$TASK_ID" "$TASK_TITLE" "security" $(( $(date +%s) - SECURITY_START )) "$SECURITY_ATTEMPTS" "pass"
       record_security_findings "$TASK_ID" "$TASK_DIR"
+      check_security_trajectory "$TASK_DIR"
       log "Security: PASS"
     else
       log "Security: FAIL (attempt $SECURITY_ATTEMPTS/3)"
@@ -988,11 +1399,13 @@ Return PASS or FAIL with specific findings."
 
       log "Security fix needed — re-running Developer..."
 
-      SEC_FIX_PROMPT="You are AG-04 Developer for Life OS, a personal AI assistant built on Telegram, Claude.
+      SEC_FIX_PROMPT="You are AG-04 Developer for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
 
 The Security Agent has rejected task $TASK_ID. Fix every finding below.
 
+<security-findings>
 $(cat "$SEC_REPORT")
+</security-findings>
 
 Task spec for context:
 $TASK_SPEC
@@ -1081,6 +1494,69 @@ for f in json.loads(sys.argv[1]):
   log "Task $TASK_ID: COMPLETE"
 done
 
+# ── Health summary report ─────────────────────────────────────────────────────
+python3 - "$PIPELINE_DIR/metrics.json" "$PIPELINE_DIR/health-summary.md" \
+  "$PHASE" "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" <<'PYEOF'
+import json, os, sys
+
+metrics_file, output_file, phase, timestamp = \
+    sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+
+if not os.path.exists(metrics_file):
+    sys.exit(0)
+
+data = json.load(open(metrics_file))
+tasks = data.get('tasks', {})
+if not tasks:
+    sys.exit(0)
+
+def fmt(v, suffix='%'):
+    return f"{v}{suffix}" if v is not None else '—'
+
+rows = []
+for tid, t in tasks.items():
+    h = t.get('health', {})
+    rows.append({
+        'id':    tid,
+        'title': t.get('title', tid)[:35],
+        'cov':   fmt(h.get('coverage_pct')),
+        'dup':   fmt(h.get('duplication_pct')),
+        'cx':    str(h.get('complex_fn_count', 0)) if 'complex_fn_count' in h else '—',
+        'delta': t.get('health_delta', '—'),
+    })
+
+covs = [t.get('health', {}).get('coverage_pct') for t in tasks.values()
+        if t.get('health', {}).get('coverage_pct') is not None]
+dups = [t.get('health', {}).get('duplication_pct') for t in tasks.values()
+        if t.get('health', {}).get('duplication_pct') is not None]
+total_cx = sum(t.get('health', {}).get('complex_fn_count', 0) for t in tasks.values())
+avg_cov = fmt(round(sum(covs) / len(covs), 1)) if covs else '—'
+avg_dup = fmt(round(sum(dups) / len(dups), 1)) if dups else '—'
+
+lines = [
+    f"# Phase {phase} — Code Health Summary",
+    f"",
+    f"*Generated {timestamp}*",
+    f"",
+    f"| Task | Coverage | Duplication | Complex Fns | Refactor delta |",
+    f"|---|---|---|---|---|",
+]
+for r in rows:
+    lines.append(
+        f"| {r['id']} — {r['title']} | {r['cov']} | {r['dup']} | {r['cx']} | {r['delta']} |"
+    )
+lines += [
+    f"| **Phase average** | **{avg_cov}** | **{avg_dup}** | **{total_cx} total** | |",
+    "",
+]
+
+open(output_file, 'w').write('\n'.join(lines))
+PYEOF
+
+if [ -f "$PIPELINE_DIR/health-summary.md" ]; then
+  log "Health summary written to pipeline/phase-$PHASE/health-summary.md"
+fi
+
 # ── AG-08 Validator ───────────────────────────────────────────────────────────
 log ""
 log "========================================"
@@ -1094,7 +1570,7 @@ while [ "$VALIDATION_PASSED" = false ] && [ "$VALIDATION_ATTEMPTS" -lt 2 ]; do
   VALIDATION_ATTEMPTS=$(( VALIDATION_ATTEMPTS + 1 ))
   log "Validation attempt $VALIDATION_ATTEMPTS/2..."
 
-  VAL_PROMPT="You are AG-08 Validator for Life OS, a personal AI assistant built on Telegram, Claude.
+  VAL_PROMPT="You are AG-08 Validator for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
 
 Validate the full Phase $PHASE implementation against the PRD exit criteria in docs/prd.md.
 
@@ -1121,7 +1597,7 @@ Do not send any Telegram messages. The shell script handles notifications."
     # Send Telegram notification on phase PASS
     VAL_TEXT=$(head -c 3000 "$PIPELINE_DIR/validation-report.md")
     curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-      --data-urlencode "text=✅ Life OS, a personal AI assistant built on Telegram, Claude — Phase ${PHASE} Complete
+      --data-urlencode "text=✅ Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude — Phase ${PHASE} Complete
 
 ${VAL_TEXT}" \
       -d "chat_id=${TELEGRAM_ALLOWED_CHAT_ID}" > /dev/null
@@ -1158,12 +1634,34 @@ for t in data['tasks'].values():
     all_findings.extend(t.get('security_findings', []))
 top_findings = [f"{r} ({c}x)" for r, c in Counter(all_findings).most_common(5)] if all_findings else []
 
+# pass@1 rate: tasks where every phase passed on the first attempt
+tasks_pass_at_1 = sum(
+    1 for t in data['tasks'].values()
+    if all(v.get('attempts', 1) == 1 for v in t.values() if isinstance(v, dict) and 'attempts' in v)
+)
+n = len(data['tasks'])
+pass_at_1_rate = round(100 * tasks_pass_at_1 / n) if n else 0
+
+# Health summary: aggregate across tasks, skip None values
+health_vals = [t.get('health', {}) for t in data['tasks'].values()]
+def avg(vals):
+    v = [x for x in vals if x is not None]
+    return round(sum(v) / len(v), 1) if v else None
+
+health_summary = {
+    'avg_coverage_pct':    avg([h.get('coverage_pct')    for h in health_vals]),
+    'avg_duplication_pct': avg([h.get('duplication_pct') for h in health_vals]),
+    'total_complex_fns':   sum(h.get('complex_fn_count', 0) for h in health_vals),
+}
+
 data['summary'] = {
     'completed_at': completed_at,
     'total_duration_s': total,
-    'tasks_completed': len(data['tasks']),
+    'tasks_completed': n,
+    'pass_at_1_rate': pass_at_1_rate,
     'high_retry_tasks': high_retry,
     'top_security_findings': top_findings,
+    'health': health_summary,
 }
 with open(f, 'w') as fp:
     json.dump(data, fp, indent=2)
@@ -1177,6 +1675,7 @@ data = json.load(open('$PIPELINE_DIR/metrics.json'))
 s = data.get('summary', {})
 print(f\"  Total time : {s.get('total_duration_s', 0)}s\")
 print(f\"  Tasks done : {s.get('tasks_completed', 0)}\")
+print(f\"  Pass@1 rate: {s.get('pass_at_1_rate', 0)}%  ← % of tasks needing no retries\")
 high = s.get('high_retry_tasks', [])
 if high:
     print(f\"  High-retry : {', '.join(high)}  ← review task specs\")
@@ -1185,6 +1684,15 @@ if findings:
     print(f\"  Top security findings:\")
     for finding in findings:
         print(f\"    - {finding}\")
+h = s.get('health', {})
+if any(v is not None for v in h.values()):
+    print(f\"  Code health:\")
+    if h.get('avg_coverage_pct') is not None:
+        print(f\"    Coverage   : {h['avg_coverage_pct']}% avg\")
+    if h.get('avg_duplication_pct') is not None:
+        print(f\"    Duplication: {h['avg_duplication_pct']}% avg\")
+    if h.get('total_complex_fns', 0) > 0:
+        print(f\"    Complex fns: {h['total_complex_fns']} functions > 20 lines\")
 "
 fi
 

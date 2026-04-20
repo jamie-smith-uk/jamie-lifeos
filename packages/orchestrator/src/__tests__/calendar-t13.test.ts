@@ -378,7 +378,7 @@ describe("AC1 — 'what have I got today?' triggers get_todays_events tool call"
       message_id: 4,
     });
 
-    expect(result).toBe(FINAL_REPLY);
+    expect(result.text).toBe(FINAL_REPLY);
   });
 });
 

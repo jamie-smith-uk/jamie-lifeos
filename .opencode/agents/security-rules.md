@@ -1,4 +1,4 @@
-# Life OS, a personal AI assistant built on Telegram, Claude Security Rules
+# Life OS Security Rules
 # Loaded by AG-04 (Developer), AG-06 (Refactor), and AG-07 (Security Agent)
 # Both agents use this identical file.
 

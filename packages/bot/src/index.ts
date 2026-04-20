@@ -7,11 +7,17 @@
  * Forwards every incoming text message to the orchestrator via POST /message.
  * Forwards every callback_query to the orchestrator via POST /callback.
  * On any network error the user always receives a plain error reply.
+ *
+ * T-17: Message handler reads show_confirmation_keyboard from the orchestrator
+ * response and renders a Confirm / Edit / Cancel inline keyboard when true.
+ * The callback handler answers the callback query via answerCallbackQuery and
+ * sends the orchestrator reply as a new message to the chat.
  */
 
 import TelegramBot from "node-telegram-bot-api";
 import { env, logger } from "@lifeos/shared";
 import { isAllowedChat } from "./middleware.js";
+import { buildConfirmKeyboard } from "./keyboard.js";
 
 // ---------------------------------------------------------------------------
 // Initialise bot
@@ -38,13 +44,23 @@ if (isPolling) {
 }
 
 // ---------------------------------------------------------------------------
-// Helper: POST to orchestrator with a JSON body
+// Helper: POST to orchestrator with a JSON body, returning parsed JSON
 // ---------------------------------------------------------------------------
 
+/**
+ * POST to the orchestrator and return the parsed JSON response body.
+ *
+ * T-17: Returns the full response object so callers can inspect fields like
+ * `text` and `show_confirmation_keyboard`.
+ *
+ * @param path  The orchestrator route to POST to.
+ * @param body  The request payload.
+ * @returns     The parsed JSON response body as a plain object.
+ */
 async function postToOrchestrator(
   path: "/message" | "/callback",
   body: Record<string, unknown>,
-): Promise<void> {
+): Promise<Record<string, unknown>> {
   const url = `${env.ORCHESTRATOR_URL}${path}`;
   const response = await fetch(url, {
     method: "POST",
@@ -58,6 +74,8 @@ async function postToOrchestrator(
       `Orchestrator responded with HTTP ${response.status}: ${text}`,
     );
   }
+
+  return (await response.json()) as Record<string, unknown>;
 }
 
 // ---------------------------------------------------------------------------
@@ -105,13 +123,45 @@ bot.onText(/.*/, (msg) => {
     body["from_username"] = fromUsername;
   }
 
-  postToOrchestrator("/message", body).catch((err: unknown) => {
-    botLogger.error(
-      { err, chat_id: chatId, message_id: messageId },
-      "Failed to forward message to orchestrator",
-    );
-    void sendErrorReply(chatId);
-  });
+  postToOrchestrator("/message", body)
+    .then((orchestratorReply) => {
+      // Extract the reply text from the orchestrator response.
+      const replyText =
+        typeof orchestratorReply["text"] === "string"
+          ? orchestratorReply["text"]
+          : "Something went wrong. Please try again.";
+
+      const showKeyboard = orchestratorReply["show_confirmation_keyboard"] === true;
+
+      if (showKeyboard) {
+        // T-17: Render the proposal with Confirm / Edit / Cancel inline keyboard.
+        bot
+          .sendMessage(chatId, replyText, {
+            reply_markup: buildConfirmKeyboard(),
+          })
+          .catch((sendErr: unknown) => {
+            botLogger.error(
+              { err: sendErr, chat_id: chatId },
+              "Failed to send proposal message with keyboard",
+            );
+          });
+      } else {
+        // Plain text reply.
+        bot.sendMessage(chatId, replyText).catch((sendErr: unknown) => {
+          botLogger.error(
+            { err: sendErr, chat_id: chatId },
+            "Failed to send reply message",
+          );
+        });
+      }
+    })
+    .catch((err: unknown) => {
+      botLogger.error(
+        { err, chat_id: chatId, message_id: messageId },
+        "Failed to forward message to orchestrator",
+      );
+      void sendErrorReply(chatId);
+    });
 });
 
 // ---------------------------------------------------------------------------
@@ -136,11 +186,12 @@ bot.on("callback_query", (query) => {
 
   const callbackData = query.data ?? "";
   const messageId = query.message?.message_id ?? 0;
+  const callbackQueryId = query.id;
 
   botLogger.info(
     {
       chat_id: chatId,
-      callback_query_id: query.id,
+      callback_query_id: callbackQueryId,
       callback_data: callbackData,
     },
     "Received callback_query",
@@ -148,18 +199,54 @@ bot.on("callback_query", (query) => {
 
   const body: Record<string, unknown> = {
     chat_id: chatId,
-    callback_query_id: query.id,
+    callback_query_id: callbackQueryId,
     callback_data: callbackData,
     message_id: messageId,
   };
 
-  postToOrchestrator("/callback", body).catch((err: unknown) => {
-    botLogger.error(
-      { err, chat_id: chatId, callback_query_id: query.id },
-      "Failed to forward callback_query to orchestrator",
-    );
-    void sendErrorReply(chatId);
-  });
+  postToOrchestrator("/callback", body)
+    .then((orchestratorReply) => {
+      // T-17: Answer the callback query to dismiss the loading spinner on
+      // the button, then send the orchestrator's reply as a new message.
+      bot
+        .answerCallbackQuery(callbackQueryId, { text: "" })
+        .catch((answerErr: unknown) => {
+          botLogger.warn(
+            { err: answerErr, callback_query_id: callbackQueryId },
+            "Failed to answer callback query",
+          );
+        });
+
+      const replyText =
+        typeof orchestratorReply["text"] === "string"
+          ? orchestratorReply["text"]
+          : "";
+
+      if (replyText) {
+        bot.sendMessage(chatId, replyText).catch((sendErr: unknown) => {
+          botLogger.error(
+            { err: sendErr, chat_id: chatId },
+            "Failed to send callback reply message",
+          );
+        });
+      }
+    })
+    .catch((err: unknown) => {
+      botLogger.error(
+        { err, chat_id: chatId, callback_query_id: callbackQueryId },
+        "Failed to forward callback_query to orchestrator",
+      );
+      // Answer the callback query even on error to dismiss the spinner.
+      bot
+        .answerCallbackQuery(callbackQueryId, { text: "Something went wrong." })
+        .catch((answerErr: unknown) => {
+          botLogger.warn(
+            { err: answerErr, callback_query_id: callbackQueryId },
+            "Failed to answer callback query on error",
+          );
+        });
+      void sendErrorReply(chatId);
+    });
 });
 
 // ---------------------------------------------------------------------------
