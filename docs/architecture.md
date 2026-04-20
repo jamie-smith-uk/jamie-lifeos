@@ -219,6 +219,8 @@ Any action that creates, modifies, or deletes external state requires a two-step
 1. **Propose** — the agent presents a structured summary of what it intends to do and writes a pending record to `active_confirmations` in the DB (keyed by chat_id).
 2. **Confirm** — the bot renders an inline keyboard with Confirm / Edit / Cancel. On Confirm, the orchestrator reads the pending record and executes the action. On Cancel, the record is deleted. On Edit, the agent prompts for changes and proposes again.
 
+The pending action is stored as a JSONB object in the active_confirmation column of the conversation_context table — it is not a separate table.
+
 Rules:
 - Only one active confirmation per chat_id at a time. A new proposal replaces any existing pending confirmation.
 - Confirmations expire after 10 minutes. Expired confirmations are dropped silently.
