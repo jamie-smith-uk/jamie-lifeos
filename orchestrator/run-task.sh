@@ -244,14 +244,14 @@ if [ "$OPT_DRY_RUN" = true ]; then
 fi
 
 log "========================================"
-log "Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude — Task: $TASK_TITLE"
+log "Life OS — Task: $TASK_TITLE"
 log "========================================"
 log "Mode:$([ "$OPT_URGENT" = "true" ] && echo " URGENT") $([ "$OPT_NO_SECURITY" = "true" ] && echo " NO-SECURITY")"
 log "Dir:  $TASK_DIR"
 
 # ── Optional Telegram review gate ────────────────────────────────────────────
 if [ "$OPT_REVIEW" = true ]; then
-  REVIEW_TEXT="🔍 Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude — Task Review
+  REVIEW_TEXT="🔍 Life OS — Task Review
 
 *$TASK_TITLE*
 
@@ -314,7 +314,7 @@ if [ ! -f "$TESTS_WRITTEN_FILE" ]; then
   log "RED phase — Tester writing failing tests..."
   CONTEXT_BLOCK=$(build_context_block)
 
-  RED_PROMPT="You are AG-03 Tester for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
+  RED_PROMPT="You are AG-03 Tester for Life OS.
 RED phase of TDD — no implementation exists yet.
 Write the test suite for this task:
 $TASK_SPEC
@@ -352,7 +352,7 @@ if [ ! -f "$GREEN_VERIFIED_FILE" ]; then
     log "GREEN phase — Developer attempt $DEV_ATTEMPTS/3..."
 
     CONTEXT_BLOCK=$(build_context_block)
-    DEV_PROMPT="You are AG-04 Developer for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
+    DEV_PROMPT="You are AG-04 Developer for Life OS.
 Implement this task to make the failing tests pass:
 $TASK_SPEC
 ${CONTEXT_BLOCK:+
@@ -423,7 +423,7 @@ MIGRATION_VERIFIED_FILE="$TASK_DIR/migration-verified.txt"
 if [ "$HAS_MIGRATION" = "true" ] && [ ! -f "$MIGRATION_VERIFIED_FILE" ]; then
   MIGRATION_START=$(date +%s)
   log "MIGRATION phase..."
-  run_agent "ag-05-migration" "You are AG-05 Migration for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
+  run_agent "ag-05-migration" "You are AG-05 Migration for Life OS.
 Validate migration files for: $TASK_SPEC
 Run the migration and rollback. Write migration-report.md to $TASK_DIR/" \
     "$TASK_DIR/migration-output.md"
@@ -443,7 +443,7 @@ if [ "$OPT_URGENT" != "true" ] && [ ! -f "$REFACTOR_VERIFIED_FILE" ]; then
   REFACTOR_START=$(date +%s)
   log "REFACTOR phase..."
   CONTEXT_BLOCK=$(build_context_block)
-  run_agent "ag-06-refactor" "You are AG-06 Refactor for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
+  run_agent "ag-06-refactor" "You are AG-06 Refactor for Life OS.
 Improve without changing behaviour: $TASK_SPEC
 ${CONTEXT_BLOCK:+
 $CONTEXT_BLOCK}
@@ -501,7 +501,7 @@ if [ "$OPT_NO_SECURITY" != "true" ] && ! ([ -f "$SEC_REPORT" ] && report_passes 
     SECURITY_ATTEMPTS=$(( SECURITY_ATTEMPTS + 1 ))
     log "Security attempt $SECURITY_ATTEMPTS/3..."
 
-    run_agent "ag-07-security" "You are AG-07 Security Agent for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
+    run_agent "ag-07-security" "You are AG-07 Security Agent for Life OS.
 Review all code for: $TASK_SPEC
 Apply every rule in .opencode/agents/security-rules.md to every file in files_in_scope.
 Write security-report.md to $TASK_DIR/" "$TASK_DIR/sec-output-$SECURITY_ATTEMPTS.md"
@@ -518,7 +518,7 @@ Write security-report.md to $TASK_DIR/" "$TASK_DIR/sec-output-$SECURITY_ATTEMPTS
       [ "$SECURITY_ATTEMPTS" -eq 3 ] && halt "Security failed after 3 attempts" "AG-07" \
         "$(cat "$SEC_REPORT")"
 
-      run_agent "ag-04-developer" "You are AG-04 Developer for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
+      run_agent "ag-04-developer" "You are AG-04 Developer for Life OS.
 Fix every security finding:
 <security-findings>
 $(cat "$SEC_REPORT")
@@ -583,5 +583,5 @@ log "Duration     : $TOTAL_S"
 log "Output       : $TASK_DIR"
 log "========================================"
 
-telegram_notify "✅ Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude — Task complete
+telegram_notify "✅ Life OS — Task complete
 *$TASK_TITLE* ($TOTAL_S)"

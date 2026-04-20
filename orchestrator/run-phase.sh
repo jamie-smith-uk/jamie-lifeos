@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-# ── Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude Pipeline Runner ───────────────────────────────────────────
+# ── Life OS Pipeline Runner ───────────────────────────────────────────
 # Usage: ./orchestrator/run-phase.sh --phase 1
 # Requires: opencode CLI, ANTHROPIC_API_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_ALLOWED_CHAT_ID
 
@@ -611,7 +611,7 @@ fi
 
 # ── Header ────────────────────────────────────────────────────────────────────
 log "========================================"
-log "Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude Pipeline — Phase $PHASE"
+log "Life OS Pipeline — Phase $PHASE"
 log "========================================"
 
 # ── AG-01 Architect ───────────────────────────────────────────────────────────
@@ -692,7 +692,7 @@ print(result)
 PYEOF
 )
 
-ARCH_PROMPT="You are running as AG-01 Architect for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
+ARCH_PROMPT="You are running as AG-01 Architect for Life OS.
 
 Here is the PRD content for Phase $PHASE:
 <prd-phase>
@@ -870,7 +870,7 @@ fi
 log ""
 log "AG-02 Reviewer — preparing human review..."
 
-REVIEW_PROMPT="You are running as AG-02 Reviewer for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
+REVIEW_PROMPT="You are running as AG-02 Reviewer for Life OS.
 
 Read pipeline/phase-$PHASE/task-manifest.json and pipeline/phase-$PHASE/manifest-summary.md.
 
@@ -896,7 +896,7 @@ fi
 SUMMARY_TEXT=$(head -c 3000 "$SUMMARY_FILE")
 
 curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-  --data-urlencode "text=🔍 Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude Pipeline — Phase ${PHASE} Review
+  --data-urlencode "text=🔍 Life OS Pipeline — Phase ${PHASE} Review
 
 ${SUMMARY_TEXT}
 
@@ -939,7 +939,7 @@ Revise the manifest accordingly and rewrite task-manifest.json and manifest-summ
 
   run_agent "ag-01-architect" "$ARCH_PROMPT_REVISED" "$PIPELINE_DIR/ag01-output-revised-$REVISION.md"
 
-  REVIEW_PROMPT_REVISED="You are running as AG-02 Reviewer for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
+  REVIEW_PROMPT_REVISED="You are running as AG-02 Reviewer for Life OS.
 
 This is revision $REVISION of the manifest. The user requested: $CHANGES
 
@@ -959,7 +959,7 @@ Do not send any Telegram messages. Do not make any API calls. Just write the fil
   fi
   SUMMARY_TEXT=$(head -c 3000 "$SUMMARY_FILE")
   curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-    --data-urlencode "text=🔄 Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude Pipeline — Phase ${PHASE} Review (Revision ${REVISION})
+    --data-urlencode "text=🔄 Life OS Pipeline — Phase ${PHASE} Review (Revision ${REVISION})
 
 ${SUMMARY_TEXT}
 
@@ -1071,7 +1071,7 @@ print('true' if task.get('security_sensitive') else 'false')
     RED_START=$(date +%s)
     log "RED phase — Tester writing failing tests..."
 
-    RED_PROMPT="You are AG-03 Tester for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
+    RED_PROMPT="You are AG-03 Tester for Life OS.
 
 This is the RED phase of TDD. The Developer has not yet written implementation code.
 
@@ -1132,7 +1132,7 @@ print(len(task.get('acceptance_criteria', [])))
       DEV_ATTEMPTS=$(( DEV_ATTEMPTS + 1 ))
       log "GREEN phase — Developer attempt $DEV_ATTEMPTS/3..."
 
-      DEV_PROMPT="You are AG-04 Developer for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
+      DEV_PROMPT="You are AG-04 Developer for Life OS.
 
 Implement this task to make the failing tests pass:
 $TASK_SPEC
@@ -1231,7 +1231,7 @@ REPORT
       MIGRATION_START=$(date +%s)
       log "MIGRATION phase — AG-05 Migration..."
 
-      MIGRATION_PROMPT="You are AG-05 Migration for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
+      MIGRATION_PROMPT="You are AG-05 Migration for Life OS.
 
 The Developer has written migration files for task $TASK_ID.
 Task spec:
@@ -1269,7 +1269,7 @@ Follow your system prompt exactly."
     REFACTOR_START=$(date +%s)
     log "REFACTOR phase — AG-06 Refactor..."
 
-    REFACTOR_PROMPT="You are AG-06 Refactor for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
+    REFACTOR_PROMPT="You are AG-06 Refactor for Life OS.
 
 The Developer has implemented task $TASK_ID and all tests pass.
 Your job is to improve the code without changing its behaviour.
@@ -1376,7 +1376,7 @@ PYEOF
     SECURITY_ATTEMPTS=$(( SECURITY_ATTEMPTS + 1 ))
     log "Security attempt $SECURITY_ATTEMPTS/3..."
 
-    SEC_PROMPT="You are AG-07 Security Agent for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
+    SEC_PROMPT="You are AG-07 Security Agent for Life OS.
 
 Review all code written for task $TASK_ID.
 Task spec:
@@ -1403,7 +1403,7 @@ Return PASS or FAIL with specific findings."
 
       log "Security fix needed — re-running Developer..."
 
-      SEC_FIX_PROMPT="You are AG-04 Developer for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
+      SEC_FIX_PROMPT="You are AG-04 Developer for Life OS.
 
 The Security Agent has rejected task $TASK_ID. Fix every finding below.
 
@@ -1574,7 +1574,7 @@ while [ "$VALIDATION_PASSED" = false ] && [ "$VALIDATION_ATTEMPTS" -lt 2 ]; do
   VALIDATION_ATTEMPTS=$(( VALIDATION_ATTEMPTS + 1 ))
   log "Validation attempt $VALIDATION_ATTEMPTS/2..."
 
-  VAL_PROMPT="You are AG-08 Validator for Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude.
+  VAL_PROMPT="You are AG-08 Validator for Life OS.
 
 Validate the full Phase $PHASE implementation against the PRD exit criteria in docs/prd.md.
 
@@ -1601,7 +1601,7 @@ Do not send any Telegram messages. The shell script handles notifications."
     # Send Telegram notification on phase PASS
     VAL_TEXT=$(head -c 3000 "$PIPELINE_DIR/validation-report.md")
     curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-      --data-urlencode "text=✅ Life OS, a personal AI assistant built on Telegram, Claude, a personal AI assistant built on Telegram, Claude — Phase ${PHASE} Complete
+      --data-urlencode "text=✅ Life OS — Phase ${PHASE} Complete
 
 ${VAL_TEXT}" \
       -d "chat_id=${TELEGRAM_ALLOWED_CHAT_ID}" > /dev/null
