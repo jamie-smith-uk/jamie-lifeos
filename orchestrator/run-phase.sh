@@ -1,11 +1,8 @@
 #!/bin/bash
 
-# Source: github.com/jamie-smith-uk/jamie-agent-pipeline
-# To update this pipeline: cd ~/Documents/jamie-agent-pipeline && ./orchestrator/sync-pipeline.sh --target /Users/jamie/Documents/jamie-lifeos
-
 set -euo pipefail
 
-# ── Life OS Pipeline Runner ──────────────────────────────────────────────────
+# ── Life OS, a personal AI assistant built on Telegram, Claude Pipeline Runner ───────────────────────────────────────────
 # Usage: ./orchestrator/run-phase.sh --phase 1
 # Requires: opencode CLI, ANTHROPIC_API_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_ALLOWED_CHAT_ID
 
@@ -23,7 +20,7 @@ if [ -z "$PHASE" ]; then
   exit 1
 fi
 
-# ── Paths ────────────────────────────────────────────────────────────────────
+# ── Paths ─────────────────────────────────────────────────────────────────────
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PIPELINE_DIR="$REPO_ROOT/pipeline/phase-$PHASE"
 AGENTS_DIR="$REPO_ROOT/agents"
@@ -36,6 +33,11 @@ if [ -f "$REPO_ROOT/.env" ]; then
   set +a
 fi
 
+# ── Validate required env vars ────────────────────────────────────────────────
+: "${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY is not set — check your .env}"
+: "${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is not set — check your .env}"
+: "${TELEGRAM_ALLOWED_CHAT_ID:?TELEGRAM_ALLOWED_CHAT_ID is not set — check your .env}"
+
 # Construct DATABASE_URL from individual vars if not already set
 if [ -z "${DATABASE_URL:-}" ]; then
   DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}"
@@ -43,8 +45,10 @@ if [ -z "${DATABASE_URL:-}" ]; then
 fi
 
 mkdir -p "$PIPELINE_DIR"
+PHASE_STARTED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+CONTEXT_MAX_CHARS=4000  # max context.md chars injected into agent prompts (~1k tokens)
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
+# ── Helpers ───────────────────────────────────────────────────────────────────
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
 
 halt() {
@@ -116,12 +120,267 @@ wait_for_approval() {
   halt "Approval timeout" "human-gate" "No approval signal received within 24 hours"
 }
 
-report_contains() {
-  local file="$1" word="$2"
-  grep -q "$word" "$file" 2>/dev/null
+# Checks that a report file contains a PASS title line as written by the agents.
+# Matches "Title: ... — PASS" or "# ... — PASS" — avoids false positives from
+# body text that happens to contain the word PASS.
+report_passes() {
+  local file="$1"
+  grep -qE "(Title:|##? .+).*— PASS" "$file" 2>/dev/null
 }
 
-# ── Phase gate ───────────────────────────────────────────────────────────────
+# Returns accumulated build context, capped at CONTEXT_MAX_CHARS (most recent tasks).
+# Output is empty if no context exists yet (first task in phase).
+build_context_block() {
+  local context_file="$PIPELINE_DIR/context.md"
+  [ -f "$context_file" ] && [ -s "$context_file" ] || return 0
+
+  local content
+  content=$(cat "$context_file")
+
+  if [ ${#content} -gt "$CONTEXT_MAX_CHARS" ]; then
+    content=$(python3 -c "
+import sys
+content = sys.stdin.read()
+tail = content[-$CONTEXT_MAX_CHARS:]
+idx = tail.find('\n## ')
+if idx > 0:
+    tail = tail[idx+1:]
+print('*(Earlier tasks omitted — see context.md for full history)*\n\n' + tail)
+" <<< "$content")
+  fi
+
+  printf "## Context from completed tasks in this phase\n\n%s\n" "$content"
+}
+
+# Appends one phase entry to pipeline/phase-N/metrics.json (creates file if absent).
+# Args: task_id task_title phase duration_s attempts result
+record_task_metrics() {
+  local task_id="$1" task_title="$2" phase="$3" duration_s="$4" attempts="$5" result="$6"
+  python3 - "$PIPELINE_DIR/metrics.json" \
+    "$task_id" "$task_title" "$phase" "$duration_s" "$attempts" "$result" \
+    "$PHASE" "$PHASE_STARTED_AT" <<'PYEOF'
+import json, os, sys
+f = sys.argv[1]
+task_id, title, phase = sys.argv[2], sys.argv[3], sys.argv[4]
+duration, attempts, result = int(sys.argv[5]), int(sys.argv[6]), sys.argv[7]
+phase_num, started_at = int(sys.argv[8]), sys.argv[9]
+
+data = json.load(open(f)) if os.path.exists(f) else {
+    'phase': phase_num, 'started_at': started_at, 'tasks': {}
+}
+task = data['tasks'].setdefault(task_id, {'title': title})
+task[phase] = {'duration_s': duration, 'attempts': attempts, 'result': result}
+task['total_duration_s'] = sum(
+    v['duration_s'] for v in task.values()
+    if isinstance(v, dict) and 'duration_s' in v
+)
+with open(f, 'w') as fp:
+    json.dump(data, fp, indent=2)
+PYEOF
+}
+
+# Mutation testing for security-sensitive tasks. Makes targeted mutations to
+# security-critical lines and checks if tests catch them. Results written to
+# $TASK_DIR/mutation-report.md. Warnings only — not a hard FAIL gate.
+run_mutation_tests() {
+  local task_id="$1" task_dir="$2" files_in_scope_json="$3"
+  local mutations_total=0 mutations_caught=0
+  local survived_list=""
+
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    local full="$REPO_ROOT/$f"
+    [[ -f "$full" ]] || continue
+
+    # Find first line matching a security-critical pattern (priority order)
+    local line_num=""
+    for pat in "TELEGRAM_ALLOWED_CHAT_ID" "chat_id" '\$[0-9]' \
+               "validateInput\|isValid\|sanitize\|whitelist"; do
+      line_num=$(grep -nm1 "$pat" "$full" 2>/dev/null | cut -d: -f1 || true)
+      [[ -n "$line_num" ]] && break
+    done
+    [[ -z "$line_num" ]] && continue
+
+    mutations_total=$(( mutations_total + 1 ))
+
+    # Mutate: comment out the matched line (Python handles cross-platform)
+    python3 -c "
+import sys
+fp, n = sys.argv[1], int(sys.argv[2])
+lines = open(fp).readlines()
+lines[n-1] = '// MUTATED: ' + lines[n-1]
+open(fp, 'w').writelines(lines)
+" "$full" "$line_num"
+
+    if timeout 60 bash -c "cd '$REPO_ROOT' && pnpm test --run" > /dev/null 2>&1; then
+      survived_list+="  - $f line $line_num\n"
+      log "  ⚠ Mutation survived: $f:$line_num"
+    else
+      mutations_caught=$(( mutations_caught + 1 ))
+      log "  ✓ Mutation caught: $f:$line_num"
+    fi
+
+    # Restore original
+    python3 -c "
+import sys
+fp, n = sys.argv[1], int(sys.argv[2])
+lines = open(fp).readlines()
+lines[n-1] = lines[n-1].replace('// MUTATED: ', '', 1)
+open(fp, 'w').writelines(lines)
+" "$full" "$line_num"
+
+  done < <(python3 -c "import json,sys; [print(f) for f in json.loads(sys.argv[1])]" \
+    "$files_in_scope_json")
+
+  {
+    if [ "$mutations_total" -eq 0 ]; then
+      printf "Title: Mutation Report — %s — WARN\n\n" "$task_id"
+      printf "No security-critical patterns found to mutate.\n"
+      printf "Verify that security paths are explicitly tested in __tests__/ files.\n"
+    elif [ "$mutations_caught" -eq "$mutations_total" ]; then
+      printf "Title: Mutation Report — %s — PASS\n\n" "$task_id"
+      printf "All %d mutation(s) caught by tests. Security paths are covered.\n" \
+        "$mutations_total"
+    else
+      local survived=$(( mutations_total - mutations_caught ))
+      printf "Title: Mutation Report — %s — WARN\n\n" "$task_id"
+      printf "%d of %d mutation(s) survived — these security paths may lack test coverage:\n\n" \
+        "$survived" "$mutations_total"
+      printf "%b" "$survived_list"
+      printf "\nAdd tests that verify the security check is enforced when removed.\n"
+    fi
+  } > "$task_dir/mutation-report.md"
+}
+
+# Parses security FAIL outputs for this task and records violated rule categories
+# in metrics.json under tasks.<id>.security_findings.
+record_security_findings() {
+  local task_id="$1" task_dir="$2"
+  python3 - "$PIPELINE_DIR/metrics.json" "$task_id" "$task_dir" <<'PYEOF'
+import json, os, re, sys
+metrics_file, task_id, task_dir = sys.argv[1], sys.argv[2], sys.argv[3]
+if not os.path.exists(metrics_file):
+    sys.exit(0)
+data = json.load(open(metrics_file))
+if task_id not in data.get('tasks', {}):
+    sys.exit(0)
+
+rule_patterns = [
+    "Parameterised queries", "Prompt injection", "Input validation",
+    "Cron injection", "Secrets in .env", "Never log secrets",
+    "Agent exposure", "secrets in git", "Whitelist on every handler",
+    "agent-constructed SQL", "OAuth tokens", "Admin UI",
+    "No PII in logs", "Label all external content", "No stack traces",
+    "Statement timeout", "Zero high or critical", "exact versions",
+    "No unjustified",
+]
+violated = set()
+for fname in sorted(os.listdir(task_dir)):
+    if not fname.startswith('sec-output-'):
+        continue
+    try:
+        content = open(os.path.join(task_dir, fname)).read()
+        if 'FAIL' not in content:
+            continue
+        for pattern in rule_patterns:
+            if re.search(pattern, content, re.IGNORECASE):
+                violated.add(pattern)
+    except Exception:
+        pass
+if violated:
+    data['tasks'][task_id]['security_findings'] = sorted(violated)
+    with open(metrics_file, 'w') as fp:
+        json.dump(data, fp, indent=2)
+PYEOF
+}
+
+# Runs tsc --noEmit, ESLint on files that exist from files_in_scope, and pnpm test.
+# Prints combined failure output to stdout (empty on full pass).
+# Returns 0 if all checks pass, 1 if any fail.
+verify_implementation() {
+  local files_in_scope_json="$1"
+  local failures="" out rc
+
+  out=$(cd "$REPO_ROOT" && pnpm exec tsc --noEmit 2>&1); rc=$?
+  if [ $rc -ne 0 ]; then
+    failures+="=== tsc --noEmit ===
+${out}
+
+"
+  fi
+
+  mapfile -t existing_files < <(python3 -c "
+import json, os, sys
+files = json.loads(sys.argv[1])
+for f in files:
+    full = os.path.join('$REPO_ROOT', f)
+    if os.path.isfile(full):
+        print(full)
+" "$files_in_scope_json" 2>/dev/null)
+
+  if [ ${#existing_files[@]} -gt 0 ]; then
+    out=$(cd "$REPO_ROOT" && pnpm exec eslint "${existing_files[@]}" 2>&1); rc=$?
+    if [ $rc -ne 0 ]; then
+      failures+="=== eslint ===
+${out}
+
+"
+    fi
+  fi
+
+  out=$(cd "$REPO_ROOT" && pnpm test --run 2>&1); rc=$?
+  if [ $rc -ne 0 ]; then
+    failures+="=== pnpm test --run ===
+${out}
+
+"
+  fi
+
+  printf "%s" "$failures"
+  [ -z "$failures" ]
+}
+
+# Checks that all git-modified and new files (excluding pipeline/ and __tests__/)
+# are listed in files_in_scope_json. Prints violating paths, returns 1 if any found.
+check_scope_compliance() {
+  local files_in_scope_json="$1"
+  local violations=""
+
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    [[ "$f" == pipeline/* ]] && continue
+    [[ "$f" == *__tests__* ]] && continue
+    local in_scope
+    in_scope=$(python3 -c "
+import json, sys
+print('yes' if sys.argv[2] in json.loads(sys.argv[1]) else 'no')
+" "$files_in_scope_json" "$f" 2>/dev/null)
+    [ "$in_scope" = "no" ] && violations+="$f"$'\n'
+  done < <(
+    git -C "$REPO_ROOT" diff --name-only HEAD 2>/dev/null
+    git -C "$REPO_ROOT" ls-files --others --exclude-standard "$REPO_ROOT" 2>/dev/null \
+      | sed "s|$REPO_ROOT/||"
+  )
+
+  [ -z "$violations" ] && return 0
+  printf "%s" "$violations"
+  return 1
+}
+
+# Reverts files returned by check_scope_compliance (tracked = git checkout, new = rm).
+revert_scope_violations() {
+  while IFS= read -r vf; do
+    [[ -z "$vf" ]] && continue
+    if git -C "$REPO_ROOT" ls-files --error-unmatch "$vf" 2>/dev/null; then
+      git -C "$REPO_ROOT" checkout HEAD -- "$vf"
+    else
+      rm -f "$REPO_ROOT/$vf"
+    fi
+    log "  Reverted out-of-scope: $vf"
+  done
+}
+
+# ── Phase gate ────────────────────────────────────────────────────────────────
 if [ "$PHASE" -gt 1 ]; then
   PREV_PHASE=$(( PHASE - 1 ))
   PREV_REPORT="$REPO_ROOT/pipeline/phase-$PREV_PHASE/validation-report.md"
@@ -130,23 +389,62 @@ if [ "$PHASE" -gt 1 ]; then
     halt "Phase $PREV_PHASE not complete" "orchestrator" "validation-report.md not found for phase $PREV_PHASE"
   fi
 
-  if ! report_contains "$PREV_REPORT" "PASS"; then
-    halt "Phase $PREV_PHASE did not pass validation" "orchestrator" "validation-report.md for phase $PREV_PHASE does not contain PASS"
+  if ! report_passes "$PREV_REPORT"; then
+    halt "Phase $PREV_PHASE did not pass validation" "orchestrator" "validation-report.md for phase $PREV_PHASE does not contain a PASS title"
   fi
 fi
 
-# ── Header ───────────────────────────────────────────────────────────────────
+# ── Header ────────────────────────────────────────────────────────────────────
 log "========================================"
-log "Life OS Pipeline — Phase $PHASE"
+log "Life OS, a personal AI assistant built on Telegram, Claude Pipeline — Phase $PHASE"
 log "========================================"
 
-# ── AG-01 Architect ──────────────────────────────────────────────────────────
+# ── AG-01 Architect ───────────────────────────────────────────────────────────
 log ""
 log "AG-01 Architect — producing task manifest..."
 
-ARCH_PROMPT="You are running as AG-01 Architect for Life OS.
+# Tiered context: extract only the relevant phase section and its epics from the PRD
+PHASE_PRD_CONTENT=$(python3 - "$REPO_ROOT/docs/prd.md" "$PHASE" <<'PYEOF'
+import re, sys
+try:
+    content = open(sys.argv[1]).read()
+except FileNotFoundError:
+    print("(docs/prd.md not found — create it before running the pipeline)")
+    sys.exit(0)
+phase_num = sys.argv[2]
+phase_match = re.search(
+    rf'(## Phase {phase_num}[^\n]*\n.*?)(?=\n## Phase \d+|\Z)',
+    content, re.DOTALL
+)
+phase_section = phase_match.group(1) if phase_match else ''
+epics = list(dict.fromkeys(re.findall(r'EP-\d+', phase_section)))
+stories = []
+for ep in epics:
+    m = re.search(rf'(### {ep}[^\n]*\n.*?)(?=\n### |\n---|\Z)', content, re.DOTALL)
+    if m:
+        stories.append(m.group(1))
+result = phase_section
+if stories:
+    result += '\n\n## User stories for this phase\n\n' + '\n\n'.join(stories)
+print(result.strip() if result.strip() else content)
+PYEOF
+)
 
-Read the PRD at docs/prd.md and the Architecture doc at docs/architecture.md.
+ARCH_DOC=$(cat "$REPO_ROOT/docs/architecture.md" 2>/dev/null \
+  || echo "(docs/architecture.md not found — create it before running the pipeline)")
+
+ARCH_PROMPT="You are running as AG-01 Architect for Life OS, a personal AI assistant built on Telegram, Claude.
+
+Here is the PRD content for Phase $PHASE:
+<prd-phase>
+$PHASE_PRD_CONTENT
+</prd-phase>
+
+Here is the Architecture document:
+<architecture>
+$ARCH_DOC
+</architecture>
+
 Produce the task manifest for Phase $PHASE.
 
 Write two files to pipeline/phase-$PHASE/:
@@ -178,17 +476,57 @@ for t in tasks:
         print(f\"  {t['id']}: {t['title']}{flag}\")
 "
 
-# ── AG-02 Reviewer ───────────────────────────────────────────────────────────
+# ── Acceptance criteria quality gate ─────────────────────────────────────────
+AC_ISSUES=$(python3 - "$PIPELINE_DIR/task-manifest.json" <<'PYEOF'
+import json, re, sys
+data = json.load(open(sys.argv[1]))
+tasks = data if isinstance(data, list) else data.get('tasks', [])
+vague = re.compile(
+    r'\b(works?(?: correctly| properly| as expected)?|is (?:done|complete|working|functional)|'
+    r'functions?(?: properly| correctly)|it works|should work|is (?:implemented|added|created))\b',
+    re.IGNORECASE
+)
+issues = []
+for t in (t for t in tasks if isinstance(t, dict)):
+    tid = t.get('id', '?')
+    criteria = t.get('acceptance_criteria', [])
+    if not criteria:
+        issues.append(f"{tid}: no acceptance criteria defined")
+        continue
+    for i, c in enumerate(criteria, 1):
+        c = c.strip()
+        if len(c) < 10:
+            issues.append(f"{tid} AC-{i}: too short to be testable — '{c}'")
+        elif vague.search(c):
+            issues.append(f"{tid} AC-{i}: non-testable language — '{c[:80]}'")
+for issue in issues:
+    print(issue)
+PYEOF
+)
+
+if [ -n "$AC_ISSUES" ]; then
+  log "Acceptance criteria quality warnings:"
+  while IFS= read -r issue; do log "  ! $issue"; done <<< "$AC_ISSUES"
+fi
+
+# ── AG-02 Reviewer ────────────────────────────────────────────────────────────
 log ""
 log "AG-02 Reviewer — preparing human review..."
 
-REVIEW_PROMPT="You are running as AG-02 Reviewer for Life OS.
+REVIEW_PROMPT="You are running as AG-02 Reviewer for Life OS, a personal AI assistant built on Telegram, Claude.
 
 Read pipeline/phase-$PHASE/task-manifest.json and pipeline/phase-$PHASE/manifest-summary.md.
 
 Write reviewer-summary.md to pipeline/phase-$PHASE/ using the format defined in your system prompt.
 
 Do not send any Telegram messages. Do not make any API calls. Just write the file and stop."
+
+if [ -n "$AC_ISSUES" ]; then
+  REVIEW_PROMPT="$REVIEW_PROMPT
+
+The orchestrator detected acceptance criteria quality issues — surface these in 'Concerns or risks':
+$AC_ISSUES"
+fi
 
 run_agent "ag-02-reviewer" "$REVIEW_PROMPT" "$PIPELINE_DIR/ag02-output.md"
 
@@ -201,7 +539,7 @@ fi
 SUMMARY_TEXT=$(head -c 3000 "$SUMMARY_FILE")
 
 curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-  --data-urlencode "text=🔍 Life OS Pipeline — Phase ${PHASE} Review
+  --data-urlencode "text=🔍 Life OS, a personal AI assistant built on Telegram, Claude Pipeline — Phase ${PHASE} Review
 
 ${SUMMARY_TEXT}
 
@@ -210,7 +548,7 @@ Reply with: approve | changes: [what to change] | stop" \
 
 log "Reviewer summary sent to Telegram"
 
-# ── Human gate ───────────────────────────────────────────────────────────────
+# ── Human gate ────────────────────────────────────────────────────────────────
 log ""
 log "========================================"
 log "HUMAN GATE — waiting for your reply..."
@@ -222,9 +560,18 @@ if [ "$APPROVAL" = "stop" ]; then
   halt "User stopped the pipeline" "human-gate" "User replied 'stop'"
 fi
 
-if [[ "$APPROVAL" == changes:* ]]; then
-  CHANGES="${APPROVAL#changes: }"
-  log "Changes requested: $CHANGES"
+MAX_REVISIONS=3
+REVISION=0
+
+while [[ "$APPROVAL" == changes:* ]]; do
+  REVISION=$(( REVISION + 1 ))
+  if [ "$REVISION" -gt "$MAX_REVISIONS" ]; then
+    halt "Manifest revised $MAX_REVISIONS times without approval" "human-gate" "Too many revision rounds — stopping pipeline"
+  fi
+
+  CHANGES="${APPROVAL#changes:}"
+  CHANGES="${CHANGES# }"
+  log "Changes requested (round $REVISION/$MAX_REVISIONS): $CHANGES"
   log "Re-running Architect with feedback..."
 
   ARCH_PROMPT_REVISED="$ARCH_PROMPT
@@ -233,15 +580,46 @@ The user has reviewed the manifest and requested these changes: $CHANGES
 
 Revise the manifest accordingly and rewrite task-manifest.json and manifest-summary.md."
 
-  run_agent "ag-01-architect" "$ARCH_PROMPT_REVISED" "$PIPELINE_DIR/ag01-output-revised.md"
-  run_agent "ag-02-reviewer" "$REVIEW_PROMPT" "$PIPELINE_DIR/ag02-output-revised.md"
+  run_agent "ag-01-architect" "$ARCH_PROMPT_REVISED" "$PIPELINE_DIR/ag01-output-revised-$REVISION.md"
+
+  REVIEW_PROMPT_REVISED="You are running as AG-02 Reviewer for Life OS, a personal AI assistant built on Telegram, Claude.
+
+This is revision $REVISION of the manifest. The user requested: $CHANGES
+
+Read pipeline/phase-$PHASE/task-manifest.json and pipeline/phase-$PHASE/manifest-summary.md.
+Also read the previous pipeline/phase-$PHASE/reviewer-summary.md to identify what changed.
+
+Write a revised reviewer-summary.md to pipeline/phase-$PHASE/ using the revision format from
+your system prompt — put the 'What changed' section first, then the standard summary.
+
+Do not send any Telegram messages. Do not make any API calls. Just write the file and stop."
+
+  run_agent "ag-02-reviewer" "$REVIEW_PROMPT_REVISED" "$PIPELINE_DIR/ag02-output-revised-$REVISION.md"
+
+  SUMMARY_FILE="$PIPELINE_DIR/reviewer-summary.md"
+  if [ ! -f "$SUMMARY_FILE" ]; then
+    halt "reviewer-summary.md not produced on revision" "AG-02" "Reviewer did not write the summary file"
+  fi
+  SUMMARY_TEXT=$(head -c 3000 "$SUMMARY_FILE")
+  curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+    --data-urlencode "text=🔄 Life OS, a personal AI assistant built on Telegram, Claude Pipeline — Phase ${PHASE} Review (Revision ${REVISION})
+
+${SUMMARY_TEXT}
+
+Reply with: approve | changes: [what to change] | stop" \
+    -d "chat_id=${TELEGRAM_ALLOWED_CHAT_ID}" > /dev/null
+  log "Revised reviewer summary (revision $REVISION) sent to Telegram"
 
   rm -f "$PIPELINE_DIR/approval.json"
   APPROVAL=$(wait_for_approval)
 
-  if [ "$APPROVAL" != "approve" ]; then
-    halt "User did not approve after revision" "human-gate" "Signal received: $APPROVAL"
+  if [ "$APPROVAL" = "stop" ]; then
+    halt "User stopped the pipeline" "human-gate" "User replied 'stop' during revision"
   fi
+done
+
+if [ "$APPROVAL" != "approve" ]; then
+  halt "Unexpected approval signal" "human-gate" "Signal received: $APPROVAL"
 fi
 
 log "Approved. Starting implementation..."
@@ -254,7 +632,7 @@ with open('$PIPELINE_DIR/approval.json', 'w') as f:
     json.dump(data, f, indent=2)
 "
 
-# ── Task loop ────────────────────────────────────────────────────────────────
+# ── Task loop ─────────────────────────────────────────────────────────────────
 TASKS=$(python3 -c "
 import json
 data = json.load(open('$PIPELINE_DIR/task-manifest.json'))
@@ -268,12 +646,10 @@ for TASK_ID in $TASKS; do
   TASK_DIR="$PIPELINE_DIR/$TASK_ID"
   mkdir -p "$TASK_DIR"
 
-  # Skip if already fully complete (both security and test reports show PASS)
   SEC_REPORT="$TASK_DIR/security-report.md"
-  TEST_REPORT="$TASK_DIR/test-report.md"
 
-  if [ -f "$SEC_REPORT" ] && report_contains "$SEC_REPORT" "PASS" && \
-     [ -f "$TEST_REPORT" ] && report_contains "$TEST_REPORT" "PASS"; then
+  # Task is fully complete once security has passed (green gate is a prerequisite)
+  if [ -f "$SEC_REPORT" ] && report_passes "$SEC_REPORT"; then
     log "Task $TASK_ID already complete — skipping"
     continue
   fi
@@ -294,118 +670,421 @@ task = next(t for t in tasks if isinstance(t, dict) and t['id'] == '$TASK_ID')
 print(task['title'])
 ")
 
+  FILES_IN_SCOPE_JSON=$(python3 -c "
+import json
+data = json.load(open('$PIPELINE_DIR/task-manifest.json'))
+tasks = data if isinstance(data, list) else data.get('tasks', [])
+task = next(t for t in tasks if isinstance(t, dict) and t['id'] == '$TASK_ID')
+print(json.dumps(task.get('files_in_scope', [])))
+")
+
   log ""
   log "========================================"
   log "Task: $TASK_ID — $TASK_TITLE"
   log "========================================"
 
-  # ── Developer + Security loop ─────────────────────────────────────────────
-  SECURITY_PASSED=false
-  SECURITY_ATTEMPTS=0
-
-  while [ "$SECURITY_PASSED" = false ] && [ "$SECURITY_ATTEMPTS" -lt 3 ]; do
-    SECURITY_ATTEMPTS=$(( SECURITY_ATTEMPTS + 1 ))
-    log "Developer attempt $SECURITY_ATTEMPTS/3..."
-
-    DEV_PROMPT="You are AG-03 Developer for Life OS.
-
-Implement this task:
+  # Wrap task spec to prevent manifest content being interpreted as agent instructions
+  TASK_SPEC="<task-spec>
 $TASK_JSON
+</task-spec>"
+
+  # Build context snapshot for this task's agents (empty on first task)
+  CONTEXT_BLOCK=$(build_context_block)
+
+  # Detect whether this task includes migration files
+  HAS_MIGRATION=$(python3 -c "
+import json, sys
+files = json.loads(sys.argv[1])
+print('true' if any('migration' in f.lower() or f.startswith('migrations/') for f in files) else 'false')
+" "$FILES_IN_SCOPE_JSON")
+
+  # Detect whether this task is security-sensitive (triggers mutation testing)
+  SECURITY_SENSITIVE=$(python3 -c "
+import json
+data = json.load(open('$PIPELINE_DIR/task-manifest.json'))
+tasks = data if isinstance(data, list) else data.get('tasks', [])
+task = next(t for t in tasks if isinstance(t, dict) and t['id'] == '$TASK_ID')
+print('true' if task.get('security_sensitive') else 'false')
+")
+
+  # ── RED phase: Tester writes failing tests ────────────────────────────────
+  TESTS_WRITTEN_FILE="$TASK_DIR/tests-written.txt"
+
+  if [ ! -f "$TESTS_WRITTEN_FILE" ]; then
+    RED_START=$(date +%s)
+    log "RED phase — Tester writing failing tests..."
+
+    RED_PROMPT="You are AG-03 Tester for Life OS, a personal AI assistant built on Telegram, Claude.
+
+This is the RED phase of TDD. The Developer has not yet written implementation code.
+
+Write the test suite for task $TASK_ID that defines the expected behaviour.
+Task spec:
+$TASK_SPEC
+${CONTEXT_BLOCK:+
+$CONTEXT_BLOCK}
+
+Write test files to the __tests__/ directories as normal.
+Tests will fail right now because there is no implementation — that is correct and expected.
+
+Do NOT write implementation code.
+Do NOT write test-report.md — the orchestrator writes that.
+After writing all test files, write the single line 'tests-written' to:
+  pipeline/phase-$PHASE/$TASK_ID/tests-written.txt
+
+Follow your system prompt exactly."
+
+    run_agent "ag-03-tester" "$RED_PROMPT" "$TASK_DIR/tester-red-output.md"
+
+    if [ ! -f "$TESTS_WRITTEN_FILE" ]; then
+      halt "Tester did not confirm tests written" "AG-03" \
+        "Task: $TASK_ID — tests-written.txt not found after RED phase"
+    fi
+
+    # Informational: verify tests fail before implementation (expect non-zero exit)
+    log "Confirming tests fail before implementation (RED check)..."
+    if (cd "$REPO_ROOT" && pnpm test --run > "$TASK_DIR/test-red-output.txt" 2>&1); then
+      log "WARNING: Tests pass before implementation — verify tests have meaningful assertions"
+    else
+      log "RED confirmed — tests fail as expected"
+    fi
+    record_task_metrics "$TASK_ID" "$TASK_TITLE" "red" $(( $(date +%s) - RED_START )) 1 "pass"
+  else
+    log "RED phase already complete — skipping"
+  fi
+
+  # ── GREEN phase: Developer implements until hard gate passes ───────────────
+  GREEN_VERIFIED_FILE="$TASK_DIR/green-verified.txt"
+
+  if [ ! -f "$GREEN_VERIFIED_FILE" ]; then
+    GREEN_START=$(date +%s)
+    DEV_ATTEMPTS=0
+    GREEN_PASSED=false
+    GATE_FAILURES=""
+
+    while [ "$GREEN_PASSED" = false ] && [ "$DEV_ATTEMPTS" -lt 3 ]; do
+      DEV_ATTEMPTS=$(( DEV_ATTEMPTS + 1 ))
+      log "GREEN phase — Developer attempt $DEV_ATTEMPTS/3..."
+
+      DEV_PROMPT="You are AG-04 Developer for Life OS, a personal AI assistant built on Telegram, Claude.
+
+Implement this task to make the failing tests pass:
+$TASK_SPEC
+${CONTEXT_BLOCK:+
+$CONTEXT_BLOCK}
+
+The Tester has already written failing tests in the __tests__/ directories.
+Your job is to write implementation code that makes every test pass.
+Do not modify the test files.
 
 Write self-assessment.md to pipeline/phase-$PHASE/$TASK_ID/
 Follow your system prompt exactly. Apply all security rules.
+Use process.env.DATABASE_URL for any database connections — do not read .env directly."
 
-## Environment
-Do not read .env directly. Database connection details will be provided to the tester separately. Use process.env.DATABASE_URL for any database connections in the implementation code."
+      if [ -n "$GATE_FAILURES" ]; then
+        DEV_PROMPT="$DEV_PROMPT
 
-    run_agent "ag-03-developer" "$DEV_PROMPT" "$TASK_DIR/dev-output.md"
+## Previous attempt failed the hard gate — fix every item below before marking done:
 
-    # Check for BLOCKED
-    if [ -f "$TASK_DIR/BLOCKED.md" ]; then
-      halt "Developer blocked on $TASK_ID" "AG-03" "$(cat "$TASK_DIR/BLOCKED.md")"
+$GATE_FAILURES"
+      fi
+
+      run_agent "ag-04-developer" "$DEV_PROMPT" "$TASK_DIR/dev-output-$DEV_ATTEMPTS.md"
+
+      if [ -f "$TASK_DIR/BLOCKED.md" ]; then
+        halt "Developer blocked on $TASK_ID" "AG-04" "$(cat "$TASK_DIR/BLOCKED.md")"
+      fi
+
+      log "Checking files_in_scope compliance..."
+      SCOPE_VIOLATIONS=$(check_scope_compliance "$FILES_IN_SCOPE_JSON") || true
+      SCOPE_GATE=""
+      if [ -n "$SCOPE_VIOLATIONS" ]; then
+        log "Scope violation — reverting out-of-scope changes..."
+        revert_scope_violations <<< "$SCOPE_VIOLATIONS"
+        SCOPE_GATE="=== files_in_scope violation (changes reverted) ===
+The following files were modified or created outside files_in_scope and have been automatically reverted.
+Do NOT re-create or modify them — only write to files listed in files_in_scope:
+$SCOPE_VIOLATIONS"
+      fi
+
+      log "Running hard gate (tsc + eslint + pnpm test)..."
+      IMPL_FAILURES=$(verify_implementation "$FILES_IN_SCOPE_JSON") || true
+      GATE_FAILURES="${SCOPE_GATE:+$SCOPE_GATE
+}${IMPL_FAILURES}"
+
+      if [ -z "$GATE_FAILURES" ]; then
+        GREEN_PASSED=true
+        echo "green-verified" > "$GREEN_VERIFIED_FILE"
+        cat > "$TASK_DIR/test-report.md" <<REPORT
+Title: Test Report — $TASK_ID — PASS
+
+Verified by orchestrator hard gate after Developer attempt $DEV_ATTEMPTS.
+
+- tsc --noEmit: PASS
+- eslint (files_in_scope): PASS
+- pnpm test --run: PASS
+
+$(cat "$TASK_DIR/test-red-output.txt" 2>/dev/null | head -20 || true)
+REPORT
+        record_task_metrics "$TASK_ID" "$TASK_TITLE" "green" $(( $(date +%s) - GREEN_START )) "$DEV_ATTEMPTS" "pass"
+        log "GREEN phase: PASS"
+      else
+        log "Hard gate: FAIL (attempt $DEV_ATTEMPTS/3)"
+        printf "%s" "$GATE_FAILURES" > "$TASK_DIR/gate-failures-$DEV_ATTEMPTS.txt"
+        if [ "$DEV_ATTEMPTS" -eq 3 ]; then
+          halt "Developer could not pass hard gate after 3 attempts" "AG-04" \
+            "Task: $TASK_ID — see $TASK_DIR/gate-failures-3.txt"
+        fi
+      fi
+    done
+  else
+    log "GREEN phase already complete — skipping"
+
+    if [ ! -f "$TASK_DIR/test-report.md" ]; then
+      cat > "$TASK_DIR/test-report.md" <<REPORT
+Title: Test Report — $TASK_ID — PASS
+
+Verified by orchestrator hard gate (restored on resume).
+
+- tsc --noEmit: PASS
+- eslint (files_in_scope): PASS
+- pnpm test --run: PASS
+REPORT
+    fi
+  fi
+
+  # ── MIGRATION phase (conditional) ────────────────────────────────────────
+  MIGRATION_VERIFIED_FILE="$TASK_DIR/migration-verified.txt"
+
+  if [ "$HAS_MIGRATION" = "true" ]; then
+    if [ ! -f "$MIGRATION_VERIFIED_FILE" ]; then
+      MIGRATION_START=$(date +%s)
+      log "MIGRATION phase — AG-05 Migration..."
+
+      MIGRATION_PROMPT="You are AG-05 Migration for Life OS, a personal AI assistant built on Telegram, Claude.
+
+The Developer has written migration files for task $TASK_ID.
+Task spec:
+$TASK_SPEC
+
+Validate every migration file in files_in_scope.
+Run the migration and its rollback against the test database.
+Write migration-report.md to pipeline/phase-$PHASE/$TASK_ID/
+Follow your system prompt exactly."
+
+      run_agent "ag-05-migration" "$MIGRATION_PROMPT" "$TASK_DIR/migration-output.md"
+
+      if [ ! -f "$TASK_DIR/migration-report.md" ]; then
+        halt "Migration agent did not write migration-report.md" "AG-05" \
+          "Task: $TASK_ID — migration-report.md not found"
+      fi
+
+      if ! report_passes "$TASK_DIR/migration-report.md"; then
+        halt "Migration failed for task $TASK_ID" "AG-05" \
+          "$(cat "$TASK_DIR/migration-report.md")"
+      fi
+
+      echo "migration-verified" > "$MIGRATION_VERIFIED_FILE"
+      record_task_metrics "$TASK_ID" "$TASK_TITLE" "migration" $(( $(date +%s) - MIGRATION_START )) 1 "pass"
+      log "MIGRATION phase: PASS"
+    else
+      log "MIGRATION phase already complete — skipping"
+    fi
+  fi
+
+  # ── REFACTOR phase: clean up without changing behaviour ───────────────────
+  REFACTOR_VERIFIED_FILE="$TASK_DIR/refactor-verified.txt"
+
+  if [ ! -f "$REFACTOR_VERIFIED_FILE" ]; then
+    REFACTOR_START=$(date +%s)
+    log "REFACTOR phase — AG-06 Refactor..."
+
+    REFACTOR_PROMPT="You are AG-06 Refactor for Life OS, a personal AI assistant built on Telegram, Claude.
+
+The Developer has implemented task $TASK_ID and all tests pass.
+Your job is to improve the code without changing its behaviour.
+
+Task spec:
+$TASK_SPEC
+${CONTEXT_BLOCK:+
+$CONTEXT_BLOCK}
+
+Read every file in files_in_scope and the corresponding test files.
+Make conservative, targeted improvements only.
+Do NOT modify test files. Do NOT change public interfaces.
+
+Write refactor-report.md to pipeline/phase-$PHASE/$TASK_ID/
+Follow your system prompt exactly."
+
+    run_agent "ag-06-refactor" "$REFACTOR_PROMPT" "$TASK_DIR/refactor-output.md"
+
+    if [ ! -f "$TASK_DIR/refactor-report.md" ]; then
+      halt "Refactor agent did not write refactor-report.md" "AG-06" \
+        "Task: $TASK_ID — refactor-report.md not found"
     fi
 
-    log "Running Security Agent..."
+    # Re-run hard gate to ensure refactor didn't break anything
+    log "Re-running hard gate after refactor..."
+    REFACTOR_FAILURES=$(verify_implementation "$FILES_IN_SCOPE_JSON") || true
+    if [ -n "$REFACTOR_FAILURES" ]; then
+      halt "Refactor broke tsc or tests on task $TASK_ID" "AG-06" \
+        "Task: $TASK_ID
+$REFACTOR_FAILURES"
+    fi
 
-    SEC_PROMPT="You are AG-04 Security Agent for Life OS.
+    echo "refactor-verified" > "$REFACTOR_VERIFIED_FILE"
+    record_task_metrics "$TASK_ID" "$TASK_TITLE" "refactor" $(( $(date +%s) - REFACTOR_START )) 1 "pass"
+    log "REFACTOR phase: PASS"
+  else
+    log "REFACTOR phase already complete — skipping"
+  fi
+
+  # ── MUTATION TESTING (security-sensitive tasks only) ─────────────────────
+  if [ "$SECURITY_SENSITIVE" = "true" ]; then
+    if [ ! -f "$TASK_DIR/mutation-report.md" ]; then
+      MUTATION_START=$(date +%s)
+      log "MUTATION TESTING — task is security_sensitive..."
+      run_mutation_tests "$TASK_ID" "$TASK_DIR" "$FILES_IN_SCOPE_JSON"
+      record_task_metrics "$TASK_ID" "$TASK_TITLE" "mutation" \
+        $(( $(date +%s) - MUTATION_START )) 1 "pass"
+      log "Mutation testing complete — see mutation-report.md"
+    else
+      log "MUTATION TESTING already complete — skipping"
+    fi
+  fi
+
+  # ── Security phase ────────────────────────────────────────────────────────
+  SECURITY_PASSED=false
+  SECURITY_ATTEMPTS=0
+  SECURITY_START=$(date +%s)
+
+  while [ "$SECURITY_PASSED" = false ] && [ "$SECURITY_ATTEMPTS" -lt 3 ]; do
+    SECURITY_ATTEMPTS=$(( SECURITY_ATTEMPTS + 1 ))
+    log "Security attempt $SECURITY_ATTEMPTS/3..."
+
+    SEC_PROMPT="You are AG-07 Security Agent for Life OS, a personal AI assistant built on Telegram, Claude.
 
 Review all code written for task $TASK_ID.
 Task spec:
-$TASK_JSON
+$TASK_SPEC
 
 Apply every rule in .opencode/agents/security-rules.md to every file in files_in_scope.
 Write security-report.md to pipeline/phase-$PHASE/$TASK_ID/
-Return PASS or FAIL with specific findings.
+Return PASS or FAIL with specific findings."
 
-## Environment reference
-DATABASE_URL=$DATABASE_URL
-POSTGRES_HOST=$POSTGRES_HOST
-POSTGRES_PORT=$POSTGRES_PORT
-POSTGRES_USER=$POSTGRES_USER
-POSTGRES_DB=$POSTGRES_DB"
+    run_agent "ag-07-security" "$SEC_PROMPT" "$TASK_DIR/sec-output-$SECURITY_ATTEMPTS.md"
 
-    run_agent "ag-04-security" "$SEC_PROMPT" "$TASK_DIR/sec-output.md"
-
-    if [ -f "$TASK_DIR/security-report.md" ] && report_contains "$TASK_DIR/security-report.md" "PASS"; then
+    if [ -f "$SEC_REPORT" ] && report_passes "$SEC_REPORT"; then
       SECURITY_PASSED=true
+      record_task_metrics "$TASK_ID" "$TASK_TITLE" "security" $(( $(date +%s) - SECURITY_START )) "$SECURITY_ATTEMPTS" "pass"
+      record_security_findings "$TASK_ID" "$TASK_DIR"
       log "Security: PASS"
     else
       log "Security: FAIL (attempt $SECURITY_ATTEMPTS/3)"
       if [ "$SECURITY_ATTEMPTS" -eq 3 ]; then
-        halt "Security could not be resolved after 3 attempts" "AG-04" "Task: $TASK_ID — see $TASK_DIR/security-report.md"
+        halt "Security could not be resolved after 3 attempts" "AG-07" \
+          "Task: $TASK_ID — see $SEC_REPORT"
       fi
+
+      log "Security fix needed — re-running Developer..."
+
+      SEC_FIX_PROMPT="You are AG-04 Developer for Life OS, a personal AI assistant built on Telegram, Claude.
+
+The Security Agent has rejected task $TASK_ID. Fix every finding below.
+
+$(cat "$SEC_REPORT")
+
+Task spec for context:
+$TASK_SPEC
+
+Do not introduce new issues. Do not modify test files.
+Update self-assessment.md after fixing.
+Use process.env.DATABASE_URL for any database connections."
+
+      run_agent "ag-04-developer" "$SEC_FIX_PROMPT" \
+        "$TASK_DIR/dev-secfix-$SECURITY_ATTEMPTS.md"
+
+      SCOPE_VIOLATIONS=$(check_scope_compliance "$FILES_IN_SCOPE_JSON") || true
+      if [ -n "$SCOPE_VIOLATIONS" ]; then
+        log "Scope violation after security fix — reverting..."
+        revert_scope_violations <<< "$SCOPE_VIOLATIONS"
+      fi
+
+      log "Re-running hard gate after security fix..."
+      POST_SEC_FAILURES=$(verify_implementation "$FILES_IN_SCOPE_JSON") || true
+      if [ -n "$SCOPE_VIOLATIONS" ]; then
+        POST_SEC_FAILURES="=== files_in_scope violation after security fix ===
+$SCOPE_VIOLATIONS
+
+${POST_SEC_FAILURES}"
+      fi
+      if [ -n "$POST_SEC_FAILURES" ]; then
+        rm -f "$GREEN_VERIFIED_FILE" "$REFACTOR_VERIFIED_FILE"
+        halt "Security fix broke tsc or tests on task $TASK_ID" "AG-07" \
+          "Task: $TASK_ID
+$POST_SEC_FAILURES"
+      fi
+      log "Post-security hard gate: PASS"
     fi
   done
 
-  # ── Tester loop ───────────────────────────────────────────────────────────
-  TEST_PASSED=false
-  TEST_ATTEMPTS=0
+  # ── Context accumulation ──────────────────────────────────────────────────
+  log "Updating build context..."
+  {
+    printf "## %s — %s\n\n" "$TASK_ID" "$TASK_TITLE"
+    printf "**Files:** %s\n\n" "$(python3 -c "
+import json, sys
+print(', '.join(json.loads(sys.argv[1])))
+" "$FILES_IN_SCOPE_JSON")"
+    python3 - "$TASK_DIR/self-assessment.md" <<'PYEOF'
+import re, sys
+try:
+    content = open(sys.argv[1]).read()
+    m = re.search(r'## Notes for future agents\n(.*?)(\n## |\Z)', content, re.DOTALL)
+    if m:
+        print(m.group(1).strip())
+except Exception:
+    pass
+PYEOF
+    printf "\n---\n"
+  } >> "$PIPELINE_DIR/context.md"
 
-  while [ "$TEST_PASSED" = false ] && [ "$TEST_ATTEMPTS" -lt 3 ]; do
-    TEST_ATTEMPTS=$(( TEST_ATTEMPTS + 1 ))
-    log "Tester attempt $TEST_ATTEMPTS/3..."
+  # ── Git commit ────────────────────────────────────────────────────────────
+  log "Committing task $TASK_ID..."
 
-    TEST_PROMPT="You are AG-05 Tester for Life OS.
+  while IFS= read -r f; do
+    [ -e "$REPO_ROOT/$f" ] && git -C "$REPO_ROOT" add "$f"
+  done < <(python3 -c "
+import json, sys
+for f in json.loads(sys.argv[1]):
+    print(f)
+" "$FILES_IN_SCOPE_JSON")
 
-Write and run tests for task $TASK_ID.
-Task spec:
-$TASK_JSON
+  while IFS= read -r f; do
+    base=$(basename "${f%.ts}")
+    while IFS= read -r tf; do
+      git -C "$REPO_ROOT" add "$tf"
+    done < <(find "$REPO_ROOT" -path "*/__tests__/${base}*" 2>/dev/null)
+  done < <(python3 -c "
+import json, sys
+for f in json.loads(sys.argv[1]):
+    print(f)
+" "$FILES_IN_SCOPE_JSON")
 
-Every acceptance criterion must have at least one passing test.
-Write test-report.md to pipeline/phase-$PHASE/$TASK_ID/
-Return PASS or FAIL with full test output.
-
-## Environment for testing
-Use these values for database connections in tests — do not read .env:
-DATABASE_URL=$DATABASE_URL
-POSTGRES_HOST=$POSTGRES_HOST
-POSTGRES_PORT=$POSTGRES_PORT
-POSTGRES_USER=$POSTGRES_USER
-POSTGRES_DB=$POSTGRES_DB
-
-For tests requiring a database connection, use DATABASE_URL directly.
-Mock the Telegram API, Anthropic API, Google Calendar MCP, and Gmail MCP — do not make real calls to these services in tests."
-
-    run_agent "ag-05-tester" "$TEST_PROMPT" "$TASK_DIR/test-output.md"
-
-    if [ -f "$TASK_DIR/test-report.md" ] && report_contains "$TASK_DIR/test-report.md" "PASS"; then
-      TEST_PASSED=true
-      log "Tests: PASS"
-    else
-      log "Tests: FAIL (attempt $TEST_ATTEMPTS/3)"
-      if [ "$TEST_ATTEMPTS" -eq 3 ]; then
-        halt "Tests could not pass after 3 attempts" "AG-05" "Task: $TASK_ID — see $TASK_DIR/test-report.md"
-      fi
-    fi
-  done
+  if ! git -C "$REPO_ROOT" diff --cached --quiet; then
+    git -C "$REPO_ROOT" commit -m "feat($TASK_ID): $TASK_TITLE"
+    log "Committed: feat($TASK_ID): $TASK_TITLE"
+  else
+    log "Nothing new to commit for $TASK_ID"
+  fi
 
   log "Task $TASK_ID: COMPLETE"
 done
 
-# ── AG-06 Validator ──────────────────────────────────────────────────────────
+# ── AG-08 Validator ───────────────────────────────────────────────────────────
 log ""
 log "========================================"
-log "AG-06 Validator — end-to-end phase check"
+log "AG-08 Validator — end-to-end phase check"
 log "========================================"
 
 VALIDATION_PASSED=false
@@ -415,7 +1094,7 @@ while [ "$VALIDATION_PASSED" = false ] && [ "$VALIDATION_ATTEMPTS" -lt 2 ]; do
   VALIDATION_ATTEMPTS=$(( VALIDATION_ATTEMPTS + 1 ))
   log "Validation attempt $VALIDATION_ATTEMPTS/2..."
 
-  VAL_PROMPT="You are AG-06 Validator for Life OS.
+  VAL_PROMPT="You are AG-08 Validator for Life OS, a personal AI assistant built on Telegram, Claude.
 
 Validate the full Phase $PHASE implementation against the PRD exit criteria in docs/prd.md.
 
@@ -434,15 +1113,15 @@ On FAIL:
 
 Do not send any Telegram messages. The shell script handles notifications."
 
-  run_agent "ag-06-validator" "$VAL_PROMPT" "$PIPELINE_DIR/val-output.md"
+  run_agent "ag-08-validator" "$VAL_PROMPT" "$PIPELINE_DIR/val-output.md"
 
-  if [ -f "$PIPELINE_DIR/validation-report.md" ] && report_contains "$PIPELINE_DIR/validation-report.md" "PASS"; then
+  if [ -f "$PIPELINE_DIR/validation-report.md" ] && report_passes "$PIPELINE_DIR/validation-report.md"; then
     VALIDATION_PASSED=true
 
     # Send Telegram notification on phase PASS
     VAL_TEXT=$(head -c 3000 "$PIPELINE_DIR/validation-report.md")
     curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-      --data-urlencode "text=✅ Life OS — Phase ${PHASE} Complete
+      --data-urlencode "text=✅ Life OS, a personal AI assistant built on Telegram, Claude — Phase ${PHASE} Complete
 
 ${VAL_TEXT}" \
       -d "chat_id=${TELEGRAM_ALLOWED_CHAT_ID}" > /dev/null
@@ -456,10 +1135,58 @@ ${VAL_TEXT}" \
   else
     log "Validation: FAIL (attempt $VALIDATION_ATTEMPTS/2)"
     if [ "$VALIDATION_ATTEMPTS" -eq 2 ]; then
-      halt "Phase validation failed after 2 attempts" "AG-06" "See pipeline/phase-$PHASE/validation-report.md"
+      halt "Phase validation failed after 2 attempts" "AG-08" "See pipeline/phase-$PHASE/validation-report.md"
     fi
   fi
 done
+
+# ── Phase metrics summary ─────────────────────────────────────────────────────
+python3 - "$PIPELINE_DIR/metrics.json" "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" <<'PYEOF'
+import json, os, sys
+f, completed_at = sys.argv[1], sys.argv[2]
+if not os.path.exists(f):
+    sys.exit(0)
+from collections import Counter
+data = json.load(open(f))
+total = sum(t.get('total_duration_s', 0) for t in data['tasks'].values())
+high_retry = [
+    tid for tid, t in data['tasks'].items()
+    if any(v.get('attempts', 1) > 1 for v in t.values() if isinstance(v, dict))
+]
+all_findings = []
+for t in data['tasks'].values():
+    all_findings.extend(t.get('security_findings', []))
+top_findings = [f"{r} ({c}x)" for r, c in Counter(all_findings).most_common(5)] if all_findings else []
+
+data['summary'] = {
+    'completed_at': completed_at,
+    'total_duration_s': total,
+    'tasks_completed': len(data['tasks']),
+    'high_retry_tasks': high_retry,
+    'top_security_findings': top_findings,
+}
+with open(f, 'w') as fp:
+    json.dump(data, fp, indent=2)
+PYEOF
+
+if [ -s "$PIPELINE_DIR/metrics.json" ]; then
+  log "Metrics summary:"
+  python3 -c "
+import json
+data = json.load(open('$PIPELINE_DIR/metrics.json'))
+s = data.get('summary', {})
+print(f\"  Total time : {s.get('total_duration_s', 0)}s\")
+print(f\"  Tasks done : {s.get('tasks_completed', 0)}\")
+high = s.get('high_retry_tasks', [])
+if high:
+    print(f\"  High-retry : {', '.join(high)}  ← review task specs\")
+findings = s.get('top_security_findings', [])
+if findings:
+    print(f\"  Top security findings:\")
+    for finding in findings:
+        print(f\"    - {finding}\")
+"
+fi
 
 # Clean up HALT.md if present from a previous run
 rm -f "$REPO_ROOT/HALT.md"

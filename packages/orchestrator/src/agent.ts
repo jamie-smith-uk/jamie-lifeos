@@ -13,6 +13,42 @@
  *                                       call Anthropic API, execute tool loop,
  *                                       return final text response.
  *
+ * T-13: System prompt updated with calendar formatting guidelines block so
+ * that when the agent receives event data from get_todays_events, it formats
+ * the result as a readable chronological list (time + title + location).
+ * Empty calendar responses are shown as "You have nothing scheduled today."
+ *
+ * T-14: System prompt Identity block extended with natural language date
+ * resolution rules so the agent can translate 'next Tuesday', 'this week',
+ * 'tomorrow', etc. to ISO 8601 datetime strings (with local TZ offset) before
+ * calling get_events_range. The Live Context block provides the current
+ * datetime and TZ required for this resolution.
+ *
+ * T-15: Calendar write tool definitions (create_event, update_event,
+ * delete_event, check_free_busy) added to TOOL_DEFINITIONS and
+ * CALENDAR_TOOL_NAMES. These tools are included so the model is aware of
+ * them, but they are ONLY executed by the confirmation executor after explicit
+ * user approval — the agent must not call them directly.
+ *
+ * T-16: Confirmation record storage on the active_confirmation JSONB column:
+ *
+ *   saveConfirmation(chatId, payload) — upserts payload onto the latest row's
+ *                                       active_confirmation column for chat_id.
+ *   loadConfirmation(chatId)          — returns pending ConfirmationPayload or
+ *                                       null; null if no record or older than
+ *                                       10 minutes.
+ *   clearConfirmation(chatId)         — sets active_confirmation to NULL on
+ *                                       the latest row for chat_id.
+ *
+ * T-17: Create event confirmation flow:
+ *
+ *   runAgent() now returns AgentResult { text, showConfirmationKeyboard }.
+ *   When the agent calls create_event in the tool loop, the call is
+ *   intercepted: a ConfirmationPayload is persisted via saveConfirmation and
+ *   a synthetic tool_result is returned to the model so it can compose the
+ *   proposal text.  showConfirmationKeyboard is set to true so the bot
+ *   renders Confirm / Edit / Cancel inline buttons alongside the reply.
+ *
  * All SQL uses parameterised queries ($1, $2, …) — no string interpolation.
  *
  * Database connection is obtained from the shared `pool` singleton which
@@ -25,7 +61,12 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { pool, env, logger } from "@lifeos/shared";
-import type { MessageRole, ConversationMessage, IncomingMessage } from "@lifeos/shared";
+import type { MessageRole, ConversationMessage, ConfirmationPayload, IncomingMessage, CreateEventData } from "@lifeos/shared";
+import {
+  calendarReadToolDefinitions,
+  calendarWriteToolDefinitions,
+  executeCalendarTool,
+} from "./tools/calendar.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -88,7 +129,37 @@ function buildSystemPrompt(): string {
   return [
     // Block 1: Identity
     `## Identity
-You are a personal life operating system assistant. You help the user manage their calendar, tasks, and daily schedule. You are concise, helpful, and proactive. You respond in the same language the user writes in.`,
+You are a personal life operating system assistant. You help the user manage their calendar, tasks, and daily schedule. You are concise, helpful, and proactive. You respond in the same language the user writes in.
+
+When presenting calendar events to the user, always format them as a numbered or bulleted list in chronological order (earliest first). Each event must include:
+  - Start time (e.g. "9:00 AM")
+  - Event title
+  - Location, if present (e.g. "@ Conference Room B")
+
+Example format:
+  1. 9:00 AM — Stand-up @ Zoom
+  2. 12:30 PM — Lunch with Alice
+  3. 3:00 PM — Design Review @ Office
+
+If the calendar is empty for the requested period, respond with exactly: "You have nothing scheduled today."
+
+--- Date resolution rules (T-14) ---
+When the user mentions a relative date or date range, resolve it to ISO 8601 datetime strings using the current datetime and timezone from the Live Context block below BEFORE calling get_events_range. Always use the local timezone offset (e.g. +01:00, -05:00), not Z/UTC, unless the configured timezone IS UTC.
+
+Single-day queries (e.g. "next Tuesday", "tomorrow", "this Friday"):
+  start = <resolved date>T00:00:00<tz-offset>
+  end   = <resolved date>T23:59:59<tz-offset>
+
+Week queries:
+  "This week" = Monday of the current ISO week at T00:00:00<tz-offset> through Sunday at T23:59:59<tz-offset>.
+  "Next week" = Monday of the following ISO week at T00:00:00<tz-offset> through Sunday at T23:59:59<tz-offset>.
+
+Named-day resolution ("next Tuesday" when today is Monday 2026-04-20):
+  "next Tuesday" = the Tuesday that is NEXT after today = 2026-04-21.
+  "this Tuesday" when today is Monday = 2026-04-21 (same week).
+  If today IS Tuesday, "next Tuesday" = 7 days from now.
+
+Always derive day offsets from the current date in the Live Context block. The ISO week starts on Monday (ISO 8601).`,
 
     // Block 2: Live context
     `## Live Context
@@ -111,24 +182,66 @@ Timezone: ${tz}`,
 }
 
 // ---------------------------------------------------------------------------
-// Tool definitions (Phase 1: no tools wired yet — stubbed for tool loop)
+// Tool definitions (T-12: read tools; T-15: write tools)
 // ---------------------------------------------------------------------------
 
 /**
  * Tool definitions to include in the Anthropic API call.
- * In Phase 1 this array is empty; calendar tools are added in T-12/T-15.
- * The tool loop handles any tools that may be registered in later tasks.
+ * T-12 adds the calendar read tools: get_todays_events and get_events_range.
+ * T-15 adds the calendar write tools: create_event, update_event,
+ * delete_event, check_free_busy — these are included so the model is aware
+ * of them, but are ONLY executed by the confirmation executor after explicit
+ * user approval.
  */
-const TOOL_DEFINITIONS: Anthropic.Tool[] = [];
+const TOOL_DEFINITIONS: Anthropic.Tool[] = [
+  ...calendarReadToolDefinitions,
+  ...calendarWriteToolDefinitions,
+];
 
 // ---------------------------------------------------------------------------
 // Tool executor
 // ---------------------------------------------------------------------------
 
 /**
+ * The set of calendar tool names handled by executeCalendarTool.
+ * Checked before falling through to the unknown-tool handler.
+ *
+ * T-15: Write tool names added. These are routed through executeCalendarTool
+ * just like the read tools; the confirmation gate lives in the orchestrator
+ * layer, not here.
+ */
+const CALENDAR_TOOL_NAMES = new Set<string>([
+  "get_todays_events",
+  "get_events_range",
+  // T-15 write tools (confirmation-gated — executed only by confirmation executor)
+  "create_event",
+  "update_event",
+  "delete_event",
+  "check_free_busy",
+]);
+
+/**
+ * The set of write tool names that must be confirmation-gated.
+ * When the agent calls one of these tools, the tool loop intercepts the call,
+ * saves a ConfirmationPayload, and returns a synthetic tool_result so the
+ * model can compose a proposal text — the actual calendar mutation is deferred
+ * until the user taps Confirm.
+ */
+const CONFIRMATION_GATED_TOOLS = new Set<string>([
+  "create_event",
+  "update_event",
+  "delete_event",
+]);
+
+/**
  * Execute a single tool call and return its result as a string.
+ * Delegates to the appropriate tool module based on toolName.
  * Unrecognised tools return an error string so the model can handle it
  * gracefully rather than crashing the loop.
+ *
+ * NOTE: Confirmation-gated tools (create_event, update_event, delete_event)
+ * must NOT be dispatched here — the tool loop intercepts them before calling
+ * this function.
  *
  * @param toolName   The name of the tool to execute.
  * @param toolInput  The input parameters for the tool.
@@ -138,13 +251,100 @@ async function executeTool(
   toolName: string,
   toolInput: Record<string, unknown>,
 ): Promise<string> {
-  // Tool registry will be populated in T-12/T-15 when calendar tools are added.
-  // For now, return a graceful error for any unknown tool.
+  // Delegate calendar read (and eventually write) tools to the calendar module.
+  if (CALENDAR_TOOL_NAMES.has(toolName)) {
+    return executeCalendarTool(toolName, toolInput);
+  }
+
+  // Unknown tool — return a graceful error so the model can handle it.
   logger.child({ service: "agent" }).warn(
     { toolName, toolInput },
     "Unknown tool called — no handler registered",
   );
   return JSON.stringify({ error: `Unknown tool: ${toolName}` });
+}
+
+// ---------------------------------------------------------------------------
+// Agent result type (T-17)
+// ---------------------------------------------------------------------------
+
+/**
+ * The structured result returned by runAgent.
+ *
+ * text                    — The assistant's reply text to send to the user.
+ * showConfirmationKeyboard — When true, the bot should render Confirm / Edit /
+ *                            Cancel inline keyboard buttons alongside the reply.
+ *                            Set to true when the agent proposed a calendar
+ *                            mutation that has been saved as a ConfirmationPayload.
+ */
+export interface AgentResult {
+  text: string;
+  showConfirmationKeyboard: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Proposal summary formatter (T-17)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a human-readable proposal summary from a CreateEventData payload.
+ *
+ * Format:
+ *   Title: <title>
+ *   Date: <date>
+ *   Time: <start time> – <end time>
+ *   Duration: <N> min
+ *   Location: <location>        ← omitted when absent
+ *
+ * All times are formatted using the configured TZ.
+ */
+function buildCreateEventSummary(data: CreateEventData): string {
+  const tz = env.TZ;
+
+  const startDate = new Date(data.start);
+  const endDate = new Date(data.end);
+
+  const dateStr = startDate.toLocaleDateString("en-GB", {
+    timeZone: tz,
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const startTimeStr = startDate.toLocaleTimeString("en-GB", {
+    timeZone: tz,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+  const endTimeStr = endDate.toLocaleTimeString("en-GB", {
+    timeZone: tz,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+  const durationMs = endDate.getTime() - startDate.getTime();
+  const durationMin = Math.round(durationMs / 60_000);
+
+  const lines = [
+    `Title: ${data.title}`,
+    `Date: ${dateStr}`,
+    `Time: ${startTimeStr} – ${endTimeStr}`,
+    `Duration: ${durationMin} min`,
+  ];
+
+  if (data.location) {
+    lines.push(`Location: ${data.location}`);
+  }
+
+  if (data.attendees && data.attendees.length > 0) {
+    lines.push(`Attendees: ${data.attendees.join(", ")}`);
+  }
+
+  return lines.join("\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -160,14 +360,22 @@ async function executeTool(
  *   3. Append the new user message to the messages array.
  *   4. Call the Anthropic API with tool definitions.
  *   5. Tool loop: while the response contains tool_use blocks, execute each
- *      tool, append tool_result to messages, and call the API again.
+ *      tool (intercepting confirmation-gated tools), append tool_result to
+ *      messages, and call the API again.
  *   6. Persist both the user message and the final assistant response.
- *   7. Return the final text response.
+ *   7. Return AgentResult { text, showConfirmationKeyboard }.
+ *
+ * T-17: Confirmation-gated tools (create_event, update_event, delete_event)
+ * are intercepted in the tool loop. Instead of executing them immediately,
+ * a ConfirmationPayload is persisted via saveConfirmation and a synthetic
+ * tool_result is returned so the model can compose the proposal text.
+ * showConfirmationKeyboard is set to true so the bot renders the inline
+ * keyboard alongside the reply.
  *
  * @param msg  The incoming message from the bot.
- * @returns    The assistant's text response.
+ * @returns    AgentResult containing the reply text and keyboard flag.
  */
-export async function runAgent(msg: IncomingMessage): Promise<string> {
+export async function runAgent(msg: IncomingMessage): Promise<AgentResult> {
   const log = logger.child({ service: "agent", chat_id: msg.chat_id });
 
   // Step 1: Load conversation context.
@@ -193,6 +401,9 @@ export async function runAgent(msg: IncomingMessage): Promise<string> {
 
   let iterationCount = 0;
   let response: Anthropic.Message;
+
+  // T-17: Track whether a confirmation-gated tool was intercepted this turn.
+  let showConfirmationKeyboard = false;
 
   // Step 4: Initial API call.
   // Model ID sourced from env.ANTHROPIC_MODEL (defaults to "claude-sonnet-4-20250514").
@@ -226,16 +437,91 @@ export async function runAgent(msg: IncomingMessage): Promise<string> {
     messages.push({ role: "assistant", content: response.content });
 
     // Execute each tool and collect results.
+    // T-17: confirmation-gated tools are intercepted here.
     const toolResults: Anthropic.ToolResultBlockParam[] = await Promise.all(
       toolUseBlocks.map(async (toolUse) => {
         log.info({ toolName: toolUse.name, toolId: toolUse.id }, "Executing tool");
 
+        const toolInput = toolUse.input as Record<string, unknown>;
+
+        // ------------------------------------------------------------------
+        // T-17: Intercept confirmation-gated write tools.
+        // ------------------------------------------------------------------
+        if (CONFIRMATION_GATED_TOOLS.has(toolUse.name)) {
+          log.info(
+            { toolName: toolUse.name },
+            "Intercepting confirmation-gated tool — saving ConfirmationPayload",
+          );
+
+          let syntheticResult: string;
+
+          if (toolUse.name === "create_event") {
+            // Extract and validate the event data from tool input.
+            const title = typeof toolInput["title"] === "string" ? toolInput["title"] : "";
+            const start = typeof toolInput["start"] === "string" ? toolInput["start"] : "";
+            const end = typeof toolInput["end"] === "string" ? toolInput["end"] : "";
+
+            if (!title || !start || !end) {
+              syntheticResult = JSON.stringify({
+                error: "create_event requires 'title', 'start', and 'end' parameters",
+              });
+            } else {
+              const data: CreateEventData = { title, start, end };
+              if (typeof toolInput["location"] === "string") data.location = toolInput["location"];
+              if (typeof toolInput["description"] === "string") data.description = toolInput["description"];
+              if (Array.isArray(toolInput["attendees"])) data.attendees = toolInput["attendees"] as string[];
+
+              const summary = buildCreateEventSummary(data);
+
+              const payload: ConfirmationPayload = {
+                action: "create_event",
+                proposed_at: new Date().toISOString(),
+                data,
+                summary,
+              };
+
+              try {
+                await saveConfirmation(msg.chat_id, payload);
+                showConfirmationKeyboard = true;
+                syntheticResult = JSON.stringify({
+                  status: "pending_confirmation",
+                  message:
+                    "Event details have been noted. Present the following proposal to the user " +
+                    "and ask them to Confirm, Edit, or Cancel using the buttons below:\n\n" +
+                    summary,
+                });
+              } catch (saveErr) {
+                log.error({ err: saveErr }, "Failed to save confirmation payload");
+                syntheticResult = JSON.stringify({
+                  error: "Failed to save event proposal — please try again",
+                });
+              }
+            }
+          } else {
+            // Other confirmation-gated tools (update_event, delete_event) —
+            // placeholder until their dedicated tasks are implemented.
+            syntheticResult = JSON.stringify({
+              status: "pending_confirmation",
+              message:
+                "Action noted. Please present the proposed change to the user and ask for " +
+                "Confirm, Edit, or Cancel.",
+            });
+            showConfirmationKeyboard = true;
+          }
+
+          return {
+            type: "tool_result" as const,
+            tool_use_id: toolUse.id,
+            content: syntheticResult,
+          };
+        }
+
+        // ------------------------------------------------------------------
+        // Normal (non-gated) tool execution.
+        // ------------------------------------------------------------------
         let resultContent: string;
         try {
-          resultContent = await executeTool(
-            toolUse.name,
-            toolUse.input as Record<string, unknown>,
-          );
+          resultContent = await executeTool(toolUse.name, toolInput);
         } catch (err) {
           log.error({ err, toolName: toolUse.name }, "Tool execution error");
           resultContent = JSON.stringify({ error: String(err) });
@@ -277,9 +563,9 @@ export async function runAgent(msg: IncomingMessage): Promise<string> {
   await saveMessage(msg.chat_id, "user", msg.text);
   await saveMessage(msg.chat_id, "assistant", replyText);
 
-  log.info({ replyLength: replyText.length }, "Agent response ready");
+  log.info({ replyLength: replyText.length, showConfirmationKeyboard }, "Agent response ready");
 
-  return replyText;
+  return { text: replyText, showConfirmationKeyboard };
 }
 
 // ---------------------------------------------------------------------------
@@ -378,4 +664,139 @@ export async function saveMessage(
   } finally {
     client.release();
   }
+}
+
+// ---------------------------------------------------------------------------
+// Confirmation pattern (T-16)
+// ---------------------------------------------------------------------------
+
+/** Expiry window for pending confirmations: 10 minutes in milliseconds. */
+const CONFIRMATION_EXPIRY_MS = 10 * 60 * 1000;
+
+/**
+ * Upsert a ConfirmationPayload onto the latest conversation_context row for
+ * `chatId`.  If no rows exist yet a new placeholder row is inserted so that
+ * the payload is always persisted.
+ *
+ * Only one active confirmation is kept per chat_id — calling this function
+ * a second time overwrites the previous proposal.
+ *
+ * Strategy:
+ *   1. Attempt to UPDATE the active_confirmation column on the single row
+ *      with the highest (created_at DESC, id DESC) for this chat_id.
+ *   2. If 0 rows were updated (no history yet), INSERT a minimal row so
+ *      the payload is not lost.
+ *
+ * Both branches execute inside a serializable transaction.
+ *
+ * @param chatId   Telegram chat ID (number).
+ * @param payload  The ConfirmationPayload to persist.
+ */
+export async function saveConfirmation(
+  chatId: number,
+  payload: ConfirmationPayload,
+): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // Attempt to update the active_confirmation column on the newest row.
+    const updateResult = await client.query(
+      `UPDATE conversation_context
+          SET active_confirmation = $2
+        WHERE id = (
+          SELECT id
+            FROM conversation_context
+           WHERE chat_id = $1
+           ORDER BY created_at DESC, id DESC
+           LIMIT 1
+        )`,
+      [chatId, JSON.stringify(payload)],
+    );
+
+    // If no existing row was found, insert a placeholder row to carry the payload.
+    if ((updateResult.rowCount ?? 0) === 0) {
+      await client.query(
+        `INSERT INTO conversation_context (chat_id, role, content, active_confirmation)
+         VALUES ($1, 'assistant', '', $2)`,
+        [chatId, JSON.stringify(payload)],
+      );
+    }
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Load the pending ConfirmationPayload for `chatId`.
+ *
+ * Returns `null` if:
+ *   - No active_confirmation exists for this chat_id.
+ *   - The payload's `proposed_at` timestamp is older than 10 minutes.
+ *
+ * Reads the active_confirmation from the newest row for the chat_id
+ * (ORDER BY created_at DESC, id DESC LIMIT 1).
+ *
+ * @param chatId  Telegram chat ID (number).
+ * @returns       The ConfirmationPayload if pending and unexpired, else null.
+ */
+export async function loadConfirmation(chatId: number): Promise<ConfirmationPayload | null> {
+  const result = await pool.query<{ active_confirmation: ConfirmationPayload | null }>(
+    `SELECT active_confirmation
+       FROM conversation_context
+      WHERE chat_id = $1
+      ORDER BY created_at DESC, id DESC
+      LIMIT 1`,
+    [chatId],
+  );
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const payload = result.rows[0]?.active_confirmation ?? null;
+  if (payload === null) {
+    return null;
+  }
+
+  // Enforce 10-minute expiry.
+  const proposedAt = new Date(payload.proposed_at).getTime();
+  if (Date.now() - proposedAt > CONFIRMATION_EXPIRY_MS) {
+    // Expired — treat as absent (do not modify DB here; caller or clearConfirmation handles cleanup).
+    return null;
+  }
+
+  return payload;
+}
+
+/**
+ * Clear the active_confirmation column on the latest conversation_context row
+ * for `chatId`, setting it to NULL.
+ *
+ * This is called after the user taps Confirm, Edit, or Cancel, or when the
+ * orchestrator detects an expired payload and wants to clean up explicitly.
+ *
+ * Uses a single UPDATE targeting the newest row for this chat_id; if no row
+ * exists the operation is a no-op.
+ *
+ * @param chatId  Telegram chat ID (number).
+ */
+export async function clearConfirmation(chatId: number): Promise<void> {
+  await pool.query(
+    `UPDATE conversation_context
+        SET active_confirmation = NULL
+      WHERE id = (
+        SELECT id
+          FROM conversation_context
+         WHERE chat_id = $1
+         ORDER BY created_at DESC, id DESC
+         LIMIT 1
+      )`,
+    [chatId],
+  );
 }

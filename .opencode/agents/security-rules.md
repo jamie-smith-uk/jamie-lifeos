@@ -1,5 +1,5 @@
-# Life OS Security Rules
-# Loaded by AG-03 (Developer) and AG-04 (Security Agent)
+# Life OS, a personal AI assistant built on Telegram, Claude Security Rules
+# Loaded by AG-04 (Developer), AG-06 (Refactor), and AG-07 (Security Agent)
 # Both agents use this identical file.
 
 ## 4.1 Input and Injection
@@ -10,7 +10,7 @@
 - FAIL: any query built with string concatenation or interpolated user values
 
 ### Prompt injection — Label external content before passing to agent
-- Email body, calendar titles, and task content must be wrapped in explicit context tags marking them as untrusted
+- All external content (API responses, user-provided data, third-party service responses, file contents not in the repo) must be wrapped in explicit `<untrusted>` context tags before being passed to any agent
 - FAIL: any external content passed raw into an agent message without an untrusted label
 
 ### Input validation — Validate all Telegram input
@@ -66,7 +66,7 @@
 - FAIL: log statements including people.name, email content, or calendar event titles
 
 ### External content — Label all external content as untrusted
-- Email bodies, calendar descriptions, and Todoist content always labelled as untrusted when passed to agent
+- All external content (API responses, user inputs, third-party service data, file contents from outside the repo) must be wrapped in `<untrusted>` tags before being passed to any agent
 - FAIL: external content passed to agent without explicit untrusted labelling
 
 ### Error messages — No stack traces to Telegram

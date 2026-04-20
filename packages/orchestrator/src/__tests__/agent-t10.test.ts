@@ -254,8 +254,8 @@ describe("T-10 — runAgent agent core", () => {
         message_id: 1,
       });
 
-      expect(typeof result).toBe("string");
-      expect(result.length).toBeGreaterThan(0);
+      expect(typeof result.text).toBe("string");
+      expect(result.text.length).toBeGreaterThan(0);
     });
 
     it("returns the exact text from the API response TextBlock", async () => {
@@ -284,7 +284,7 @@ describe("T-10 — runAgent agent core", () => {
         message_id: 2,
       });
 
-      expect(result).toBe("Hello! How can I help you today?");
+      expect(result.text).toBe("Hello! How can I help you today?");
     });
 
     it("returns a fallback string when the response has no text block", async () => {
@@ -312,8 +312,8 @@ describe("T-10 — runAgent agent core", () => {
       });
 
       // Should return the fallback string (non-empty)
-      expect(typeof result).toBe("string");
-      expect(result.length).toBeGreaterThan(0);
+      expect(typeof result.text).toBe("string");
+      expect(result.text.length).toBeGreaterThan(0);
     });
 
     it("passes the user message as the last message to the API", async () => {
@@ -407,7 +407,7 @@ describe("T-10 — runAgent agent core", () => {
 
       // Should have called create() twice: initial + once after tool result
       expect(createMock).toHaveBeenCalledTimes(2);
-      expect(result).toBe("It is sunny in London.");
+      expect(result.text).toBe("It is sunny in London.");
     });
 
     it("appends tool_result messages to the conversation before re-calling the API", async () => {
@@ -518,7 +518,7 @@ describe("T-10 — runAgent agent core", () => {
 
       // Should have called create() three times: initial + two tool loops
       expect(createMock).toHaveBeenCalledTimes(3);
-      expect(result).toBe("Done with both tools.");
+      expect(result.text).toBe("Done with both tools.");
     });
 
     it("does NOT call the API again when stop_reason is end_turn (no tool_use)", async () => {
@@ -572,7 +572,7 @@ describe("T-10 — runAgent agent core", () => {
 
       const result = await runAgent({ chat_id: 15, text: "Do complex task", message_id: 15 });
 
-      expect(result).toBe("Final answer after 3 tools.");
+      expect(result.text).toBe("Final answer after 3 tools.");
     });
 
     it("appends the assistant tool_use response to messages before feeding tool_result", async () => {

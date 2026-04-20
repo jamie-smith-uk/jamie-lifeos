@@ -7,14 +7,22 @@
  *
  * Migrations are run before the server begins accepting requests.
  *
+ * T-17: Confirm/cancel callback handlers wired end-to-end.
+ *   confirm — loads ConfirmationPayload, executes the calendar tool, clears
+ *             the confirmation, and returns a success message.
+ *   cancel  — clears the pending confirmation and returns a cancellation message.
+ *   The /message handler propagates show_confirmation_keyboard from AgentResult
+ *   so the bot knows to render the inline keyboard.
+ *
  * Environment:
  *   PORT  — TCP port to listen on (default: 3001).
  */
 
 import http from "http";
 import { env, logger, runMigrations } from "@lifeos/shared";
-import type { IncomingMessage as BotMessage, IncomingCallback } from "@lifeos/shared";
-import { runAgent } from "./agent.js";
+import type { IncomingMessage as BotMessage, IncomingCallback, CreateEventData } from "@lifeos/shared";
+import { runAgent, loadConfirmation, clearConfirmation } from "./agent.js";
+import { executeCalendarTool } from "./tools/calendar.js";
 
 // ---------------------------------------------------------------------------
 // Logger child (declared early so helpers below can use it)
@@ -65,10 +73,20 @@ function sendTypingIndicator(chatId: number): void {
 /**
  * Handle an incoming message by invoking the agent loop.
  * The agent loads conversation context, calls the Anthropic API (with tool
- * loop), persists the exchange, and returns the assistant's text reply.
+ * loop), persists the exchange, and returns the assistant's reply along with
+ * a flag indicating whether the confirmation keyboard should be shown.
+ *
+ * T-17: Returns { text, show_confirmation_keyboard } so the bot knows whether
+ * to render Confirm / Edit / Cancel inline buttons alongside the reply.
  */
-async function handleMessage(msg: BotMessage): Promise<string> {
-  return runAgent(msg);
+async function handleMessage(
+  msg: BotMessage,
+): Promise<{ text: string; show_confirmation_keyboard: boolean }> {
+  const result = await runAgent(msg);
+  return {
+    text: result.text,
+    show_confirmation_keyboard: result.showConfirmationKeyboard,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -79,12 +97,15 @@ async function handleMessage(msg: BotMessage): Promise<string> {
  * Route an inline-keyboard callback to the appropriate handler.
  *
  * Supported callback_data values:
- *   confirm  — execute the pending confirmation action.
- *   edit     — re-prompt the agent with an edit request.
+ *   confirm  — load pending ConfirmationPayload, execute the calendar tool,
+ *              clear the confirmation, and return a success message.
+ *   edit     — re-prompt the agent with an edit request (T-18 stub).
  *   cancel   — clear the pending confirmation and notify the user.
  *   dismiss:<nudgeId> — dismiss a nudge notification.
  *
  * All other values are rejected with a 400 response.
+ *
+ * T-17: confirm and cancel are fully implemented.
  */
 async function handleCallback(
   callback: IncomingCallback,
@@ -92,9 +113,75 @@ async function handleCallback(
   const data = callback.callback_data;
 
   if (data === "confirm") {
-    // TODO(T-17): execute pending confirmation action.
-    log.info({ chat_id: callback.chat_id }, "Callback: confirm (stub)");
-    return { status: 200, text: "Confirmed." };
+    log.info({ chat_id: callback.chat_id }, "Callback: confirm");
+
+    // Load the pending confirmation payload.
+    const payload = await loadConfirmation(callback.chat_id);
+
+    if (payload === null) {
+      log.warn({ chat_id: callback.chat_id }, "Confirm callback: no pending confirmation found");
+      return {
+        status: 200,
+        text: "No pending action to confirm. The proposal may have expired.",
+      };
+    }
+
+    log.info(
+      { chat_id: callback.chat_id, action: payload.action },
+      "Executing confirmed calendar action",
+    );
+
+    // Execute the calendar tool with the stored data.
+    let toolResult: string;
+    try {
+      toolResult = await executeCalendarTool(
+        payload.action,
+        payload.data as unknown as Record<string, unknown>,
+      );
+    } catch (err) {
+      log.error({ err, chat_id: callback.chat_id, action: payload.action }, "Calendar tool error during confirm");
+      // Clear the confirmation so the user is not stuck.
+      await clearConfirmation(callback.chat_id).catch((clearErr: unknown) => {
+        log.error({ err: clearErr }, "Failed to clear confirmation after tool error");
+      });
+      return {
+        status: 200,
+        text: "Something went wrong while creating the event. Please try again.",
+      };
+    }
+
+    // Clear the confirmation now that the action has been executed.
+    await clearConfirmation(callback.chat_id).catch((clearErr: unknown) => {
+      log.error({ clearErr }, "Failed to clear confirmation after confirm");
+    });
+
+    // Build a user-friendly success message.
+    let successText: string;
+    if (payload.action === "create_event") {
+      const eventData = payload.data as CreateEventData;
+      // Check if the tool result contains an error.
+      let toolResultObj: { error?: string } | null = null;
+      try {
+        toolResultObj = JSON.parse(toolResult) as { error?: string };
+      } catch {
+        // Not JSON — treat as success text from the MCP server.
+      }
+
+      if (toolResultObj?.error) {
+        successText = `Failed to create event: ${toolResultObj.error}`;
+      } else {
+        successText = `Event "${eventData.title}" has been added to your calendar.`;
+        if (toolResult && toolResult.trim() !== "" && !toolResultObj?.error) {
+          // Append any detail the MCP server returned.
+          successText += `\n\n${toolResult}`;
+        }
+      }
+    } else {
+      successText = `Action confirmed: ${toolResult}`;
+    }
+
+    log.info({ chat_id: callback.chat_id, action: payload.action }, "Confirmation executed successfully");
+    return { status: 200, text: successText };
   }
 
   if (data === "edit") {
@@ -104,9 +191,14 @@ async function handleCallback(
   }
 
   if (data === "cancel") {
-    // TODO(T-17): clearConfirmation(callback.chat_id) — no DB side-effect yet.
     log.info({ chat_id: callback.chat_id }, "Callback: cancel");
-    return { status: 200, text: "Cancelled." };
+
+    // T-17: Clear any pending confirmation and notify the user.
+    await clearConfirmation(callback.chat_id).catch((clearErr: unknown) => {
+      log.error({ err: clearErr }, "Failed to clear confirmation on cancel");
+    });
+
+    return { status: 200, text: "Cancelled. No changes were made to your calendar." };
   }
 
   if (data.startsWith("dismiss:")) {
@@ -232,16 +324,25 @@ async function requestHandler(
     // failure must not block or prevent the agent from responding.
     sendTypingIndicator(msg.chat_id);
 
-    let replyText: string;
+    let agentReply: { text: string; show_confirmation_keyboard: boolean };
     try {
-      replyText = await handleMessage(msg);
+      agentReply = await handleMessage(msg);
     } catch (err) {
       log.error({ err, chat_id: msg.chat_id }, "Agent error handling /message");
       sendError(res, 500, "Internal server error");
       return;
     }
 
-    sendJson(res, 200, { text: replyText });
+    // T-17: Propagate show_confirmation_keyboard so the bot renders inline
+    // keyboard buttons when a calendar mutation has been proposed.
+    const responsePayload: { text: string; show_confirmation_keyboard?: boolean } = {
+      text: agentReply.text,
+    };
+    if (agentReply.show_confirmation_keyboard) {
+      responsePayload.show_confirmation_keyboard = true;
+    }
+
+    sendJson(res, 200, responsePayload);
     return;
   }
 

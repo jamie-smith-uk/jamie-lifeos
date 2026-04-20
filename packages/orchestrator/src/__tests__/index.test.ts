@@ -158,7 +158,7 @@ async function startServer(port: number): Promise<ServerHandle> {
   // Mock the agent module so runAgent returns a stub response without
   // hitting the real Anthropic API or database.
   vi.doMock("../agent.js", () => ({
-    runAgent: vi.fn().mockResolvedValue("Agent not yet implemented."),
+    runAgent: vi.fn().mockResolvedValue({ text: "Agent not yet implemented.", showConfirmationKeyboard: false }),
     loadContext: vi.fn().mockResolvedValue([]),
     saveMessage: vi.fn().mockResolvedValue(undefined),
   }));
@@ -572,7 +572,7 @@ describe("AC3 — migrations run before server accepts requests", () => {
     }));
 
     vi.doMock("../agent.js", () => ({
-      runAgent: vi.fn().mockResolvedValue("stub response"),
+      runAgent: vi.fn().mockResolvedValue({ text: "stub response", showConfirmationKeyboard: false }),
       loadContext: vi.fn().mockResolvedValue([]),
       saveMessage: vi.fn().mockResolvedValue(undefined),
     }));
