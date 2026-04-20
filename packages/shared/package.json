@@ -2,21 +2,24 @@
   "name": "@lifeos/shared",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "dev": "tsc --project tsconfig.json --watch",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "vitest run --config vitest.config.ts"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0",
-    "@types/pg": "^8.20.0",
-    "typescript": "5.4.5"
+    "@types/node": "25.6.0",
+    "@types/pg": "8.20.0",
+    "typescript": "5.4.5",
+    "vitest": "^4.1.4"
   },
   "dependencies": {
-    "pg": "^8.20.0",
-    "pino": "^10.3.1"
+    "pg": "8.20.0",
+    "pino": "10.3.1"
   }
 }

@@ -1,2 +1,6 @@
-// packages/shared – public entry point (populated in T-02)
-export {};
+// packages/shared — public entry point
+export * from "./env.js";
+export * from "./logger.js";
+export * from "./db.js";
+export * from "./types.js";
+export { runMigrations } from "./migrate.js";
