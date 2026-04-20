@@ -33,6 +33,12 @@ if [ -f "$REPO_ROOT/.env" ]; then
   set +a
 fi
 
+# Construct DATABASE_URL from individual vars if not already set
+if [ -z "${DATABASE_URL:-}" ]; then
+  DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}"
+  export DATABASE_URL
+fi
+
 mkdir -p "$PIPELINE_DIR"
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
