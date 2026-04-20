@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Source: github.com/jamie-smith-uk/jamie-agent-pipeline
+# To update this pipeline: cd ~/Documents/jamie-agent-pipeline && ./orchestrator/sync-pipeline.sh --target /Users/jamie/Documents/jamie-lifeos
+
 set -euo pipefail
 
 # ── Life OS Pipeline Runner ──────────────────────────────────────────────────
