@@ -11,6 +11,9 @@ COPY packages/orchestrator/package.json ./packages/orchestrator/
 
 RUN pnpm install --frozen-lockfile
 
+RUN mkdir -p node_modules/@lifeos && \
+    ln -sf /app/packages/shared node_modules/@lifeos/shared
+
 COPY packages/shared ./packages/shared
 COPY packages/bot ./packages/bot
 

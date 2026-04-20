@@ -3,12 +3,8 @@
   "compilerOptions": {
     "composite": true,
     "outDir": "./dist",
-    "rootDir": "./src",
-    "paths": {
-      "@lifeos/shared": ["../shared/dist/index.d.ts"]
-    }
+    "rootDir": "./src"
   },
   "include": ["src"],
-  "exclude": ["src/__tests__/**", "**/*.test.ts", "**/*.spec.ts"],
-  "references": [{ "path": "../shared" }]
+  "exclude": ["src/__tests__/**", "**/*.test.ts", "**/*.spec.ts"]
 }
