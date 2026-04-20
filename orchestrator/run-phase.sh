@@ -333,7 +333,7 @@ Review all code written for task $TASK_ID.
 Task spec:
 $TASK_JSON
 
-Apply every rule in agents/security-rules.md to every file in files_in_scope.
+Apply every rule in .opencode/agents/security-rules.md to every file in files_in_scope.
 Write security-report.md to pipeline/phase-$PHASE/$TASK_ID/
 Return PASS or FAIL with specific findings.
 
