@@ -297,7 +297,10 @@ Implement this task:
 $TASK_JSON
 
 Write self-assessment.md to pipeline/phase-$PHASE/$TASK_ID/
-Follow your system prompt exactly. Apply all security rules."
+Follow your system prompt exactly. Apply all security rules.
+
+## Environment
+Do not read .env directly. Database connection details will be provided to the tester separately. Use process.env.DATABASE_URL for any database connections in the implementation code."
 
     run_agent "ag-03-developer" "$DEV_PROMPT" "$TASK_DIR/dev-output.md"
 
@@ -316,7 +319,14 @@ $TASK_JSON
 
 Apply every rule in agents/security-rules.md to every file in files_in_scope.
 Write security-report.md to pipeline/phase-$PHASE/$TASK_ID/
-Return PASS or FAIL with specific findings."
+Return PASS or FAIL with specific findings.
+
+## Environment reference
+DATABASE_URL=$DATABASE_URL
+POSTGRES_HOST=$POSTGRES_HOST
+POSTGRES_PORT=$POSTGRES_PORT
+POSTGRES_USER=$POSTGRES_USER
+POSTGRES_DB=$POSTGRES_DB"
 
     run_agent "ag-04-security" "$SEC_PROMPT" "$TASK_DIR/sec-output.md"
 
@@ -347,7 +357,18 @@ $TASK_JSON
 
 Every acceptance criterion must have at least one passing test.
 Write test-report.md to pipeline/phase-$PHASE/$TASK_ID/
-Return PASS or FAIL with full test output."
+Return PASS or FAIL with full test output.
+
+## Environment for testing
+Use these values for database connections in tests — do not read .env:
+DATABASE_URL=$DATABASE_URL
+POSTGRES_HOST=$POSTGRES_HOST
+POSTGRES_PORT=$POSTGRES_PORT
+POSTGRES_USER=$POSTGRES_USER
+POSTGRES_DB=$POSTGRES_DB
+
+For tests requiring a database connection, use DATABASE_URL directly.
+Mock the Telegram API, Anthropic API, Google Calendar MCP, and Gmail MCP — do not make real calls to these services in tests."
 
     run_agent "ag-05-tester" "$TEST_PROMPT" "$TASK_DIR/test-output.md"
 
