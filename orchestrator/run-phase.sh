@@ -118,7 +118,8 @@ wait_for_approval() {
   log "Reply 'approve', 'changes: [what to change]', or 'stop'" >&2
 
   # Launch telegram gate in background to write approval.json
-  "$REPO_ROOT/orchestrator/telegram-gate.sh" --phase "$PHASE" &
+  # Redirect stdout to stderr so gate output doesn't pollute the signal capture
+  "$REPO_ROOT/orchestrator/telegram-gate.sh" --phase "$PHASE" >&2 &
   GATE_PID=$!
 
   # Wait for approval.json to appear
