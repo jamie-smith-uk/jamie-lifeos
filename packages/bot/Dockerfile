@@ -17,7 +17,11 @@ RUN pnpm install --frozen-lockfile
 COPY packages/shared ./packages/shared
 COPY packages/bot ./packages/bot
 
-RUN pnpm --filter @lifeos/shared build && pnpm --filter @lifeos/bot build
+RUN cd packages/shared && \
+    ../../node_modules/.bin/tsc --project tsconfig.json && \
+    cd /app && \
+    cd packages/bot && \
+    ../../node_modules/.bin/tsc --project tsconfig.json
 
 FROM node:20-alpine AS runtime
 

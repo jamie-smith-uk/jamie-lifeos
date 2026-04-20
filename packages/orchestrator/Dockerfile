@@ -17,7 +17,11 @@ RUN pnpm install --frozen-lockfile
 COPY packages/shared ./packages/shared
 COPY packages/orchestrator ./packages/orchestrator
 
-RUN pnpm --filter @lifeos/shared build && pnpm --filter @lifeos/orchestrator build
+RUN cd packages/shared && \
+    ../../node_modules/.bin/tsc --project tsconfig.json && \
+    cd /app && \
+    cd packages/orchestrator && \
+    ../../node_modules/.bin/tsc --project tsconfig.json
 
 FROM node:20-alpine AS runtime
 
