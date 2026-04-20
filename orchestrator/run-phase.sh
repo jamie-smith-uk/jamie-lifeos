@@ -25,6 +25,14 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PIPELINE_DIR="$REPO_ROOT/pipeline/phase-$PHASE"
 AGENTS_DIR="$REPO_ROOT/agents"
 
+# Load .env if present (exports all vars so they're available to child processes)
+if [ -f "$REPO_ROOT/.env" ]; then
+  set -a
+  # shellcheck source=../.env
+  source "$REPO_ROOT/.env"
+  set +a
+fi
+
 mkdir -p "$PIPELINE_DIR"
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -61,7 +69,7 @@ run_agent() {
   local agent_id="$1" prompt="$2" output_file="$3"
   log "[$agent_id] Starting..."
 
-  opencode -p "$prompt" --agent "$agent_id" -q > "$output_file" 2>&1
+  opencode run --agent "$agent_id" "$prompt" > "$output_file" 2>&1
   local exit_code=$?
 
   if [ $exit_code -ne 0 ]; then
@@ -140,10 +148,14 @@ fi
 log "Manifest produced. Tasks:"
 python3 -c "
 import json
-tasks = json.load(open('$PIPELINE_DIR/task-manifest.json'))
+data = json.load(open('$PIPELINE_DIR/task-manifest.json'))
+tasks = data if isinstance(data, list) else data.get('tasks', data.get('task_order', []))
+if tasks and isinstance(tasks[0], str):
+    tasks = data.get('tasks', [])
 for t in tasks:
-    flag = ' [SECURITY]' if t.get('security_sensitive') else ''
-    print(f\"  {t['id']}: {t['title']}{flag}\")
+    if isinstance(t, dict):
+        flag = ' [SECURITY]' if t.get('security_sensitive') else ''
+        print(f\"  {t['id']}: {t['title']}{flag}\")
 "
 
 # ── AG-02 Reviewer ───────────────────────────────────────────────────────────
@@ -154,18 +166,29 @@ REVIEW_PROMPT="You are running as AG-02 Reviewer for Life OS.
 
 Read pipeline/phase-$PHASE/task-manifest.json and pipeline/phase-$PHASE/manifest-summary.md.
 
-1. Write reviewer-summary.md to pipeline/phase-$PHASE/
-2. Send the summary to the user via Telegram using:
-   - Bot token: $TELEGRAM_BOT_TOKEN
-   - Chat ID: $TELEGRAM_ALLOWED_CHAT_ID
-   Use curl to call the Telegram sendMessage API.
+Write reviewer-summary.md to pipeline/phase-$PHASE/ using the format defined in your system prompt.
 
-The message must end with:
-'Reply with: approve | changes: [what to change] | stop'
-
-Then halt. Do not proceed further."
+Do not send any Telegram messages. Do not make any API calls. Just write the file and stop."
 
 run_agent "ag-02-reviewer" "$REVIEW_PROMPT" "$PIPELINE_DIR/ag02-output.md"
+
+# Read the reviewer summary and send it via Telegram
+SUMMARY_FILE="$PIPELINE_DIR/reviewer-summary.md"
+if [ ! -f "$SUMMARY_FILE" ]; then
+  halt "reviewer-summary.md not produced" "AG-02" "Reviewer did not write the summary file"
+fi
+
+SUMMARY_TEXT=$(cat "$SUMMARY_FILE")
+TELEGRAM_MESSAGE="🔍 *Life OS Pipeline — Phase $PHASE Review*
+
+$SUMMARY_TEXT"
+
+curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+  -d "chat_id=${TELEGRAM_ALLOWED_CHAT_ID}" \
+  --data-urlencode "text=${TELEGRAM_MESSAGE}" \
+  -d "parse_mode=Markdown" > /dev/null
+
+log "Reviewer summary sent to Telegram"
 
 # ── Human gate ───────────────────────────────────────────────────────────────
 log ""
@@ -214,9 +237,11 @@ with open('$PIPELINE_DIR/approval.json', 'w') as f:
 # ── Task loop ────────────────────────────────────────────────────────────────
 TASKS=$(python3 -c "
 import json
-tasks = json.load(open('$PIPELINE_DIR/task-manifest.json'))
+data = json.load(open('$PIPELINE_DIR/task-manifest.json'))
+tasks = data if isinstance(data, list) else data.get('tasks', [])
 for t in tasks:
-    print(t['id'])
+    if isinstance(t, dict):
+        print(t['id'])
 ")
 
 for TASK_ID in $TASKS; do
@@ -225,15 +250,17 @@ for TASK_ID in $TASKS; do
 
   TASK_JSON=$(python3 -c "
 import json
-tasks = json.load(open('$PIPELINE_DIR/task-manifest.json'))
-task = next(t for t in tasks if t['id'] == '$TASK_ID')
+data = json.load(open('$PIPELINE_DIR/task-manifest.json'))
+tasks = data if isinstance(data, list) else data.get('tasks', [])
+task = next(t for t in tasks if isinstance(t, dict) and t['id'] == '$TASK_ID')
 print(json.dumps(task, indent=2))
 ")
 
   TASK_TITLE=$(python3 -c "
 import json
-tasks = json.load(open('$PIPELINE_DIR/task-manifest.json'))
-task = next(t for t in tasks if t['id'] == '$TASK_ID')
+data = json.load(open('$PIPELINE_DIR/task-manifest.json'))
+tasks = data if isinstance(data, list) else data.get('tasks', [])
+task = next(t for t in tasks if isinstance(t, dict) and t['id'] == '$TASK_ID')
 print(task['title'])
 ")
 
@@ -348,22 +375,34 @@ Validate the full Phase $PHASE implementation against the PRD exit criteria in d
 
 On PASS:
 - Run: git tag phase-$PHASE-complete
-- Send Telegram notification to chat ID $TELEGRAM_ALLOWED_CHAT_ID via bot token $TELEGRAM_BOT_TOKEN
-- Include a changelog of what was built
+- Write the validation-report.md with PASS, changelog, and full sign-off
 
 On FAIL:
 - List exactly which exit criteria failed and why
-- Do not create a git tag"
+- Do not create a git tag
+
+Do not send any Telegram messages. The shell script handles notifications."
 
   run_agent "ag-06-validator" "$VAL_PROMPT" "$PIPELINE_DIR/val-output.md"
 
   if [ -f "$PIPELINE_DIR/validation-report.md" ] && report_contains "$PIPELINE_DIR/validation-report.md" "PASS"; then
     VALIDATION_PASSED=true
+
+    # Send Telegram notification on phase PASS
+    VAL_TEXT=$(cat "$PIPELINE_DIR/validation-report.md")
+    TELEGRAM_VAL_MESSAGE="✅ *Life OS — Phase $PHASE Complete*
+
+$VAL_TEXT"
+    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+      -d "chat_id=${TELEGRAM_ALLOWED_CHAT_ID}" \
+      --data-urlencode "text=${TELEGRAM_VAL_MESSAGE}" \
+      -d "parse_mode=Markdown" > /dev/null
+
     log ""
     log "========================================"
     log "Phase $PHASE: COMPLETE"
     log "Git tag: phase-$PHASE-complete created"
-    log "Check Telegram for your phase summary"
+    log "Telegram notification sent"
     log "========================================"
   else
     log "Validation: FAIL (attempt $VALIDATION_ATTEMPTS/2)"
