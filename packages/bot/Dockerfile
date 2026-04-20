@@ -40,6 +40,7 @@ COPY --from=builder /app/packages/shared/package.json ./packages/shared/package.
 COPY --from=builder /app/packages/bot/dist ./packages/bot/dist
 COPY --from=builder /app/packages/bot/package.json ./packages/bot/package.json
 COPY package.json ./
+COPY db ./db
 
 USER lifeos
 

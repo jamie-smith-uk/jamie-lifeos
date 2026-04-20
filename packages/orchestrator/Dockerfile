@@ -40,6 +40,7 @@ COPY --from=builder /app/packages/shared/package.json ./packages/shared/package.
 COPY --from=builder /app/packages/orchestrator/dist ./packages/orchestrator/dist
 COPY --from=builder /app/packages/orchestrator/package.json ./packages/orchestrator/package.json
 COPY package.json ./
+COPY db ./db
 
 USER lifeos
 
