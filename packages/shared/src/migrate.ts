@@ -124,8 +124,11 @@ function readMigrationFiles(migrationsDir: string): string[] {
     return true;
   });
 
-  // Lexicographic sort is correct for zero-padded numeric prefixes.
-  return files.sort();
+  return files.sort((a, b) => {
+    const numA = parseInt(a.split("_")[0] ?? "0", 10);
+    const numB = parseInt(b.split("_")[0] ?? "0", 10);
+    return numA - numB;
+  });
 }
 
 /**
