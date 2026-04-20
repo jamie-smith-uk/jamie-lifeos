@@ -114,8 +114,8 @@ wait_for_approval() {
   local approval_file="$PIPELINE_DIR/approval.json"
   local deadline=$(( $(date +%s) + 86400 )) # 24 hours
 
-  log "Waiting for your approval via Telegram..."
-  log "Reply 'approve', 'changes: [what to change]', or 'stop'"
+  log "Waiting for your approval via Telegram..." >&2
+  log "Reply 'approve', 'changes: [what to change]', or 'stop'" >&2
 
   # Launch telegram gate in background to write approval.json
   "$REPO_ROOT/orchestrator/telegram-gate.sh" --phase "$PHASE" &
@@ -127,7 +127,7 @@ wait_for_approval() {
       wait $GATE_PID 2>/dev/null || true
       local signal
       signal=$(python3 -c "import json; print(json.load(open('$approval_file'))['signal'])")
-      log "Approval received: $signal"
+      log "Approval received: $signal" >&2
       echo "$signal"
       return 0
     fi
