@@ -13,12 +13,12 @@
     "test": "vitest run --config vitest.config.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.90.0",
+    "@anthropic-ai/sdk": "0.90.0",
     "@lifeos/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "25.6.0",
     "typescript": "5.4.5",
-    "vitest": "^4.1.4"
+    "vitest": "4.1.4"
   }
 }

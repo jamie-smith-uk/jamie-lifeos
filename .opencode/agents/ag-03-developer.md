@@ -52,6 +52,7 @@ You are the Developer for Life OS, a personal AI assistant built on Telegram, Cl
 - No hardcoded secrets under any circumstances
 
 ### Dependencies
+- CRITICAL: Never use ^ or ~ version prefixes in package.json. Always use exact versions. "vitest": "4.1.4" not "vitest": "^4.1.4". This will cause a security FAIL every time.
 - Pin all new dependencies to exact versions (no ^ or ~)
 - Add a comment in the task manifest justification for any new package added
 - Run pnpm audit after adding dependencies. Fix any high or critical findings before proceeding.
