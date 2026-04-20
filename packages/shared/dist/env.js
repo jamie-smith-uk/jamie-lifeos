@@ -15,7 +15,9 @@ const REQUIRED_VARS = [
 ];
 const OPTIONAL_DEFAULTS = {
     ANTHROPIC_MODEL: "claude-sonnet-4-20250514",
-    GOOGLE_CALENDAR_MCP_TOKEN: "",
+    GOOGLE_CLIENT_ID: "",
+    GOOGLE_CLIENT_SECRET: "",
+    GOOGLE_REFRESH_TOKEN: "",
     BOT_MODE: "polling",
     LOG_LEVEL: "info",
     ORCHESTRATOR_URL: "http://localhost:3001",
@@ -56,7 +58,9 @@ function loadEnv() {
         ANTHROPIC_MODEL: raw("ANTHROPIC_MODEL"),
         DATABASE_URL: raw("DATABASE_URL"),
         ORCHESTRATOR_URL: raw("ORCHESTRATOR_URL"),
-        GOOGLE_CALENDAR_MCP_TOKEN: raw("GOOGLE_CALENDAR_MCP_TOKEN"),
+        GOOGLE_CLIENT_ID: raw("GOOGLE_CLIENT_ID"),
+        GOOGLE_CLIENT_SECRET: raw("GOOGLE_CLIENT_SECRET"),
+        GOOGLE_REFRESH_TOKEN: raw("GOOGLE_REFRESH_TOKEN"),
         DIGEST_CRON: raw("DIGEST_CRON"),
         TZ: raw("TZ"),
         BOT_MODE: botMode,
