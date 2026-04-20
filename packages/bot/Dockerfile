@@ -19,9 +19,8 @@ COPY packages/bot ./packages/bot
 
 RUN cd packages/shared && \
     ../../node_modules/.bin/tsc --project tsconfig.json && \
-    cd /app && \
-    cd packages/bot && \
-    ../../node_modules/.bin/tsc --project tsconfig.json
+    cd /app/packages/bot && \
+    ../../node_modules/.bin/tsc --project tsconfig.build.json
 
 FROM node:20-alpine AS runtime
 

@@ -19,9 +19,8 @@ COPY packages/orchestrator ./packages/orchestrator
 
 RUN cd packages/shared && \
     ../../node_modules/.bin/tsc --project tsconfig.json && \
-    cd /app && \
-    cd packages/orchestrator && \
-    ../../node_modules/.bin/tsc --project tsconfig.json
+    cd /app/packages/orchestrator && \
+    ../../node_modules/.bin/tsc --project tsconfig.build.json
 
 FROM node:20-alpine AS runtime
 
