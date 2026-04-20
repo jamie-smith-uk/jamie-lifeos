@@ -188,15 +188,15 @@ if [ ! -f "$SUMMARY_FILE" ]; then
   halt "reviewer-summary.md not produced" "AG-02" "Reviewer did not write the summary file"
 fi
 
-SUMMARY_TEXT=$(cat "$SUMMARY_FILE")
-TELEGRAM_MESSAGE="🔍 *Life OS Pipeline — Phase $PHASE Review*
-
-$SUMMARY_TEXT"
+SUMMARY_TEXT=$(head -c 3000 "$SUMMARY_FILE")
 
 curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-  -d "chat_id=${TELEGRAM_ALLOWED_CHAT_ID}" \
-  --data-urlencode "text=${TELEGRAM_MESSAGE}" \
-  -d "parse_mode=Markdown" > /dev/null
+  --data-urlencode "text=🔍 Life OS Pipeline — Phase ${PHASE} Review
+
+${SUMMARY_TEXT}
+
+Reply with: approve | changes: [what to change] | stop" \
+  -d "chat_id=${TELEGRAM_ALLOWED_CHAT_ID}" > /dev/null
 
 log "Reviewer summary sent to Telegram"
 
@@ -430,14 +430,12 @@ Do not send any Telegram messages. The shell script handles notifications."
     VALIDATION_PASSED=true
 
     # Send Telegram notification on phase PASS
-    VAL_TEXT=$(cat "$PIPELINE_DIR/validation-report.md")
-    TELEGRAM_VAL_MESSAGE="✅ *Life OS — Phase $PHASE Complete*
-
-$VAL_TEXT"
+    VAL_TEXT=$(head -c 3000 "$PIPELINE_DIR/validation-report.md")
     curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-      -d "chat_id=${TELEGRAM_ALLOWED_CHAT_ID}" \
-      --data-urlencode "text=${TELEGRAM_VAL_MESSAGE}" \
-      -d "parse_mode=Markdown" > /dev/null
+      --data-urlencode "text=✅ Life OS — Phase ${PHASE} Complete
+
+${VAL_TEXT}" \
+      -d "chat_id=${TELEGRAM_ALLOWED_CHAT_ID}" > /dev/null
 
     log ""
     log "========================================"
