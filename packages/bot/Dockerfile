@@ -11,15 +11,11 @@ COPY packages/orchestrator/package.json ./packages/orchestrator/
 
 RUN pnpm install --frozen-lockfile
 
-RUN mkdir -p node_modules/@lifeos && \
-    ln -sf /app/packages/shared node_modules/@lifeos/shared
-
 COPY packages/shared ./packages/shared
 COPY packages/bot ./packages/bot
 
-RUN cd /app && \
-    node_modules/.bin/tsc -p packages/shared/tsconfig.json && \
-    node_modules/.bin/tsc -p packages/bot/tsconfig.build.json
+RUN pnpm --filter @lifeos/shared build
+RUN pnpm --filter @lifeos/bot build
 
 FROM node:20-alpine AS runtime
 
