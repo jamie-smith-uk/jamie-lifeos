@@ -24,14 +24,22 @@ FROM node:20-alpine AS runtime
 
 RUN addgroup -S lifeos && adduser -S lifeos -G lifeos
 
+RUN npm install -g pnpm@9
+
 WORKDIR /app
 
-COPY --from=builder /app/node_modules ./node_modules
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/orchestrator/package.json ./packages/orchestrator/
+COPY packages/bot/package.json ./packages/bot/
+
+RUN pnpm install --frozen-lockfile --prod
+
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/packages/shared/package.json ./packages/shared/package.json
 COPY --from=builder /app/packages/orchestrator/dist ./packages/orchestrator/dist
 COPY --from=builder /app/packages/orchestrator/package.json ./packages/orchestrator/package.json
-COPY --from=builder /app/package.json ./package.json
+COPY package.json ./
 
 USER lifeos
 
