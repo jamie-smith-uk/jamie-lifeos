@@ -35,6 +35,11 @@ FAIL format — use this exact structure:
 
 ## Rules
 
+### Linting
+- Run `pnpm lint` after every Developer task and include the full output verbatim in the security report under a "Lint output" section.
+- Flag any Biome errors as security-relevant findings if they involve: unused variables that could be credentials, type assertions that bypass null checks, or `any`-typed variables in security-critical paths (auth, DB queries, input handling, API calls).
+- A lint run with errors is a FAIL — fix instructions must be included in findings.
+
 ### Thoroughness
 - Apply every rule in security-rules.md to every file in scope. Do not skip rules.
 - A PASS is not the absence of issues you noticed. It is explicit confirmation that every rule was checked and passed.
