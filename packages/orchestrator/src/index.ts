@@ -22,13 +22,20 @@
  *             and showConfirmationKeyboard will be set to true in the reply so
  *             the bot renders the inline keyboard again for the revised proposal.
  *
+ * T-19: Delete event confirmation flow wired end-to-end.
+ *   When the agent calls delete_event, the interceptor in agent.ts saves a
+ *   ConfirmationPayload { action: 'delete_event', eventId }.  On confirm, this
+ *   handler calls delete_event via executeCalendarTool and returns a deletion
+ *   success message.  The agent is instructed to first call get_events_range to
+ *   resolve ambiguous matches before proposing the deletion.
+ *
  * Environment:
  *   PORT  — TCP port to listen on (default: 3001).
  */
 
 import http from "http";
 import { env, logger, runMigrations } from "@lifeos/shared";
-import type { IncomingMessage as BotMessage, IncomingCallback, CreateEventData, UpdateEventData } from "@lifeos/shared";
+import type { IncomingMessage as BotMessage, IncomingCallback, CreateEventData, UpdateEventData, DeleteEventData } from "@lifeos/shared";
 import { runAgent, loadConfirmation, clearConfirmation } from "./agent.js";
 import { executeCalendarTool } from "./tools/calendar.js";
 
@@ -54,24 +61,29 @@ function sendTypingIndicator(chatId: number): void {
   const url =
     `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendChatAction`;
 
-  fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, action: "typing" }),
-  })
-    .then((res) => {
+  void (async () => {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, action: "typing" }),
+      });
       if (!res.ok) {
-        res.text().catch(() => "(unreadable)").then((text) => {
-          log.warn(
-            { chat_id: chatId, status: res.status, body: text },
-            "sendChatAction typing returned non-OK status",
-          );
-        });
+        let text = "(unreadable)";
+        try {
+          text = await res.text();
+        } catch {
+          // ignore
+        }
+        log.warn(
+          { chat_id: chatId, status: res.status, body: text },
+          "sendChatAction typing returned non-OK status",
+        );
       }
-    })
-    .catch((err: unknown) => {
+    } catch (err: unknown) {
       log.warn({ err, chat_id: chatId }, "Failed to send typing indicator");
-    });
+    }
+  })();
 }
 
 // ---------------------------------------------------------------------------
@@ -153,9 +165,11 @@ async function handleCallback(
     } catch (err) {
       log.error({ err, chat_id: callback.chat_id, action: payload.action }, "Calendar tool error during confirm");
       // Clear the confirmation so the user is not stuck.
-      await clearConfirmation(callback.chat_id).catch((clearErr: unknown) => {
+      try {
+        await clearConfirmation(callback.chat_id);
+      } catch (clearErr: unknown) {
         log.error({ err: clearErr }, "Failed to clear confirmation after tool error");
-      });
+      }
       return {
         status: 200,
         text: "Something went wrong while applying the change. Please try again.",
@@ -163,9 +177,11 @@ async function handleCallback(
     }
 
     // Clear the confirmation now that the action has been executed.
-    await clearConfirmation(callback.chat_id).catch((clearErr: unknown) => {
+    try {
+      await clearConfirmation(callback.chat_id);
+    } catch (clearErr: unknown) {
       log.error({ clearErr }, "Failed to clear confirmation after confirm");
-    });
+    }
 
     // Build a user-friendly success message.
     let successText: string;
@@ -202,6 +218,18 @@ async function handleCallback(
           successText += `\n\n${toolResult}`;
         }
       }
+    } else if (payload.action === "delete_event") {
+      // T-19: Build a success message for delete_event.
+      const deleteData = payload.data as DeleteEventData;
+
+      if (toolResultObj?.error) {
+        successText = `Failed to delete event: ${toolResultObj.error}`;
+      } else {
+        successText = `Event (ID: ${deleteData.eventId}) has been deleted from your calendar.`;
+        if (toolResult && toolResult.trim() !== "" && !toolResultObj?.error) {
+          successText += `\n\n${toolResult}`;
+        }
+      }
     } else {
       successText = `Action confirmed: ${toolResult}`;
     }
@@ -216,15 +244,20 @@ async function handleCallback(
     // T-18: Load the pending confirmation so we can include context in the
     // re-prompt message. Then clear it — the agent will create a fresh
     // confirmation when it proposes the revised change.
-    const existingPayload = await loadConfirmation(callback.chat_id).catch((err: unknown) => {
+    let existingPayload;
+    try {
+      existingPayload = await loadConfirmation(callback.chat_id);
+    } catch (err: unknown) {
       log.warn({ err, chat_id: callback.chat_id }, "Edit callback: failed to load confirmation");
-      return null;
-    });
+      existingPayload = null;
+    }
 
     // Clear the existing confirmation so we start fresh.
-    await clearConfirmation(callback.chat_id).catch((clearErr: unknown) => {
+    try {
+      await clearConfirmation(callback.chat_id);
+    } catch (clearErr: unknown) {
       log.error({ err: clearErr }, "Failed to clear confirmation on edit");
-    });
+    }
 
     // Build a context-aware re-prompt message that includes the prior proposal
     // so the agent knows what was proposed and can offer to change specific fields.
@@ -274,9 +307,11 @@ async function handleCallback(
     log.info({ chat_id: callback.chat_id }, "Callback: cancel");
 
     // T-17: Clear any pending confirmation and notify the user.
-    await clearConfirmation(callback.chat_id).catch((clearErr: unknown) => {
+    try {
+      await clearConfirmation(callback.chat_id);
+    } catch (clearErr: unknown) {
       log.error({ err: clearErr }, "Failed to clear confirmation on cancel");
-    });
+    }
 
     return { status: 200, text: "Cancelled. No changes were made to your calendar." };
   }
@@ -514,7 +549,12 @@ async function requestHandler(
 async function main(): Promise<void> {
   // Run database migrations before the server accepts any traffic.
   log.info("Running database migrations…");
-  await runMigrations();
+  try {
+    await runMigrations();
+  } catch (err: unknown) {
+    log.error({ err }, "Failed to run migrations — exiting");
+    process.exit(1);
+  }
   log.info("Migrations complete");
 
   const port = Number(env.PORT);
@@ -524,12 +564,16 @@ async function main(): Promise<void> {
   }
 
   const server = http.createServer((req, res) => {
-    requestHandler(req, res).catch((err: unknown) => {
-      log.error({ err }, "Unhandled error in request handler");
-      if (!res.headersSent) {
-        sendError(res, 500, "Internal server error");
+    void (async () => {
+      try {
+        await requestHandler(req, res);
+      } catch (err: unknown) {
+        log.error({ err }, "Unhandled error in request handler");
+        if (!res.headersSent) {
+          sendError(res, 500, "Internal server error");
+        }
       }
-    });
+    })();
   });
 
   server.listen(port, () => {
@@ -549,8 +593,12 @@ async function main(): Promise<void> {
   process.on("SIGINT", () => shutdown("SIGINT"));
 }
 
-main().catch((err: unknown) => {
-  // Use console.error as a last resort — logger may not be initialised.
-  console.error("Fatal error during orchestrator startup:", err);
-  process.exit(1);
-});
+void (async () => {
+  try {
+    await main();
+  } catch (err: unknown) {
+    // Use console.error as a last resort — logger may not be initialised.
+    console.error("Fatal error during orchestrator startup:", err);
+    process.exit(1);
+  }
+})();

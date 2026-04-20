@@ -206,7 +206,11 @@ export async function runMigrations(
   } catch (err) {
     log.error({ err }, "Migration failed — exiting with code 1");
     // Allow pool to close cleanly before exit.
-    await pool.end().catch(() => undefined);
+    try {
+      await pool.end();
+    } catch {
+      // Ignore errors during shutdown
+    }
     process.exit(1);
   }
 }
@@ -222,7 +226,8 @@ const isMain =
     path.resolve(fileURLToPath(import.meta.url));
 
 if (isMain) {
-  runMigrations().then(() => {
+  (async () => {
+    await runMigrations();
     process.exit(0);
-  });
+  })();
 }
