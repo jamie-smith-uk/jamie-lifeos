@@ -11,6 +11,7 @@
 
 import TelegramBot from "node-telegram-bot-api";
 import { env, logger } from "@lifeos/shared";
+import { isAllowedChat } from "./middleware.js";
 
 // ---------------------------------------------------------------------------
 // Initialise bot
@@ -19,21 +20,21 @@ import { env, logger } from "@lifeos/shared";
 const botLogger = logger.child({ service: "bot" });
 
 const isPolling = env.BOT_MODE === "polling";
+const port = parseInt(env.PORT, 10);
 
 const bot = new TelegramBot(env.TELEGRAM_BOT_TOKEN, {
   polling: isPolling
     ? { autoStart: true, params: { timeout: 10 } }
     : false,
+  webHook: isPolling
+    ? false
+    : { host: "0.0.0.0", port },
 });
 
-if (!isPolling) {
-  // Webhook mode: the caller (Railway / reverse proxy) must have already
-  // registered the webhook URL with Telegram. The bot simply listens on PORT.
-  const port = parseInt(env.PORT, 10);
-  bot.startWebHook("/", /* tlsOptions */ null as never, port);
-  botLogger.info({ port, mode: "webhook" }, "Bot listening in webhook mode");
-} else {
+if (isPolling) {
   botLogger.info({ mode: "polling" }, "Bot started in polling mode");
+} else {
+  botLogger.info({ port, mode: "webhook" }, "Bot listening in webhook mode");
 }
 
 // ---------------------------------------------------------------------------
@@ -84,6 +85,12 @@ bot.onText(/.*/, (msg) => {
   const messageId = msg.message_id;
   const fromUsername = msg.from?.username;
 
+  if (!isAllowedChat(chatId)) {
+    // Silently drop — no reply sent to the unauthorised sender.
+    // WARN logging is handled inside isAllowedChat.
+    return;
+  }
+
   botLogger.info(
     { chat_id: chatId, message_id: messageId, from_username: fromUsername },
     "Received message",
@@ -121,11 +128,21 @@ bot.on("callback_query", (query) => {
     return;
   }
 
+  if (!isAllowedChat(chatId)) {
+    // Silently drop — no reply sent to the unauthorised sender.
+    // WARN logging is handled inside isAllowedChat.
+    return;
+  }
+
   const callbackData = query.data ?? "";
   const messageId = query.message?.message_id ?? 0;
 
   botLogger.info(
-    { chat_id: chatId, callback_query_id: query.id, callback_data: callbackData },
+    {
+      chat_id: chatId,
+      callback_query_id: query.id,
+      callback_data: callbackData,
+    },
     "Received callback_query",
   );
 

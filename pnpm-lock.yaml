@@ -30,6 +30,9 @@ importers:
       typescript:
         specifier: 5.4.5
         version: 5.4.5
+      vitest:
+        specifier: ^4.1.4
+        version: 4.1.4(@types/node@25.6.0)(vite@8.0.9(@types/node@25.6.0))
 
   packages/orchestrator:
     dependencies:

@@ -9,7 +9,8 @@
     "build": "tsc --project tsconfig.json",
     "dev": "tsc --project tsconfig.json --watch",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "vitest run --config vitest.config.ts"
   },
   "dependencies": {
     "@lifeos/shared": "workspace:*",
@@ -18,6 +19,7 @@
   "devDependencies": {
     "@types/node": "25.6.0",
     "@types/node-telegram-bot-api": "0.64.14",
-    "typescript": "5.4.5"
+    "typescript": "5.4.5",
+    "vitest": "^4.1.4"
   }
 }
