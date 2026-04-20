@@ -636,6 +636,19 @@ describe("AC3 — migrations run before server accepts requests", () => {
       },
       logger: silentLogger,
       runMigrations: runMigrationsMock,
+      pool: {
+        query: vi.fn().mockResolvedValue({ rows: [] }),
+        connect: vi.fn().mockResolvedValue({
+          query: vi.fn().mockResolvedValue({ rows: [] }),
+          release: vi.fn(),
+        }),
+      },
+    }));
+
+    vi.doMock("../agent.js", () => ({
+      runAgent: vi.fn().mockResolvedValue("stub response"),
+      loadContext: vi.fn().mockResolvedValue([]),
+      saveMessage: vi.fn().mockResolvedValue(undefined),
     }));
 
     await import("../index.js");
@@ -694,6 +707,19 @@ describe("AC3 — migrations run before server accepts requests", () => {
       },
       logger: silentLogger,
       runMigrations: runMigrationsMock,
+      pool: {
+        query: vi.fn().mockResolvedValue({ rows: [] }),
+        connect: vi.fn().mockResolvedValue({
+          query: vi.fn().mockResolvedValue({ rows: [] }),
+          release: vi.fn(),
+        }),
+      },
+    }));
+
+    vi.doMock("../agent.js", () => ({
+      runAgent: vi.fn().mockResolvedValue("stub response"),
+      loadContext: vi.fn().mockResolvedValue([]),
+      saveMessage: vi.fn().mockResolvedValue(undefined),
     }));
 
     await import("../index.js");
@@ -764,6 +790,19 @@ describe("AC4 — server listens on PORT env var, defaults to 3001", () => {
       },
       logger: silentLogger,
       runMigrations: runMigrationsMock,
+      pool: {
+        query: vi.fn().mockResolvedValue({ rows: [] }),
+        connect: vi.fn().mockResolvedValue({
+          query: vi.fn().mockResolvedValue({ rows: [] }),
+          release: vi.fn(),
+        }),
+      },
+    }));
+
+    vi.doMock("../agent.js", () => ({
+      runAgent: vi.fn().mockResolvedValue("stub response"),
+      loadContext: vi.fn().mockResolvedValue([]),
+      saveMessage: vi.fn().mockResolvedValue(undefined),
     }));
 
     await import("../index.js");
@@ -835,6 +874,19 @@ describe("AC4 — server listens on PORT env var, defaults to 3001", () => {
       },
       logger: silentLogger,
       runMigrations: runMigrationsMock,
+      pool: {
+        query: vi.fn().mockResolvedValue({ rows: [] }),
+        connect: vi.fn().mockResolvedValue({
+          query: vi.fn().mockResolvedValue({ rows: [] }),
+          release: vi.fn(),
+        }),
+      },
+    }));
+
+    vi.doMock("../agent.js", () => ({
+      runAgent: vi.fn().mockResolvedValue("stub response"),
+      loadContext: vi.fn().mockResolvedValue([]),
+      saveMessage: vi.fn().mockResolvedValue(undefined),
     }));
 
     await import("../index.js");
