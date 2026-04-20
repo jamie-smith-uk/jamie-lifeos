@@ -17,11 +17,10 @@ RUN pnpm install --frozen-lockfile
 COPY packages/shared ./packages/shared
 COPY packages/orchestrator ./packages/orchestrator
 
-# Build shared first (orchestrator depends on it), then orchestrator
-RUN pnpm --filter @lifeos/shared build && \
-    mkdir -p node_modules/@lifeos && \
+# tsc --build handles project references: builds shared first, then orchestrator
+RUN mkdir -p node_modules/@lifeos && \
     ln -sf /app/packages/shared node_modules/@lifeos/shared && \
-    pnpm --filter @lifeos/orchestrator build
+    ./node_modules/.bin/tsc --build packages/orchestrator/tsconfig.json
 
 FROM node:20-alpine AS runtime
 
