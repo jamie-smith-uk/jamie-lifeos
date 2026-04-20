@@ -420,6 +420,7 @@ describe("AC1 — Smoke test 4: meeting proposal triggers confirmation keyboard"
           input_schema: { type: "object", properties: {}, required: ["title", "start", "end"] },
         },
       ],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue(""),
     }));
 
@@ -455,6 +456,7 @@ describe("AC1 — Smoke test 4: meeting proposal triggers confirmation keyboard"
           input_schema: { type: "object", properties: {}, required: ["title", "start", "end"] },
         },
       ],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue(""),
     }));
 
@@ -491,6 +493,7 @@ describe("AC1 — Smoke test 4: meeting proposal triggers confirmation keyboard"
           input_schema: { type: "object", properties: {}, required: ["title", "start", "end"] },
         },
       ],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue(""),
     }));
 
@@ -529,6 +532,7 @@ describe("AC1 — Smoke test 4: meeting proposal triggers confirmation keyboard"
           input_schema: { type: "object", properties: {}, required: ["title", "start", "end"] },
         },
       ],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue(""),
     }));
 
@@ -556,6 +560,7 @@ describe("AC1 — Smoke test 4: meeting proposal triggers confirmation keyboard"
     vi.doMock("../tools/calendar.js", () => ({
       calendarReadToolDefinitions: [],
       calendarWriteToolDefinitions: [],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn(),
     }));
 
@@ -593,6 +598,7 @@ describe("AC1 — Smoke test 4: meeting proposal triggers confirmation keyboard"
           input_schema: { type: "object", properties: {}, required: ["title", "start", "end"] },
         },
       ],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue(""),
     }));
 
@@ -630,6 +636,7 @@ describe("AC1 — Smoke test 4: meeting proposal triggers confirmation keyboard"
           input_schema: { type: "object", properties: {}, required: ["title", "start", "end"] },
         },
       ],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn(),
     }));
 
@@ -732,6 +739,7 @@ describe("AC2 — Smoke test 5: Confirm callback executes create_event and retur
     vi.doMock("../tools/calendar.js", () => ({
       calendarReadToolDefinitions: [],
       calendarWriteToolDefinitions: [],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: executeCalendarToolMock,
     }));
 
@@ -777,6 +785,7 @@ describe("AC2 — Smoke test 5: Confirm callback executes create_event and retur
     vi.doMock("../tools/calendar.js", () => ({
       calendarReadToolDefinitions: [],
       calendarWriteToolDefinitions: [],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue("Event created."),
     }));
 
@@ -815,6 +824,7 @@ describe("AC2 — Smoke test 5: Confirm callback executes create_event and retur
     vi.doMock("../tools/calendar.js", () => ({
       calendarReadToolDefinitions: [],
       calendarWriteToolDefinitions: [],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue(""),
     }));
 
@@ -842,6 +852,7 @@ describe("AC2 — Smoke test 5: Confirm callback executes create_event and retur
     vi.doMock("../tools/calendar.js", () => ({
       calendarReadToolDefinitions: [],
       calendarWriteToolDefinitions: [],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn(),
     }));
 
@@ -877,6 +888,7 @@ describe("AC2 — Smoke test 5: Confirm callback executes create_event and retur
     vi.doMock("../tools/calendar.js", () => ({
       calendarReadToolDefinitions: [],
       calendarWriteToolDefinitions: [],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn(),
     }));
 
@@ -907,6 +919,7 @@ describe("AC2 — Smoke test 5: Confirm callback executes create_event and retur
     vi.doMock("../tools/calendar.js", () => ({
       calendarReadToolDefinitions: [],
       calendarWriteToolDefinitions: [],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue("Event created successfully."),
     }));
 
@@ -952,6 +965,7 @@ describe("AC2 — Smoke test 5: Confirm callback executes create_event and retur
     vi.doMock("../tools/calendar.js", () => ({
       calendarReadToolDefinitions: [],
       calendarWriteToolDefinitions: [],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue(""),
     }));
 
@@ -1000,6 +1014,7 @@ describe("AC3 — Cancel callback clears confirmation and does not create event"
     vi.doMock("../tools/calendar.js", () => ({
       calendarReadToolDefinitions: [],
       calendarWriteToolDefinitions: [],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn(),
     }));
 
@@ -1037,6 +1052,7 @@ describe("AC3 — Cancel callback clears confirmation and does not create event"
     vi.doMock("../tools/calendar.js", () => ({
       calendarReadToolDefinitions: [],
       calendarWriteToolDefinitions: [],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: executeCalendarToolMock,
     }));
 
@@ -1066,6 +1082,7 @@ describe("AC3 — Cancel callback clears confirmation and does not create event"
     vi.doMock("../tools/calendar.js", () => ({
       calendarReadToolDefinitions: [],
       calendarWriteToolDefinitions: [],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn(),
     }));
 
@@ -1096,6 +1113,7 @@ describe("AC3 — Cancel callback clears confirmation and does not create event"
     vi.doMock("../tools/calendar.js", () => ({
       calendarReadToolDefinitions: [],
       calendarWriteToolDefinitions: [],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn(),
     }));
 
@@ -1128,6 +1146,7 @@ describe("AC3 — Cancel callback clears confirmation and does not create event"
     vi.doMock("../tools/calendar.js", () => ({
       calendarReadToolDefinitions: [],
       calendarWriteToolDefinitions: [],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn(),
     }));
 
@@ -1161,6 +1180,7 @@ describe("AC3 — Cancel callback clears confirmation and does not create event"
     vi.doMock("../tools/calendar.js", () => ({
       calendarReadToolDefinitions: [],
       calendarWriteToolDefinitions: [],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn(),
     }));
 
@@ -1213,6 +1233,7 @@ describe("AC4 — Proposal includes title, date, time, duration, and location (i
           input_schema: { type: "object", properties: {}, required: ["title", "start", "end"] },
         },
       ],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue(""),
     }));
 
@@ -1249,6 +1270,7 @@ describe("AC4 — Proposal includes title, date, time, duration, and location (i
           input_schema: { type: "object", properties: {}, required: ["title", "start", "end"] },
         },
       ],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue(""),
     }));
 
@@ -1285,6 +1307,7 @@ describe("AC4 — Proposal includes title, date, time, duration, and location (i
           input_schema: { type: "object", properties: {}, required: ["title", "start", "end"] },
         },
       ],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue(""),
     }));
 
@@ -1321,6 +1344,7 @@ describe("AC4 — Proposal includes title, date, time, duration, and location (i
           input_schema: { type: "object", properties: {}, required: ["title", "start", "end"] },
         },
       ],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue(""),
     }));
 
@@ -1358,6 +1382,7 @@ describe("AC4 — Proposal includes title, date, time, duration, and location (i
           input_schema: { type: "object", properties: {}, required: ["title", "start", "end"] },
         },
       ],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue(""),
     }));
 
@@ -1396,6 +1421,7 @@ describe("AC4 — Proposal includes title, date, time, duration, and location (i
           input_schema: { type: "object", properties: {}, required: ["title", "start", "end"] },
         },
       ],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue(""),
     }));
 
@@ -1434,6 +1460,7 @@ describe("AC4 — Proposal includes title, date, time, duration, and location (i
           input_schema: { type: "object", properties: {}, required: ["title", "start", "end"] },
         },
       ],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue(""),
     }));
 
@@ -1470,6 +1497,7 @@ describe("AC4 — Proposal includes title, date, time, duration, and location (i
           input_schema: { type: "object", properties: {}, required: ["title", "start", "end"] },
         },
       ],
+      calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue(""),
     }));
 

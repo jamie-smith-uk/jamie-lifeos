@@ -299,7 +299,7 @@ describe("AC1 — typing indicator is sent to Telegram before agent response arr
     fetchCalls.length = 0;
 
     await httpPost(handle.port, "/message", {
-      chat_id: 999,
+      chat_id: 123456,
       text: "Hello bot",
       message_id: 1,
     });
@@ -314,7 +314,7 @@ describe("AC1 — typing indicator is sent to Telegram before agent response arr
     fetchCalls.length = 0;
 
     await httpPost(handle.port, "/message", {
-      chat_id: 999,
+      chat_id: 123456,
       text: "Trigger typing indicator",
       message_id: 2,
     });
@@ -332,7 +332,7 @@ describe("AC1 — typing indicator is sent to Telegram before agent response arr
 
   it("the sendChatAction call includes the correct chat_id", async () => {
     fetchCalls.length = 0;
-    const CHAT_ID = 42001;
+    const CHAT_ID = 123456;
 
     await httpPost(handle.port, "/message", {
       chat_id: CHAT_ID,
@@ -357,7 +357,7 @@ describe("AC1 — typing indicator is sent to Telegram before agent response arr
     fetchCalls.length = 0;
 
     await httpPost(handle.port, "/message", {
-      chat_id: 100,
+      chat_id: 123456,
       text: "Check token in URL",
       message_id: 4,
     });
@@ -411,7 +411,7 @@ describe("AC1 — typing indicator is sent to Telegram before agent response arr
     await waitForPort(PORT2);
 
     await httpPost(PORT2, "/message", {
-      chat_id: 100,
+      chat_id: 123456,
       text: "method check",
       message_id: 5,
     });
@@ -489,7 +489,7 @@ describe("AC2 — typing action is sent before the Anthropic API call is initiat
     await waitForPort(PORT);
 
     await httpPost(PORT, "/message", {
-      chat_id: 200,
+      chat_id: 123456,
       text: "order test",
       message_id: 1,
     });
@@ -553,7 +553,7 @@ describe("AC2 — typing action is sent before the Anthropic API call is initiat
     await waitForPort(PORT);
 
     await httpPost(PORT, "/message", {
-      chat_id: 201,
+      chat_id: 123456,
       text: "dispatch order check",
       message_id: 2,
     });
@@ -616,7 +616,7 @@ describe("AC2 — typing action is sent before the Anthropic API call is initiat
 
     // POST /callback — should NOT trigger typing indicator
     await httpPost(PORT, "/callback", {
-      chat_id: 202,
+      chat_id: 123456,
       callback_query_id: "cq_t11",
       callback_data: "cancel",
       message_id: 5,
@@ -677,7 +677,7 @@ describe("AC2 — typing action is sent before the Anthropic API call is initiat
     sendChatActionCallCount = 0;
 
     await httpPost(PORT, "/message", {
-      chat_id: 203,
+      chat_id: 123456,
       text: "one typing call",
       message_id: 6,
     });
@@ -762,7 +762,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
 
     it("returns HTTP 200 even when Telegram fetch rejects", async () => {
       const res = await httpPost(handle.port, "/message", {
-        chat_id: 300,
+        chat_id: 123456,
         text: "Will fetch reject?",
         message_id: 1,
       });
@@ -771,7 +771,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
 
     it("response body contains a valid text field when fetch rejects", async () => {
       const res = await httpPost(handle.port, "/message", {
-        chat_id: 300,
+        chat_id: 123456,
         text: "Network failure test",
         message_id: 2,
       });
@@ -782,7 +782,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
 
     it("the agent reply text is returned correctly when Telegram fetch fails", async () => {
       const res = await httpPost(handle.port, "/message", {
-        chat_id: 300,
+        chat_id: 123456,
         text: "Check reply text",
         message_id: 3,
       });
@@ -848,7 +848,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
 
     it("returns HTTP 200 when Telegram returns 403", async () => {
       const res = await httpPost(handle.port, "/message", {
-        chat_id: 301,
+        chat_id: 123456,
         text: "Telegram 403 test",
         message_id: 1,
       });
@@ -857,7 +857,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
 
     it("response JSON has text field when Telegram returns 403", async () => {
       const res = await httpPost(handle.port, "/message", {
-        chat_id: 301,
+        chat_id: 123456,
         text: "403 body test",
         message_id: 2,
       });
@@ -923,7 +923,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
 
     it("returns HTTP 200 when Telegram returns 500", async () => {
       const res = await httpPost(handle.port, "/message", {
-        chat_id: 302,
+        chat_id: 123456,
         text: "Telegram 500 test",
         message_id: 1,
       });
@@ -932,7 +932,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
 
     it("agent reply is included in response even after Telegram 500", async () => {
       const res = await httpPost(handle.port, "/message", {
-        chat_id: 302,
+        chat_id: 123456,
         text: "500 reply check",
         message_id: 2,
       });
@@ -996,7 +996,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
 
       const start = Date.now();
       const res = await httpPost(PORT, "/message", {
-        chat_id: 303,
+        chat_id: 123456,
         text: "non-blocking test",
         message_id: 1,
       });

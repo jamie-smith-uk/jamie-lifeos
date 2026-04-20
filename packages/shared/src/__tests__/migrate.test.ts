@@ -439,9 +439,10 @@ describe("migrate.ts", () => {
       expect(sql).toMatch(/idx_conversation_context_chat_id/i);
     });
 
-    it("index is created ON conversation_context (chat_id)", () => {
+    it("index is created ON conversation_context with chat_id as leading column", () => {
       const sql = fs.readFileSync(INIT_SQL_PATH, "utf8");
-      expect(sql).toMatch(/ON conversation_context\s*\(\s*chat_id\s*\)/i);
+      // The composite index starts with chat_id (may include additional columns)
+      expect(sql).toMatch(/ON conversation_context\s*\(\s*chat_id/i);
     });
 
     it("0001_init.sql uses IF NOT EXISTS for idempotency (table creation)", () => {

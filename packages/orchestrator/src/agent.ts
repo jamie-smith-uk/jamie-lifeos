@@ -75,10 +75,11 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { pool, env, logger } from "@lifeos/shared";
-import type { MessageRole, ConversationMessage, ConfirmationPayload, IncomingMessage, CreateEventData, UpdateEventData } from "@lifeos/shared";
+import type { MessageRole, ConversationMessage, ConfirmationPayload, IncomingMessage, CreateEventData, UpdateEventData, DeleteEventData } from "@lifeos/shared";
 import {
   calendarReadToolDefinitions,
   calendarWriteToolDefinitions,
+  calendarFreeBusyToolDefinitions,
   executeCalendarTool,
 } from "./tools/calendar.js";
 
@@ -210,6 +211,7 @@ Timezone: ${tz}`,
 const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   ...calendarReadToolDefinitions,
   ...calendarWriteToolDefinitions,
+  ...calendarFreeBusyToolDefinitions,
 ];
 
 // ---------------------------------------------------------------------------
@@ -440,6 +442,22 @@ function buildUpdateEventSummary(data: UpdateEventData): string {
   return lines.join("\n");
 }
 
+/**
+ * Build a human-readable summary for a delete event confirmation.
+ * T-19: Delete event confirmation summary includes event ID and permanent warning.
+ *
+ * @param data  The delete event data containing eventId.
+ * @returns     A formatted summary string for the confirmation message.
+ */
+function buildDeleteEventSummary(data: DeleteEventData): string {
+  return [
+    `Event ID: ${data.eventId}`,
+    "",
+    "⚠️  This action is permanent and cannot be undone.",
+    "The event will be completely removed from your calendar.",
+  ].join("\n");
+}
+
 // ---------------------------------------------------------------------------
 // Agent loop
 // ---------------------------------------------------------------------------
@@ -638,9 +656,49 @@ export async function runAgent(msg: IncomingMessage): Promise<AgentResult> {
                 });
               }
             }
+          } else if (toolUse.name === "delete_event") {
+            // ------------------------------------------------------------------
+            // T-19: Intercept delete_event — build summary with event ID and
+            // permanent warning, save ConfirmationPayload { action: 'delete_event', eventId }.
+            // ------------------------------------------------------------------
+            const deleteInput = toolUse.input as Record<string, unknown>;
+            if (typeof deleteInput.eventId === "string" && deleteInput.eventId.trim() !== "") {
+              const deleteData: DeleteEventData = {
+                eventId: deleteInput.eventId,
+              };
+
+              const summary = buildDeleteEventSummary(deleteData);
+
+              const payload: ConfirmationPayload = {
+                action: "delete_event",
+                proposed_at: new Date().toISOString(),
+                data: deleteData,
+                summary,
+              };
+
+              try {
+                await saveConfirmation(msg.chat_id, payload);
+                showConfirmationKeyboard = true;
+                syntheticResult = JSON.stringify({
+                  status: "pending_confirmation",
+                  message:
+                    "The following deletion has been noted. Present this proposal " +
+                    "to the user and ask them to Confirm or Cancel using the buttons below:\n\n" +
+                    summary,
+                });
+              } catch (saveErr) {
+                log.error({ err: saveErr }, "Failed to save delete_event confirmation payload");
+                syntheticResult = JSON.stringify({
+                  error: "Failed to save event deletion proposal — please try again",
+                });
+              }
+            } else {
+              syntheticResult = JSON.stringify({
+                error: "delete_event requires a valid eventId",
+              });
+            }
           } else {
-            // Other confirmation-gated tools (delete_event) —
-            // placeholder until their dedicated tasks are implemented.
+            // Other confirmation-gated tools — fallback for any future tools
             syntheticResult = JSON.stringify({
               status: "pending_confirmation",
               message:

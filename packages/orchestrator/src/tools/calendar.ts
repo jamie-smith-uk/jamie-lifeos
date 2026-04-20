@@ -868,6 +868,9 @@ export const calendarWriteToolDefinitions: Anthropic.Tool[] = [
   createEventTool,
   updateEventTool,
   deleteEventTool,
+];
+
+export const calendarFreeBusyToolDefinitions: Anthropic.Tool[] = [
   checkFreeBusyTool,
 ];
 

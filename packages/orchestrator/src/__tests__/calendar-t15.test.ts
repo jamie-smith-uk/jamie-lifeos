@@ -366,11 +366,11 @@ describe("AC1 — write tool definitions exported from calendar.ts", () => {
 
   // --- calendarWriteToolDefinitions array ---
 
-  it("exports calendarWriteToolDefinitions as an array of 4 tools", async () => {
+  it("exports calendarWriteToolDefinitions as an array of 3 tools (T-20: check_free_busy moved to calendarFreeBusyToolDefinitions)", async () => {
     vi.doMock("@lifeos/shared", () => ({ logger: buildLoggerMock() }));
     const { calendarWriteToolDefinitions } = await import("../tools/calendar.js");
     expect(Array.isArray(calendarWriteToolDefinitions)).toBe(true);
-    expect(calendarWriteToolDefinitions).toHaveLength(4);
+    expect(calendarWriteToolDefinitions).toHaveLength(3);
   });
 
   it("calendarWriteToolDefinitions contains create_event", async () => {
@@ -394,10 +394,11 @@ describe("AC1 — write tool definitions exported from calendar.ts", () => {
     expect(names).toContain("delete_event");
   });
 
-  it("calendarWriteToolDefinitions contains check_free_busy", async () => {
+  it("calendarFreeBusyToolDefinitions (separate array) contains check_free_busy (T-20: moved from calendarWriteToolDefinitions)", async () => {
     vi.doMock("@lifeos/shared", () => ({ logger: buildLoggerMock() }));
-    const { calendarWriteToolDefinitions } = await import("../tools/calendar.js");
-    const names = calendarWriteToolDefinitions.map((t) => t.name);
+    const { calendarFreeBusyToolDefinitions } = await import("../tools/calendar.js");
+    expect(Array.isArray(calendarFreeBusyToolDefinitions)).toBe(true);
+    const names = calendarFreeBusyToolDefinitions.map((t: any) => t.name);
     expect(names).toContain("check_free_busy");
   });
 });

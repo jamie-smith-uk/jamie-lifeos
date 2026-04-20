@@ -288,7 +288,7 @@ describe("AC1 — POST /message returns 200 and a text reply", () => {
 
   it("returns HTTP 200 for a valid message body", async () => {
     const res = await httpPost(handle.port, "/message", {
-      chat_id: 100,
+      chat_id: 123456,
       text: "Hello",
       message_id: 1,
     });
@@ -297,7 +297,7 @@ describe("AC1 — POST /message returns 200 and a text reply", () => {
 
   it("response body is valid JSON", async () => {
     const res = await httpPost(handle.port, "/message", {
-      chat_id: 100,
+      chat_id: 123456,
       text: "Hello",
       message_id: 1,
     });
@@ -306,7 +306,7 @@ describe("AC1 — POST /message returns 200 and a text reply", () => {
 
   it("response JSON contains a 'text' property", async () => {
     const res = await httpPost(handle.port, "/message", {
-      chat_id: 100,
+      chat_id: 123456,
       text: "What time is it?",
       message_id: 2,
     });
@@ -316,7 +316,7 @@ describe("AC1 — POST /message returns 200 and a text reply", () => {
 
   it("'text' property in response is non-empty", async () => {
     const res = await httpPost(handle.port, "/message", {
-      chat_id: 100,
+      chat_id: 123456,
       text: "Schedule meeting",
       message_id: 3,
     });
@@ -401,7 +401,7 @@ describe("AC2 — POST /callback with callback_data 'cancel' returns 200", () =>
 
   it("returns 200 for callback_data='cancel'", async () => {
     const res = await httpPost(handle.port, "/callback", {
-      chat_id: 100,
+      chat_id: 123456,
       callback_query_id: "cq_001",
       callback_data: "cancel",
       message_id: 5,
@@ -411,7 +411,7 @@ describe("AC2 — POST /callback with callback_data 'cancel' returns 200", () =>
 
   it("response body contains a text field for cancel", async () => {
     const res = await httpPost(handle.port, "/callback", {
-      chat_id: 100,
+      chat_id: 123456,
       callback_query_id: "cq_002",
       callback_data: "cancel",
       message_id: 6,
@@ -422,7 +422,7 @@ describe("AC2 — POST /callback with callback_data 'cancel' returns 200", () =>
 
   it("returns 200 for callback_data='confirm'", async () => {
     const res = await httpPost(handle.port, "/callback", {
-      chat_id: 100,
+      chat_id: 123456,
       callback_query_id: "cq_003",
       callback_data: "confirm",
       message_id: 7,
@@ -432,7 +432,7 @@ describe("AC2 — POST /callback with callback_data 'cancel' returns 200", () =>
 
   it("returns 200 for callback_data='edit'", async () => {
     const res = await httpPost(handle.port, "/callback", {
-      chat_id: 100,
+      chat_id: 123456,
       callback_query_id: "cq_004",
       callback_data: "edit",
       message_id: 8,
@@ -442,7 +442,7 @@ describe("AC2 — POST /callback with callback_data 'cancel' returns 200", () =>
 
   it("returns 200 for callback_data='dismiss:42'", async () => {
     const res = await httpPost(handle.port, "/callback", {
-      chat_id: 100,
+      chat_id: 123456,
       callback_query_id: "cq_005",
       callback_data: "dismiss:42",
       message_id: 9,
@@ -452,7 +452,7 @@ describe("AC2 — POST /callback with callback_data 'cancel' returns 200", () =>
 
   it("returns 400 for unknown callback_data", async () => {
     const res = await httpPost(handle.port, "/callback", {
-      chat_id: 100,
+      chat_id: 123456,
       callback_query_id: "cq_006",
       callback_data: "unknown_action",
       message_id: 10,
@@ -462,7 +462,7 @@ describe("AC2 — POST /callback with callback_data 'cancel' returns 200", () =>
 
   it("returns 400 when callback_data field is missing", async () => {
     const res = await httpPost(handle.port, "/callback", {
-      chat_id: 100,
+      chat_id: 123456,
       callback_query_id: "cq_007",
       message_id: 11,
     });
@@ -480,7 +480,7 @@ describe("AC2 — POST /callback with callback_data 'cancel' returns 200", () =>
 
   it("returns 400 for invalid dismiss nudgeId (non-integer)", async () => {
     const res = await httpPost(handle.port, "/callback", {
-      chat_id: 100,
+      chat_id: 123456,
       callback_query_id: "cq_009",
       callback_data: "dismiss:abc",
       message_id: 13,
@@ -490,7 +490,7 @@ describe("AC2 — POST /callback with callback_data 'cancel' returns 200", () =>
 
   it("returns 400 for dismiss nudgeId of 0", async () => {
     const res = await httpPost(handle.port, "/callback", {
-      chat_id: 100,
+      chat_id: 123456,
       callback_query_id: "cq_010",
       callback_data: "dismiss:0",
       message_id: 14,
@@ -735,7 +735,7 @@ describe("AC3 — migrations run before server accepts requests", () => {
 
     // By the time the server accepts connections, migrations must be resolved
     const res = await httpPost(PORT, "/message", {
-      chat_id: 1,
+      chat_id: 123456,
       text: "test",
       message_id: 1,
     });
@@ -820,7 +820,7 @@ describe("AC4 — server listens on PORT env var, defaults to 3001", () => {
 
     // Server is reachable on the custom port
     const res = await httpPost(CUSTOM_PORT, "/message", {
-      chat_id: 1,
+      chat_id: 123456,
       text: "port test",
       message_id: 1,
     });
