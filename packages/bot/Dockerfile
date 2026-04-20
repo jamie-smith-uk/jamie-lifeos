@@ -17,7 +17,7 @@ RUN mkdir -p node_modules/@lifeos && \
 COPY packages/shared ./packages/shared
 COPY packages/bot ./packages/bot
 
-RUN pnpm --filter @lifeos/shared build
+RUN ls packages/shared/dist/ && echo "shared dist present"
 RUN pnpm --filter @lifeos/bot build
 
 FROM node:20-alpine AS runtime
