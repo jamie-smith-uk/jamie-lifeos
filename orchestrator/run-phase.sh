@@ -92,17 +92,24 @@ wait_for_approval() {
   log "Waiting for your approval via Telegram..."
   log "Reply 'approve', 'changes: [what to change]', or 'stop'"
 
-  while [ $(date +%s) -lt $deadline ]; do
+  # Launch telegram gate in background to write approval.json
+  "$REPO_ROOT/orchestrator/telegram-gate.sh" --phase "$PHASE" &
+  GATE_PID=$!
+
+  # Wait for approval.json to appear
+  while [ $(date +%s) -lt $deadline ] && kill -0 $GATE_PID 2>/dev/null; do
     if [ -f "$approval_file" ]; then
+      wait $GATE_PID 2>/dev/null || true
       local signal
-      signal=$(python3 -c "import json,sys; print(json.load(open('$approval_file'))['signal'])")
+      signal=$(python3 -c "import json; print(json.load(open('$approval_file'))['signal'])")
       log "Approval received: $signal"
       echo "$signal"
       return 0
     fi
-    sleep 5
+    sleep 2
   done
 
+  kill $GATE_PID 2>/dev/null || true
   halt "Approval timeout" "human-gate" "No approval signal received within 24 hours"
 }
 
