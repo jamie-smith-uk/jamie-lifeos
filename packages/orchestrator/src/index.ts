@@ -14,22 +14,19 @@
 import http from "http";
 import { env, logger, runMigrations } from "@lifeos/shared";
 import type { IncomingMessage as BotMessage, IncomingCallback } from "@lifeos/shared";
+import { runAgent } from "./agent.js";
 
 // ---------------------------------------------------------------------------
-// Agent stub — replaced by T-09 / T-10 when agent.ts is implemented.
+// Message handler — delegates to the agent core (T-10).
 // ---------------------------------------------------------------------------
 
 /**
- * Thin shim that will be superseded once agent.ts (T-09/T-10) is in place.
- * Returns a placeholder reply so the HTTP layer is independently testable.
- *
- * @internal — call sites should import from agent.ts once available.
+ * Handle an incoming message by invoking the agent loop.
+ * The agent loads conversation context, calls the Anthropic API (with tool
+ * loop), persists the exchange, and returns the assistant's text reply.
  */
-async function handleMessage(_msg: BotMessage): Promise<string> {
-  // TODO(T-09): replace with real agent invocation:
-  //   import { runAgent } from "./agent.js";
-  //   return runAgent(msg);
-  return "Agent not yet implemented.";
+async function handleMessage(msg: BotMessage): Promise<string> {
+  return runAgent(msg);
 }
 
 // ---------------------------------------------------------------------------
