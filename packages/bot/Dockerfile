@@ -17,10 +17,7 @@ RUN pnpm install --frozen-lockfile
 COPY packages/shared ./packages/shared
 COPY packages/bot ./packages/bot
 
-# tsc --build handles project references: builds shared first, then bot
-RUN mkdir -p node_modules/@lifeos && \
-    ln -sf /app/packages/shared node_modules/@lifeos/shared && \
-    ./node_modules/.bin/tsc --build packages/bot/tsconfig.json
+RUN pnpm --filter @lifeos/shared build && pnpm --filter @lifeos/bot build
 
 FROM node:20-alpine AS runtime
 
