@@ -83,7 +83,7 @@ run_agent() {
   local agent_id="$1" prompt="$2" output_file="$3"
   log "[$agent_id] Starting..."
 
-  opencode run --agent "$agent_id" --dangerously-skip-permissions "$prompt" > "$output_file" 2>&1
+  opencode run --agent "$agent_id" "$prompt" > "$output_file" 2>&1
   local exit_code=$?
 
   if [ $exit_code -ne 0 ]; then
