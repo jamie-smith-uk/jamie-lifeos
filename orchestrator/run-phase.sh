@@ -139,7 +139,11 @@ Write two files to pipeline/phase-$PHASE/:
 
 Follow your system prompt exactly."
 
-run_agent "ag-01-architect" "$ARCH_PROMPT" "$PIPELINE_DIR/ag01-output.md"
+if [ ! -f "$PIPELINE_DIR/task-manifest.json" ]; then
+  run_agent "ag-01-architect" "$ARCH_PROMPT" "$PIPELINE_DIR/ag01-output.md"
+else
+  log "task-manifest.json already exists — skipping AG-01"
+fi
 
 if [ ! -f "$PIPELINE_DIR/task-manifest.json" ]; then
   halt "task-manifest.json not produced" "AG-01" "Architect did not write task-manifest.json"
@@ -247,6 +251,16 @@ for t in tasks:
 for TASK_ID in $TASKS; do
   TASK_DIR="$PIPELINE_DIR/$TASK_ID"
   mkdir -p "$TASK_DIR"
+
+  # Skip if already fully complete (both security and test reports show PASS)
+  SEC_REPORT="$TASK_DIR/security-report.md"
+  TEST_REPORT="$TASK_DIR/test-report.md"
+
+  if [ -f "$SEC_REPORT" ] && report_contains "$SEC_REPORT" "PASS" && \
+     [ -f "$TEST_REPORT" ] && report_contains "$TEST_REPORT" "PASS"; then
+    log "Task $TASK_ID already complete — skipping"
+    continue
+  fi
 
   TASK_JSON=$(python3 -c "
 import json
