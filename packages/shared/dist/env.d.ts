@@ -12,6 +12,7 @@ interface EnvConfig {
     ANTHROPIC_MODEL: string;
     DATABASE_URL: string;
     ORCHESTRATOR_URL: string;
+    GOOGLE_CALENDAR_MCP_TOKEN: string;
     DIGEST_CRON: string;
     TZ: string;
     BOT_MODE: "polling" | "webhook";

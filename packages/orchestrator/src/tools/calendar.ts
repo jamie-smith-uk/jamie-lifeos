@@ -57,7 +57,7 @@
  */
 
 import type Anthropic from "@anthropic-ai/sdk";
-import { logger } from "@lifeos/shared";
+import { env, logger } from "@lifeos/shared";
 
 // ---------------------------------------------------------------------------
 // Logger
@@ -123,12 +123,20 @@ async function callMcpTool(
 
   log.info({ toolName, params }, "Calling Google Calendar MCP tool");
 
+  const token = env.GOOGLE_CALENDAR_MCP_TOKEN;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  } else {
+    log.warn("GOOGLE_CALENDAR_MCP_TOKEN is not set — MCP requests will be unauthenticated");
+  }
+
   const response = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
+    headers,
     body: JSON.stringify(requestBody),
   });
 

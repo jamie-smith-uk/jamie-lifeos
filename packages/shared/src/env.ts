@@ -21,6 +21,9 @@ interface EnvConfig {
   // Orchestrator
   ORCHESTRATOR_URL: string;
 
+  // Integrations
+  GOOGLE_CALENDAR_MCP_TOKEN: string;
+
   // Scheduling
   DIGEST_CRON: string;
   TZ: string;
@@ -42,6 +45,7 @@ const REQUIRED_VARS: ReadonlyArray<keyof EnvConfig> = [
 
 const OPTIONAL_DEFAULTS: Partial<Record<keyof EnvConfig, string>> = {
   ANTHROPIC_MODEL: "claude-sonnet-4-20250514",
+  GOOGLE_CALENDAR_MCP_TOKEN: "",
   BOT_MODE: "polling",
   LOG_LEVEL: "info",
   ORCHESTRATOR_URL: "http://localhost:3001",
@@ -92,6 +96,7 @@ function loadEnv(): EnvConfig {
     ANTHROPIC_MODEL: raw("ANTHROPIC_MODEL"),
     DATABASE_URL: raw("DATABASE_URL"),
     ORCHESTRATOR_URL: raw("ORCHESTRATOR_URL"),
+    GOOGLE_CALENDAR_MCP_TOKEN: raw("GOOGLE_CALENDAR_MCP_TOKEN"),
     DIGEST_CRON: raw("DIGEST_CRON"),
     TZ: raw("TZ"),
     BOT_MODE: botMode,
