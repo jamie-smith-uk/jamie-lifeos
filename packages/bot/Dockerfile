@@ -18,7 +18,10 @@ COPY packages/shared ./packages/shared
 COPY packages/bot ./packages/bot
 
 # Build shared first (bot depends on it), then bot
-RUN pnpm --filter @lifeos/shared build && pnpm --filter @lifeos/bot build
+RUN pnpm --filter @lifeos/shared build && \
+    mkdir -p node_modules/@lifeos && \
+    ln -sf /app/packages/shared node_modules/@lifeos/shared && \
+    pnpm --filter @lifeos/bot build
 
 FROM node:20-alpine AS runtime
 

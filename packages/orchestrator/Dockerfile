@@ -18,7 +18,10 @@ COPY packages/shared ./packages/shared
 COPY packages/orchestrator ./packages/orchestrator
 
 # Build shared first (orchestrator depends on it), then orchestrator
-RUN pnpm --filter @lifeos/shared build && pnpm --filter @lifeos/orchestrator build
+RUN pnpm --filter @lifeos/shared build && \
+    mkdir -p node_modules/@lifeos && \
+    ln -sf /app/packages/shared node_modules/@lifeos/shared && \
+    pnpm --filter @lifeos/orchestrator build
 
 FROM node:20-alpine AS runtime
 
