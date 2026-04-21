@@ -90,6 +90,7 @@ import {
   calendarWriteToolDefinitions,
   executeCalendarTool,
 } from "./tools/calendar.js";
+import { executeGmailTool } from "./tools/gmail.js";
 import { executeToDoistTool } from "./tools/todoist.js";
 
 // ---------------------------------------------------------------------------
@@ -206,7 +207,7 @@ Timezone: ${tz}`,
 }
 
 // ---------------------------------------------------------------------------
-// Tool definitions (T-12: read tools; T-15: write tools; Task-3: Todoist tools)
+// Tool definitions (T-12: read tools; T-15: write tools; Task-3: Todoist; Task-4: Gmail)
 // ---------------------------------------------------------------------------
 
 /**
@@ -218,6 +219,7 @@ Timezone: ${tz}`,
  * user approval.
  * Task-3 (Phase 2): Todoist tools added — get_tasks, create_task,
  * complete_task, delete_task, update_task.
+ * Task-4 (Phase 2): Gmail read tools added — get_inbox_summary, get_thread.
  */
 const todoistToolDefinitions: Anthropic.Tool[] = [
   {
@@ -312,11 +314,44 @@ const todoistToolDefinitions: Anthropic.Tool[] = [
   },
 ];
 
+/**
+ * Gmail tool definitions (Task-4, Phase 2).
+ * Provides read-only inbox access: get_inbox_summary and get_thread.
+ */
+const gmailToolDefinitions: Anthropic.Tool[] = [
+  {
+    name: "get_inbox_summary",
+    description:
+      "Retrieve a summary of the user's unread Gmail inbox messages. Returns sender, subject, snippet, thread ID, and category for up to 10 unread emails.",
+    input_schema: {
+      type: "object",
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "get_thread",
+    description:
+      "Retrieve the full message thread from Gmail by thread ID. Returns all messages in the thread with sender, subject, date, and body.",
+    input_schema: {
+      type: "object",
+      properties: {
+        thread_id: {
+          type: "string",
+          description: "The Gmail thread ID to retrieve.",
+        },
+      },
+      required: ["thread_id"],
+    },
+  },
+];
+
 const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   ...calendarReadToolDefinitions,
   ...calendarWriteToolDefinitions,
   ...calendarFreeBusyToolDefinitions,
   ...todoistToolDefinitions,
+  ...gmailToolDefinitions,
 ];
 
 // ---------------------------------------------------------------------------
@@ -356,6 +391,14 @@ const TODOIST_TOOL_NAMES = new Set<string>([
 ]);
 
 /**
+ * The set of Gmail tool names handled by executeGmailTool.
+ * Task-4 (Phase 2): Both Gmail read operations are registered here so the
+ * tool loop routes them to the Gmail module rather than the unknown-tool
+ * handler.
+ */
+const GMAIL_TOOL_NAMES = new Set<string>(["get_inbox_summary", "get_thread"]);
+
+/**
  * The set of write tool names that must be confirmation-gated.
  * When the agent calls one of these tools, the tool loop intercepts the call,
  * saves a ConfirmationPayload, and returns a synthetic tool_result so the
@@ -387,6 +430,11 @@ async function executeTool(toolName: string, toolInput: Record<string, unknown>)
   // Delegate Todoist tools to the Todoist module (Task-3, Phase 2).
   if (TODOIST_TOOL_NAMES.has(toolName)) {
     return executeToDoistTool(toolName, toolInput);
+  }
+
+  // Delegate Gmail tools to the Gmail module (Task-4, Phase 2).
+  if (GMAIL_TOOL_NAMES.has(toolName)) {
+    return executeGmailTool(toolName, toolInput);
   }
 
   // Unknown tool — return a graceful error so the model can handle it.
