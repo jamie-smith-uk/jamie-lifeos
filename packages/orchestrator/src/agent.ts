@@ -74,14 +74,23 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
-import { pool, env, logger } from "@lifeos/shared";
-import type { MessageRole, ConversationMessage, ConfirmationPayload, IncomingMessage, CreateEventData, UpdateEventData, DeleteEventData } from "@lifeos/shared";
+import type {
+  ConfirmationPayload,
+  ConversationMessage,
+  CreateEventData,
+  DeleteEventData,
+  IncomingMessage,
+  MessageRole,
+  UpdateEventData,
+} from "@lifeos/shared";
+import { env, logger, pool } from "@lifeos/shared";
 import {
+  calendarFreeBusyToolDefinitions,
   calendarReadToolDefinitions,
   calendarWriteToolDefinitions,
-  calendarFreeBusyToolDefinitions,
   executeCalendarTool,
 } from "./tools/calendar.js";
+import { executeToDoistTool } from "./tools/todoist.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -207,11 +216,112 @@ Timezone: ${tz}`,
  * delete_event, check_free_busy — these are included so the model is aware
  * of them, but are ONLY executed by the confirmation executor after explicit
  * user approval.
+ * Task-3 (Phase 2): Todoist tools added — get_tasks, create_task,
+ * complete_task, delete_task, update_task.
  */
+
+/**
+ * Todoist tool definitions for the Anthropic API.
+ * All 5 operations: get_tasks, create_task, complete_task, delete_task, update_task.
+ */
+const todoistToolDefinitions: Anthropic.Tool[] = [
+  {
+    name: "get_tasks",
+    description:
+      "Retrieve tasks from Todoist. Optionally filter by a Todoist filter string (e.g. 'today', 'overdue', 'p1').",
+    input_schema: {
+      type: "object",
+      properties: {
+        filter: {
+          type: "string",
+          description:
+            "Todoist filter query string (e.g. 'today', 'overdue', 'p1'). If omitted, all tasks are returned.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "create_task",
+    description: "Create a new task in Todoist with an optional due date and priority.",
+    input_schema: {
+      type: "object",
+      properties: {
+        content: {
+          type: "string",
+          description: "The text content / title of the task.",
+        },
+        due_date: {
+          type: "string",
+          description: "Due date in YYYY-MM-DD format (e.g. '2026-04-30'). Optional.",
+        },
+        priority: {
+          type: "number",
+          description:
+            "Task priority: 1 (normal/p4), 2 (medium/p3), 3 (high/p2), 4 (urgent/p1). Optional.",
+        },
+      },
+      required: ["content"],
+    },
+  },
+  {
+    name: "complete_task",
+    description: "Mark an existing Todoist task as completed.",
+    input_schema: {
+      type: "object",
+      properties: {
+        task_id: {
+          type: "string",
+          description: "The unique Todoist task ID to mark as complete.",
+        },
+      },
+      required: ["task_id"],
+    },
+  },
+  {
+    name: "delete_task",
+    description: "Permanently delete a Todoist task by its ID.",
+    input_schema: {
+      type: "object",
+      properties: {
+        task_id: {
+          type: "string",
+          description: "The unique Todoist task ID to delete.",
+        },
+      },
+      required: ["task_id"],
+    },
+  },
+  {
+    name: "update_task",
+    description: "Update the due date and/or priority of an existing Todoist task.",
+    input_schema: {
+      type: "object",
+      properties: {
+        task_id: {
+          type: "string",
+          description: "The unique Todoist task ID to update.",
+        },
+        due_date: {
+          type: "string",
+          description: "New due date in YYYY-MM-DD format. Optional.",
+        },
+        priority: {
+          type: "number",
+          description:
+            "New priority: 1 (normal/p4), 2 (medium/p3), 3 (high/p2), 4 (urgent/p1). Optional.",
+        },
+      },
+      required: ["task_id"],
+    },
+  },
+];
+
 const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   ...calendarReadToolDefinitions,
   ...calendarWriteToolDefinitions,
   ...calendarFreeBusyToolDefinitions,
+  ...todoistToolDefinitions,
 ];
 
 // ---------------------------------------------------------------------------
@@ -237,17 +347,27 @@ const CALENDAR_TOOL_NAMES = new Set<string>([
 ]);
 
 /**
+ * The set of Todoist tool names handled by executeToDoistTool.
+ * Task-3 (Phase 2): All 5 Todoist operations are registered here so the
+ * tool loop routes them to the Todoist module rather than the unknown-tool
+ * handler.
+ */
+const TODOIST_TOOL_NAMES = new Set<string>([
+  "get_tasks",
+  "create_task",
+  "complete_task",
+  "delete_task",
+  "update_task",
+]);
+
+/**
  * The set of write tool names that must be confirmation-gated.
  * When the agent calls one of these tools, the tool loop intercepts the call,
  * saves a ConfirmationPayload, and returns a synthetic tool_result so the
  * model can compose a proposal text — the actual calendar mutation is deferred
  * until the user taps Confirm.
  */
-const CONFIRMATION_GATED_TOOLS = new Set<string>([
-  "create_event",
-  "update_event",
-  "delete_event",
-]);
+const CONFIRMATION_GATED_TOOLS = new Set<string>(["create_event", "update_event", "delete_event"]);
 
 /**
  * Execute a single tool call and return its result as a string.
@@ -263,20 +383,21 @@ const CONFIRMATION_GATED_TOOLS = new Set<string>([
  * @param toolInput  The input parameters for the tool.
  * @returns          A string representation of the tool result.
  */
-async function executeTool(
-  toolName: string,
-  toolInput: Record<string, unknown>,
-): Promise<string> {
+async function executeTool(toolName: string, toolInput: Record<string, unknown>): Promise<string> {
   // Delegate calendar read (and eventually write) tools to the calendar module.
   if (CALENDAR_TOOL_NAMES.has(toolName)) {
     return executeCalendarTool(toolName, toolInput);
   }
 
+  // Delegate Todoist tools to the Todoist module (Task-3, Phase 2).
+  if (TODOIST_TOOL_NAMES.has(toolName)) {
+    return executeToDoistTool(toolName, toolInput);
+  }
+
   // Unknown tool — return a graceful error so the model can handle it.
-  logger.child({ service: "agent" }).warn(
-    { toolName, toolInput },
-    "Unknown tool called — no handler registered",
-  );
+  logger
+    .child({ service: "agent" })
+    .warn({ toolName, toolInput }, "Unknown tool called — no handler registered");
   return JSON.stringify({ error: `Unknown tool: ${toolName}` });
 }
 
@@ -579,8 +700,10 @@ export async function runAgent(msg: IncomingMessage): Promise<AgentResult> {
             } else {
               const data: CreateEventData = { title, start, end };
               if (typeof toolInput["location"] === "string") data.location = toolInput["location"];
-              if (typeof toolInput["description"] === "string") data.description = toolInput["description"];
-              if (Array.isArray(toolInput["attendees"])) data.attendees = toolInput["attendees"] as string[];
+              if (typeof toolInput["description"] === "string")
+                data.description = toolInput["description"];
+              if (Array.isArray(toolInput["attendees"]))
+                data.attendees = toolInput["attendees"] as string[];
 
               const summary = buildCreateEventSummary(data);
 
@@ -613,8 +736,7 @@ export async function runAgent(msg: IncomingMessage): Promise<AgentResult> {
             // T-18: Intercept update_event — build before/after summary and
             // save ConfirmationPayload { action: 'update_event', eventId, data }.
             // ------------------------------------------------------------------
-            const eventId =
-              typeof toolInput["eventId"] === "string" ? toolInput["eventId"] : "";
+            const eventId = typeof toolInput["eventId"] === "string" ? toolInput["eventId"] : "";
 
             if (!eventId) {
               syntheticResult = JSON.stringify({
@@ -626,9 +748,12 @@ export async function runAgent(msg: IncomingMessage): Promise<AgentResult> {
               if (typeof toolInput["title"] === "string") updateData.title = toolInput["title"];
               if (typeof toolInput["start"] === "string") updateData.start = toolInput["start"];
               if (typeof toolInput["end"] === "string") updateData.end = toolInput["end"];
-              if (typeof toolInput["location"] === "string") updateData.location = toolInput["location"];
-              if (typeof toolInput["description"] === "string") updateData.description = toolInput["description"];
-              if (Array.isArray(toolInput["attendees"])) updateData.attendees = toolInput["attendees"] as string[];
+              if (typeof toolInput["location"] === "string")
+                updateData.location = toolInput["location"];
+              if (typeof toolInput["description"] === "string")
+                updateData.description = toolInput["description"];
+              if (Array.isArray(toolInput["attendees"]))
+                updateData.attendees = toolInput["attendees"] as string[];
 
               const summary = buildUpdateEventSummary(updateData);
 
