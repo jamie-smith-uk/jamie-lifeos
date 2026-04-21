@@ -206,7 +206,7 @@ Timezone: ${tz}`,
 }
 
 // ---------------------------------------------------------------------------
-// Tool definitions (T-12: read tools; T-15: write tools)
+// Tool definitions (T-12: read tools; T-15: write tools; Task-3: Todoist tools)
 // ---------------------------------------------------------------------------
 
 /**
@@ -218,11 +218,6 @@ Timezone: ${tz}`,
  * user approval.
  * Task-3 (Phase 2): Todoist tools added — get_tasks, create_task,
  * complete_task, delete_task, update_task.
- */
-
-/**
- * Todoist tool definitions for the Anthropic API.
- * All 5 operations: get_tasks, create_task, complete_task, delete_task, update_task.
  */
 const todoistToolDefinitions: Anthropic.Tool[] = [
   {
