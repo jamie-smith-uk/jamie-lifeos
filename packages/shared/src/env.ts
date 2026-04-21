@@ -92,9 +92,7 @@ function loadEnv(): EnvConfig {
 
   const botMode = raw("BOT_MODE");
   if (botMode !== "polling" && botMode !== "webhook") {
-    throw new Error(
-      `[env] BOT_MODE must be "polling" or "webhook", got: "${botMode}"`,
-    );
+    throw new Error(`[env] BOT_MODE must be "polling" or "webhook", got: "${botMode}"`);
   }
 
   return {
