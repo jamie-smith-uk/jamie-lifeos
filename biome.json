@@ -31,12 +31,6 @@
     }
   },
   "files": {
-    "includes": [
-      "**",
-      "!**/dist",
-      "!**/node_modules",
-      "!**/pipeline",
-      "!**/*.js.map"
-    ]
+    "includes": ["**", "!**/dist", "!**/node_modules", "!**/pipeline", "!**/*.js.map"]
   }
 }
