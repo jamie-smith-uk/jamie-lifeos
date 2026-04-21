@@ -18,15 +18,10 @@ import { env, logger } from "@lifeos/shared";
 
 const log = logger.child({ service: "todoist-tools" });
 
-// TODOIST_API_TOKEN is not part of the shared EnvConfig (it is Todoist-specific).
-// We read it via a type-safe accessor that looks in both the shared env object
-// (for test mocks that inject it there) and process.env as a fallback.
+// TODOIST_API_TOKEN is declared in EnvConfig and populated by the shared env
+// loader (with an empty-string default when unset).  Read it directly.
 function getTodoistToken(): string {
-  // Allow test mocks to inject the token via the shared env object.
-  const fromEnv = (env as unknown as Record<string, unknown>).TODOIST_API_TOKEN;
-  if (typeof fromEnv === "string" && fromEnv.length > 0) return fromEnv;
-  // Fall back to process.env at runtime (set via .env file or system environment).
-  return process.env.TODOIST_API_TOKEN ?? "";
+  return env.TODOIST_API_TOKEN;
 }
 
 const TODOIST_API_BASE = "https://api.todoist.com/rest/v2";
@@ -55,6 +50,20 @@ function buildAuthHeaders(token: string): Record<string, string> {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json",
   };
+}
+
+/**
+ * Handle a non-OK HTTP response: reads the body text, logs the status, and
+ * returns a JSON-serialised error string.  Never throws.
+ */
+async function httpErrorResponse(
+  response: Response,
+  operation: string,
+  context?: Record<string, unknown>,
+): Promise<string> {
+  const errorText = await response.text().catch(() => "(unreadable)");
+  log.error({ status: response.status, ...context }, `${operation} HTTP error`);
+  return JSON.stringify({ error: `Todoist API error ${response.status}: ${errorText}` });
 }
 
 // ---------------------------------------------------------------------------
@@ -109,11 +118,7 @@ async function getTasks(input: Record<string, unknown>): Promise<string> {
     });
 
     if (!response.ok) {
-      const errorText = await response.text().catch(() => "(unreadable)");
-      log.error({ status: response.status }, "get_tasks HTTP error");
-      return JSON.stringify({
-        error: `Todoist API error ${response.status}: ${errorText}`,
-      });
+      return httpErrorResponse(response, "get_tasks");
     }
 
     const tasks = (await response.json()) as TodoistTask[];
@@ -156,11 +161,7 @@ async function createTask(input: Record<string, unknown>): Promise<string> {
     });
 
     if (!response.ok) {
-      const errorText = await response.text().catch(() => "(unreadable)");
-      log.error({ status: response.status }, "create_task HTTP error");
-      return JSON.stringify({
-        error: `Todoist API error ${response.status}: ${errorText}`,
-      });
+      return httpErrorResponse(response, "create_task");
     }
 
     const task = (await response.json()) as TodoistTask;
@@ -190,11 +191,7 @@ async function completeTask(input: Record<string, unknown>): Promise<string> {
     });
 
     if (!response.ok) {
-      const errorText = await response.text().catch(() => "(unreadable)");
-      log.error({ status: response.status, taskId }, "complete_task HTTP error");
-      return JSON.stringify({
-        error: `Todoist API error ${response.status}: ${errorText}`,
-      });
+      return httpErrorResponse(response, "complete_task", { taskId });
     }
 
     return `Task ${taskId} completed successfully.`;
@@ -223,11 +220,7 @@ async function deleteTask(input: Record<string, unknown>): Promise<string> {
     });
 
     if (!response.ok) {
-      const errorText = await response.text().catch(() => "(unreadable)");
-      log.error({ status: response.status, taskId }, "delete_task HTTP error");
-      return JSON.stringify({
-        error: `Todoist API error ${response.status}: ${errorText}`,
-      });
+      return httpErrorResponse(response, "delete_task", { taskId });
     }
 
     return `Task ${taskId} deleted successfully.`;
@@ -269,11 +262,7 @@ async function updateTask(input: Record<string, unknown>): Promise<string> {
     });
 
     if (!response.ok) {
-      const errorText = await response.text().catch(() => "(unreadable)");
-      log.error({ status: response.status, taskId }, "update_task HTTP error");
-      return JSON.stringify({
-        error: `Todoist API error ${response.status}: ${errorText}`,
-      });
+      return httpErrorResponse(response, "update_task", { taskId });
     }
 
     const task = (await response.json()) as TodoistTask;

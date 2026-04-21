@@ -1484,7 +1484,9 @@ PYEOF
   log "Committing task $TASK_ID..."
 
   while IFS= read -r f; do
-    [ -e "$REPO_ROOT/$f" ] && git -C "$REPO_ROOT" add "$f"
+    if [ -e "$REPO_ROOT/$f" ] && ! git -C "$REPO_ROOT" check-ignore -q "$f" 2>/dev/null; then
+      git -C "$REPO_ROOT" add "$f"
+    fi
   done < <(python3 -c "
 import json, sys
 for f in json.loads(sys.argv[1]):
@@ -1494,7 +1496,10 @@ for f in json.loads(sys.argv[1]):
   while IFS= read -r f; do
     base=$(basename "${f%.ts}")
     while IFS= read -r tf; do
-      git -C "$REPO_ROOT" add "$tf"
+      rel=${tf#"$REPO_ROOT/"}
+      if ! git -C "$REPO_ROOT" check-ignore -q "$rel" 2>/dev/null; then
+        git -C "$REPO_ROOT" add "$tf"
+      fi
     done < <(find "$REPO_ROOT" -path "*/__tests__/${base}*" 2>/dev/null)
   done < <(python3 -c "
 import json, sys
