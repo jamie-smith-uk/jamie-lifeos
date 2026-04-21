@@ -12,6 +12,7 @@ interface EnvConfig {
     ANTHROPIC_MODEL: string;
     DATABASE_URL: string;
     ORCHESTRATOR_URL: string;
+    TODOIST_API_TOKEN: string;
     GOOGLE_CLIENT_ID: string;
     GOOGLE_CLIENT_SECRET: string;
     GOOGLE_REFRESH_TOKEN: string;

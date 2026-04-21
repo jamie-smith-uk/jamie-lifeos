@@ -21,6 +21,9 @@ interface EnvConfig {
   // Orchestrator
   ORCHESTRATOR_URL: string;
 
+  // Todoist
+  TODOIST_API_TOKEN: string;
+
   // Google Calendar OAuth2
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
@@ -47,6 +50,7 @@ const REQUIRED_VARS: ReadonlyArray<keyof EnvConfig> = [
 
 const OPTIONAL_DEFAULTS: Partial<Record<keyof EnvConfig, string>> = {
   ANTHROPIC_MODEL: "claude-sonnet-4-20250514",
+  TODOIST_API_TOKEN: "",
   GOOGLE_CLIENT_ID: "",
   GOOGLE_CLIENT_SECRET: "",
   GOOGLE_REFRESH_TOKEN: "",
@@ -100,6 +104,7 @@ function loadEnv(): EnvConfig {
     ANTHROPIC_MODEL: raw("ANTHROPIC_MODEL"),
     DATABASE_URL: raw("DATABASE_URL"),
     ORCHESTRATOR_URL: raw("ORCHESTRATOR_URL"),
+    TODOIST_API_TOKEN: raw("TODOIST_API_TOKEN"),
     GOOGLE_CLIENT_ID: raw("GOOGLE_CLIENT_ID"),
     GOOGLE_CLIENT_SECRET: raw("GOOGLE_CLIENT_SECRET"),
     GOOGLE_REFRESH_TOKEN: raw("GOOGLE_REFRESH_TOKEN"),
