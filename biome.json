@@ -1,8 +1,5 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.12/schema.json",
-  "organizeImports": {
-    "enabled": true
-  },
   "linter": {
     "enabled": true,
     "rules": {
@@ -34,11 +31,12 @@
     }
   },
   "files": {
-    "ignore": [
-      "dist/**",
-      "node_modules/**",
-      "pipeline/**",
-      "*.js.map"
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/node_modules",
+      "!**/pipeline",
+      "!**/*.js.map"
     ]
   }
 }
