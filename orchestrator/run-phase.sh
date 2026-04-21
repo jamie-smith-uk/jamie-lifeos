@@ -572,6 +572,11 @@ check_scope_compliance() {
     [[ "$f" == pipeline/* ]] && continue
     [[ "$f" == *__tests__* ]] && continue
     [[ "$f" == *.tsbuildinfo ]] && continue
+    # Always-allowed support files — type/env additions are common cross-task
+    # needs; both security and test gates still run on them.
+    [[ "$f" == packages/shared/src/types.ts ]] && continue
+    [[ "$f" == packages/shared/src/env.ts ]] && continue
+    [[ "$f" == packages/shared/dist/* ]] && continue
     local in_scope
     in_scope=$(python3 -c "
 import json, sys
