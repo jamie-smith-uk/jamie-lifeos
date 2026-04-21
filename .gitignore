@@ -6,3 +6,4 @@ pipeline/
 dist/
 !packages/shared/dist/
 *.js.map
+*.tsbuildinfo

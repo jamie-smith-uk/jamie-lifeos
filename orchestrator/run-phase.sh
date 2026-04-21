@@ -575,6 +575,7 @@ check_scope_compliance() {
     [[ -z "$f" ]] && continue
     [[ "$f" == pipeline/* ]] && continue
     [[ "$f" == *__tests__* ]] && continue
+    [[ "$f" == *.tsbuildinfo ]] && continue
     local in_scope
     in_scope=$(python3 -c "
 import json, sys
