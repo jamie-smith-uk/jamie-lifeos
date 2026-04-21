@@ -1159,8 +1159,14 @@ $SCOPE_VIOLATIONS"
 
       log "Running hard gate (tsc + eslint + pnpm test)..."
       IMPL_FAILURES=$(verify_implementation "$FILES_IN_SCOPE_JSON") || true
-      GATE_FAILURES="${SCOPE_GATE:+$SCOPE_GATE
+      # Only include scope violations in failures if tsc/lint/tests also failed.
+      # Scope violations alone are auto-recoverable via revert and shouldn't halt.
+      if [ -n "$IMPL_FAILURES" ]; then
+        GATE_FAILURES="${SCOPE_GATE:+$SCOPE_GATE
 }${IMPL_FAILURES}"
+      else
+        GATE_FAILURES=""
+      fi
 
       if [ -z "$GATE_FAILURES" ]; then
         GREEN_PASSED=true
