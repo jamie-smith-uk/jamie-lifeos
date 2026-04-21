@@ -131,7 +131,12 @@ wait_for_approval() {
 # body text that happens to contain the word PASS.
 report_passes() {
   local file="$1"
-  grep -qE "(Title:|##? .+).*— PASS" "$file" 2>/dev/null
+  # Accept multiple verdict formats:
+  #   "Title: ... — PASS"
+  #   "# Title — PASS"
+  #   "**Verdict:** PASS"
+  #   "**Result:** PASS" or "**Result: PASS**"
+  grep -qE "(Title:|##? .+).*— PASS|\*\*(Verdict|Result)[: ]+PASS(\*\*)?" "$file" 2>/dev/null
 }
 
 # Returns accumulated build context, capped at CONTEXT_MAX_CHARS (most recent tasks).
