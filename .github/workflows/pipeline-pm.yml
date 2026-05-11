@@ -96,35 +96,38 @@ jobs:
           EXISTING_ARCH=$(cat /tmp/existing-arch.txt)
           PREVIOUS_DRAFTS=$(cat /tmp/previous-drafts.txt)
 
-          PM_PROMPT="You are running as AG-PM Product Manager.
+          cat > /tmp/pm-prompt.txt << PROMPT
+          You are running as AG-PM Product Manager.
 
-Issue number: ${ISSUE_NUMBER}
-Issue title: ${ISSUE_TITLE}
-Round: ${ROUND}
+          Issue number: ${ISSUE_NUMBER}
+          Issue title: ${ISSUE_TITLE}
+          Round: ${ROUND}
 
-<issue-body>
-${ISSUE_BODY}
-</issue-body>
+          <issue-body>
+          ${ISSUE_BODY}
+          </issue-body>
 
-<issue-comments>
-${ISSUE_COMMENTS:-"(no comments yet)"}
-</issue-comments>
+          <issue-comments>
+          ${ISSUE_COMMENTS:-"(no comments yet)"}
+          </issue-comments>
 
-<existing-prd>
-${EXISTING_PRD:-"(no existing PRD — this is a new product)"}
-</existing-prd>
+          <existing-prd>
+          ${EXISTING_PRD:-"(no existing PRD — this is a new product)"}
+          </existing-prd>
 
-<existing-architecture>
-${EXISTING_ARCH:-"(no existing architecture document)"}
-</existing-architecture>
+          <existing-architecture>
+          ${EXISTING_ARCH:-"(no existing architecture document)"}
+          </existing-architecture>
 
-<previous-drafts>
-${PREVIOUS_DRAFTS:-"(no previous drafts — this is round 1)"}
-</previous-drafts>
+          <previous-drafts>
+          ${PREVIOUS_DRAFTS:-"(no previous drafts — this is round 1)"}
+          </previous-drafts>
 
-Write your draft to: docs/prd-drafts/issue-${ISSUE_NUMBER}-round-${ROUND}.md
+          Write your draft to: docs/prd-drafts/issue-${ISSUE_NUMBER}-round-${ROUND}.md
 
-Follow your system prompt exactly. Write the file and halt."
+          Follow your system prompt exactly. Write the file and halt.
+          PROMPT
+          PM_PROMPT=$(cat /tmp/pm-prompt.txt)
 
           opencode run --agent ag-pm "$PM_PROMPT"
         env:
@@ -187,26 +190,31 @@ Follow your system prompt exactly. Write the file and halt."
           ROUND="${{ steps.round.outputs.round }}"
           RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           DRAFT_PATH="docs/prd-drafts/issue-${ISSUE_NUMBER}-round-${ROUND}.md"
+          WHAT_CHANGED="${{ steps.summary.outputs.WHAT_CHANGED }}"
+          BRIEF="${{ steps.summary.outputs.BRIEF }}"
+          PHASES="${{ steps.summary.outputs.PHASES }}"
 
-          COMMENT="## PM Agent — Round ${ROUND} draft ready
+          cat > /tmp/comment.txt << COMMENT
+          ## PM Agent — Round ${ROUND} draft ready
 
-**What changed**
-${{ steps.summary.outputs.WHAT_CHANGED }}
+          **What changed**
+          ${WHAT_CHANGED}
 
-**Summary**
-${{ steps.summary.outputs.BRIEF }}
+          **Summary**
+          ${BRIEF}
 
-**Phases drafted**
-${{ steps.summary.outputs.PHASES }}
+          **Phases drafted**
+          ${PHASES}
 
-**Full draft:** [\`${DRAFT_PATH}\`](https://github.com/${{ github.repository }}/blob/main/${DRAFT_PATH})
-**Actions run:** ${RUN_URL}
+          **Full draft:** [\`${DRAFT_PATH}\`](https://github.com/${{ github.repository }}/blob/main/${DRAFT_PATH})
+          **Actions run:** ${RUN_URL}
 
----
-To request changes: reply with your feedback, then re-add the \`pm-ready\` label.
-To approve and append to \`docs/prd.md\`: add the \`pm-approve\` label."
+          ---
+          To request changes: reply with your feedback, then re-add the \`pm-ready\` label.
+          To approve and append to \`docs/prd.md\`: add the \`pm-approve\` label.
+          COMMENT
 
-          gh issue comment "$ISSUE_NUMBER" --body "$COMMENT"
+          gh issue comment "$ISSUE_NUMBER" --body "$(cat /tmp/comment.txt)"
 
       - name: Remove pm-ready label
         if: always()

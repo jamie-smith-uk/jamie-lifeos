@@ -90,40 +90,41 @@ jobs:
           # (skip the draft header, "What changed", "Brief summary", "Architectural
           # implications", "Sequencing notes", and "Open questions" sections —
           # those are for the human reviewer, not the PRD itself)
-          python3 - "$DRAFT" >> docs/prd.md <<'PYEOF'
-import re, sys
+          cat > /tmp/extract-prd.py << 'PYEOF'
+          import re, sys
 
-content = open(sys.argv[1]).read()
+          content = open(sys.argv[1]).read()
 
-# Extract sections that belong in the PRD:
-# - "## Phase N — ..." blocks (includes exit criteria, smoke tests, epics)
-# - "## User stories" and all "### EP-" blocks beneath it
-kept = []
+          # Extract sections that belong in the PRD:
+          # - "## Phase N — ..." blocks (includes exit criteria, smoke tests, epics)
+          # - "## User stories" and all "### EP-" blocks beneath it
+          kept = []
 
-# Find Phase sections
-phase_blocks = re.findall(
-    r'(^## Phase \d+.*?)(?=^## (?!Phase \d+.*?###)|^## User stories|\Z)',
-    content, re.MULTILINE | re.DOTALL
-)
-for block in phase_blocks:
-    kept.append(block.strip())
+          # Find Phase sections
+          phase_blocks = re.findall(
+              r'(^## Phase \d+.*?)(?=^## (?!Phase \d+.*?###)|^## User stories|\Z)',
+              content, re.MULTILINE | re.DOTALL
+          )
+          for block in phase_blocks:
+              kept.append(block.strip())
 
-# Find User stories section
-stories_match = re.search(
-    r'(^## User stories.*?)(?=^## (?!EP-)|\Z)',
-    content, re.MULTILINE | re.DOTALL
-)
-if stories_match:
-    kept.append(stories_match.group(1).strip())
+          # Find User stories section
+          stories_match = re.search(
+              r'(^## User stories.*?)(?=^## (?!EP-)|\Z)',
+              content, re.MULTILINE | re.DOTALL
+          )
+          if stories_match:
+              kept.append(stories_match.group(1).strip())
 
-if not kept:
-    print("WARNING: No phase or user story sections found to extract", file=__import__('sys').stderr)
-    sys.exit(1)
+          if not kept:
+              print("WARNING: No phase or user story sections found to extract", file=__import__('sys').stderr)
+              sys.exit(1)
 
-# Add a separator before appending
-print("\n\n---\n")
-print("\n\n---\n\n".join(kept))
-PYEOF
+          # Add a separator before appending
+          print("\n\n---\n")
+          print("\n\n---\n\n".join(kept))
+          PYEOF
+          python3 /tmp/extract-prd.py "$DRAFT" >> docs/prd.md
 
           echo "Appended draft phases to docs/prd.md"
 
@@ -141,30 +142,34 @@ PYEOF
           ROUND="${{ steps.draft.outputs.round }}"
 
           # Extract architectural implications for the PR body
-          ARCH_IMPLICATIONS=$(python3 - "$DRAFT" <<'PYEOF'
-import re, sys
-content = open(sys.argv[1]).read()
-m = re.search(r'## Architectural implications\n(.*?)(?=\n## |\Z)', content, re.DOTALL)
-print(m.group(1).strip() if m else "See draft for details.")
-PYEOF
-          )
+          cat > /tmp/extract-arch.py << 'PYEOF'
+          import re, sys
+          content = open(sys.argv[1]).read()
+          m = re.search(r'## Architectural implications\n(.*?)(?=\n## |\Z)', content, re.DOTALL)
+          print(m.group(1).strip() if m else "See draft for details.")
+          PYEOF
+          ARCH_IMPLICATIONS=$(python3 /tmp/extract-arch.py "$DRAFT")
+
+          cat > /tmp/pr-body.txt << PRBODY
+          ## Summary
+
+          Appends phases drafted in issue #${ISSUE_NUMBER} (round ${ROUND}) to \`docs/prd.md\`.
+
+          ## Architectural implications
+
+          ${ARCH_IMPLICATIONS}
+
+          **Action required:** Review the architectural implications above and update \`docs/architecture.md\` manually before merging if new tables, APIs, or services are introduced.
+
+          ## Source
+          - Issue: #${ISSUE_NUMBER}
+          - Draft: \`${DRAFT}\`
+          - Closes #${ISSUE_NUMBER}
+          PRBODY
 
           PR_URL=$(gh pr create \
             --title "docs(prd): ${ISSUE_TITLE}" \
-            --body "## Summary
-
-Appends phases drafted in issue #${ISSUE_NUMBER} (round ${ROUND}) to \`docs/prd.md\`.
-
-## Architectural implications
-
-${ARCH_IMPLICATIONS}
-
-**Action required:** Review the architectural implications above and update \`docs/architecture.md\` manually before merging if new tables, APIs, or services are introduced.
-
-## Source
-- Issue: #${ISSUE_NUMBER}
-- Draft: \`${DRAFT}\`
-- Closes #${ISSUE_NUMBER}" \
+            --body "$(cat /tmp/pr-body.txt)" \
             --base main \
             --head "${{ steps.branch.outputs.branch }}")
 
@@ -176,17 +181,21 @@ ${ARCH_IMPLICATIONS}
           PR_URL="${{ steps.pr.outputs.pr_url }}"
           DRAFT="${{ steps.draft.outputs.latest }}"
 
-          gh issue comment "$ISSUE_NUMBER" --body "## PM Agent — Approved
+          cat > /tmp/approve-comment.txt << APPCOMMENT
+          ## PM Agent — Approved
 
-The latest draft has been appended to \`docs/prd.md\` and a pull request has been opened:
+          The latest draft has been appended to \`docs/prd.md\` and a pull request has been opened:
 
-**PR:** $PR_URL
+          **PR:** $PR_URL
 
-**Before merging the PR:**
-- Review the diff in \`docs/prd.md\`
-- Check the \"Architectural implications\" section in the draft (\`${DRAFT}\`) and update \`docs/architecture.md\` if new tables, APIs, env vars, or services are introduced
+          **Before merging the PR:**
+          - Review the diff in \`docs/prd.md\`
+          - Check the "Architectural implications" section in the draft (\`${DRAFT}\`) and update \`docs/architecture.md\` if new tables, APIs, env vars, or services are introduced
 
-The implementation pipeline can be run against the new phases once the PR is merged."
+          The implementation pipeline can be run against the new phases once the PR is merged.
+          APPCOMMENT
+
+          gh issue comment "$ISSUE_NUMBER" --body "$(cat /tmp/approve-comment.txt)"
 
       - name: Close issue
         run: |
