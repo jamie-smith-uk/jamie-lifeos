@@ -1,4 +1,5 @@
-name: Pipeline — PM Approve
+name: PM — Approve PRD
+run-name: "PM Approve — #${{ github.event.issue.number }} ${{ github.event.issue.title }}"
 
 # Triggered when an issue is labeled "pm-approve".
 # Takes the latest draft round for this issue, appends it to docs/prd.md,
