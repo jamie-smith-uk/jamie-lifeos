@@ -77,7 +77,11 @@ jobs:
       - name: Run pending migrations
         run: |
           if [ -d migrations ] && ls migrations/*.sql 2>/dev/null | head -1; then
-            pnpm exec node-pg-migrate up
+            echo "Running migrations..."
+            for f in migrations/*.sql; do
+              echo "  Applying $f"
+              psql "$DATABASE_URL" -f "$f"
+            done
           else
             echo "No migrations to run"
           fi
