@@ -341,17 +341,29 @@ check_tester_trajectory() {
   local ac_count="$3"  # number of acceptance criteria (minimum test count target)
   local issues=""
 
-  # Find test files created since tests-written.txt (proxy for "written this task")
+  # Find test files created or modified within 10 minutes of tests-written.txt.
+  # Using -newer alone misses files written in the same second as the sentinel
+  # or files that the tester wrote before touching the sentinel. Use a 10-minute
+  # window from the sentinel's modification time as a generous but bounded proxy.
+  local sentinel_time
+  sentinel_time=$(python3 -c "import os,sys; print(int(os.path.getmtime(sys.argv[1])))" \
+    "$tests_written_file" 2>/dev/null || echo "0")
+  local window_start=$(( sentinel_time - 600 ))  # 10 minutes before sentinel
+
   local test_count=0
   local files_without_assertions=()
   while IFS= read -r tf; do
     [[ -f "$tf" ]] || continue
+    local tf_time
+    tf_time=$(python3 -c "import os,sys; print(int(os.path.getmtime(sys.argv[1])))" \
+      "$tf" 2>/dev/null || echo "0")
+    [[ "$tf_time" -ge "$window_start" ]] || continue
     test_count=$(( test_count + 1 ))
     if ! grep -qE "expect\(|it\(|test\(|describe\(" "$tf" 2>/dev/null; then
       files_without_assertions+=("$(basename "$tf")")
     fi
   done < <(find "$REPO_ROOT" \( -name "*.test.ts" -o -name "*.spec.ts" \) \
-    -newer "$tests_written_file" 2>/dev/null)
+    -not -path "*/node_modules/*" 2>/dev/null)
 
   if [ "$test_count" -eq 0 ]; then
     issues+="No test files found after RED phase — Tester may not have written any tests\n"
