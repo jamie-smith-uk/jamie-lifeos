@@ -1,7 +1,7 @@
 name: Pipeline — Implement
 
-# Downloads the pipeline artifact from the matching Architect run, executes the
-# full task loop (AG-03 → AG-08), and commits results back to the repo.
+# Executes the full task loop (AG-03 → AG-08) using the pipeline/ output
+# committed to the repo by the Architect run, then commits results back.
 # Only trigger this after reviewing the manifest from the Architect run.
 
 on:
@@ -60,12 +60,6 @@ jobs:
 
       - name: Make scripts executable
         run: chmod +x orchestrator/*.sh
-
-      - name: Download pipeline artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: pipeline-phase-${{ env.PHASE }}
-          path: pipeline/
 
       - name: Run pending migrations
         run: |
