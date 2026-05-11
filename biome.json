@@ -4,6 +4,14 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "complexity": {
+        "noExcessiveCognitiveComplexity": {
+          "level": "error",
+          "options": {
+            "maxAllowedComplexity": 10
+          }
+        }
+      },
       "correctness": {
         "noUnusedVariables": "error",
         "noUnusedImports": "error"

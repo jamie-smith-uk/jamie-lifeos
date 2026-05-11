@@ -418,29 +418,49 @@ ts_files = [os.path.join(repo_root, f) for f in files
 
 report = {'task_id': task_id, 'files_checked': files}
 
-# ── Complexity: flag functions > 20 lines ────────────────────────────────────
+# ── Complexity: parse Biome JSON output for noExcessiveCognitiveComplexity ───
+# Biome --reporter=json emits structured diagnostics including the rule name
+# and the cognitive complexity score extracted from the message text.
+# This replaces the fragile line-counting regex heuristic.
 complex_fns = []
-for fp in ts_files:
+if ts_files:
     try:
-        content = open(fp).read()
-        # Simple heuristic: find function/method bodies by counting lines between braces
-        for m in re.finditer(r'(?:function\s+\w+|(?:async\s+)?\w+\s*\([^)]*\)\s*(?::\s*\S+\s*)?)\s*\{',
-                             content):
-            start_line = content[:m.start()].count('\n') + 1
-            # Count to matching closing brace
-            depth, i = 1, m.end()
-            while i < len(content) and depth > 0:
-                if content[i] == '{':
-                    depth += 1
-                elif content[i] == '}':
-                    depth -= 1
-                i += 1
-            end_line = content[:i].count('\n') + 1
-            length = end_line - start_line
-            if length > 20:
-                rel = os.path.relpath(fp, repo_root)
-                complex_fns.append({'file': rel, 'line': start_line, 'lines': length})
-    except Exception:
+        r = subprocess.run(
+            ['pnpm', 'exec', 'biome', 'check', '--reporter=json', *ts_files],
+            capture_output=True, text=True, cwd=repo_root, timeout=60
+        )
+        # Biome writes JSON to stdout; exit code non-zero when violations found
+        if r.stdout.strip():
+            biome_out = json.loads(r.stdout)
+            for diag in biome_out.get('diagnostics', []):
+                # Filter to complexity rule only
+                category = diag.get('category', '')
+                if 'noExcessiveCognitiveComplexity' not in category:
+                    continue
+                # Extract file and line from the first span
+                spans = diag.get('advices', {}).get('advices', [])
+                location = diag.get('location', {})
+                fp = location.get('path', {}).get('file', '')
+                line = (location.get('span', [0])[0] or 0)
+                # Extract score from message, e.g. "Excessive complexity of 14 detected"
+                msg = diag.get('message', '')
+                score_match = re.search(r'complexity of (\d+)', msg)
+                score = int(score_match.group(1)) if score_match else 0
+                rel = os.path.relpath(fp, repo_root) if fp else fp
+                # Convert byte offset to line number if needed
+                if fp and os.path.isfile(fp) and isinstance(line, int) and line > 1000:
+                    # Biome reports byte offset, convert to line
+                    try:
+                        content = open(fp, 'rb').read()
+                        line = content[:line].count(b'\n') + 1
+                    except Exception:
+                        pass
+                complex_fns.append({
+                    'file': rel,
+                    'line': line,
+                    'score': score,
+                })
+    except (json.JSONDecodeError, Exception):
         pass
 report['complex_functions'] = complex_fns[:10]  # cap at 10
 
@@ -492,9 +512,10 @@ if coverage_pct is not None:
 if duplication_pct is not None:
     parts.append(f'dup {duplication_pct}%')
 if complex_fns:
-    parts.append(f'{len(complex_fns)} complex fn(s)')
+    parts.append(f'{len(complex_fns)} complexity violation(s)')
     for fn in complex_fns[:3]:
-        parts_detail = f"    {fn['file']}:{fn['line']} ({fn['lines']} lines)"
+        score_str = f" (score {fn['score']})" if fn.get('score') else ''
+        parts_detail = f"    {fn['file']}:{fn['line']}{score_str}"
         print(parts_detail)
 if parts:
     print(f'  {prefix}' + ' · '.join(parts))
@@ -508,6 +529,7 @@ data = json.load(open(metrics_file))
 if task_id in data.get('tasks', {}):
     data['tasks'][task_id]['health'] = {
         'complex_fn_count': len(complex_fns),
+        'max_complexity_score': max((f.get('score', 0) for f in complex_fns), default=0),
         'duplication_pct': duplication_pct,
         'coverage_pct': coverage_pct,
     }
@@ -1379,6 +1401,25 @@ Follow your system prompt exactly."
     REFACTOR_START=$(date +%s)
     log "REFACTOR phase — AG-06 Refactor..."
 
+    # Build complexity violation list from the pre-refactor health report
+    COMPLEXITY_BLOCK=$(python3 - "$TASK_DIR/health-report-pre.json" <<'PYEOF'
+import json, sys, os
+try:
+    report = json.load(open(sys.argv[1]))
+    fns = report.get('complex_functions', [])
+    if not fns:
+        sys.exit(0)
+    print("The following functions exceeded the cognitive complexity threshold (max: 10).")
+    print("These are your primary refactor targets — reduce their complexity score:")
+    print("")
+    for fn in fns:
+        score = fn.get('score', '?')
+        print(f"  {fn['file']}:{fn['line']} — complexity score {score}")
+except Exception:
+    pass
+PYEOF
+)
+
     REFACTOR_PROMPT="You are AG-06 Refactor for Life OS.
 
 The Developer has implemented task $TASK_ID and all tests pass.
@@ -1388,7 +1429,11 @@ Task spec:
 $TASK_SPEC
 ${CONTEXT_BLOCK:+
 $CONTEXT_BLOCK}
+${COMPLEXITY_BLOCK:+
+## Complexity violations to fix
 
+$COMPLEXITY_BLOCK
+}
 Read every file in files_in_scope and the corresponding test files.
 Make conservative, targeted improvements only.
 Do NOT modify test files. Do NOT change public interfaces.
