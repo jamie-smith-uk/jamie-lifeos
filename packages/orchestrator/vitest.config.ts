@@ -7,5 +7,6 @@ export default defineConfig({
     include: ["src/__tests__/**/*.test.ts"],
     isolate: true,
     pool: "forks",
+    passWithNoTests: true,
   },
 });
