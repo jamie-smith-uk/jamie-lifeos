@@ -786,6 +786,22 @@ Write two files to pipeline/phase-$PHASE/:
 1. task-manifest.json
 2. manifest-summary.md
 
+STRICT SCHEMA REQUIREMENT — every task object in task-manifest.json MUST have ALL of these fields
+with EXACTLY these types and allowed values. The manifest will be machine-validated and will be
+rejected if any field is missing or uses a non-allowed value:
+
+  {
+    "id":                   string   — e.g. "task-1" (sequential, no other format)
+    "title":                string
+    "description":          string
+    "files_in_scope":       string[] — MUST be non-empty; use exact repo paths from the file tree above
+    "dependencies":         string[] — task ids; use [] if none
+    "acceptance_criteria":  string[] — MUST be non-empty; each item must be a specific testable statement
+    "security_sensitive":   boolean  — true or false (REQUIRED — never omit this field)
+    "estimated_complexity": string   — MUST be exactly one of: "low", "medium", "high"
+                                       DO NOT use XS, S, M, L, XL, or any other value
+  }
+
 Follow your system prompt exactly."
 
 if [ ! -f "$PIPELINE_DIR/task-manifest.json" ]; then
