@@ -56,7 +56,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install opencode
-        run: npm install -g opencode-ai
+        run: npm install -g opencode-ai@1.14.48
 
       - name: Make scripts executable
         run: chmod +x orchestrator/*.sh

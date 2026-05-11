@@ -134,10 +134,12 @@ PYEOF
 generate_task_from_description() {
   local description="$1"
   log "Generating task manifest from description..."
-  python3 - "$description" "${ANTHROPIC_API_KEY}" "$REPO_ROOT" <<'PYEOF'
-import json, re, subprocess, sys, urllib.request
+  # Pass API key via environment, not as process arg (S-03 fix — args visible in ps aux)
+  python3 - "$description" "$REPO_ROOT" <<'PYEOF'
+import json, os, re, subprocess, sys, urllib.request
 
-desc, api_key, repo_root = sys.argv[1], sys.argv[2], sys.argv[3]
+desc, repo_root = sys.argv[1], sys.argv[2]
+api_key = os.environ.get('ANTHROPIC_API_KEY', '')
 
 try:
     listing = subprocess.run(
@@ -347,8 +349,37 @@ Only write to files listed in files_in_scope."
 
     log "Running hard gate (tsc + eslint + pnpm test)..."
     IMPL_FAILURES=$(verify_implementation "$FILES_IN_SCOPE_JSON") || true
-    GATE_FAILURES="${SCOPE_GATE:+$SCOPE_GATE
+    # Only surface scope violations if implementation also failed (L-04 fix).
+    # Scope violations alone are already reverted — penalising a passing attempt
+    # for already-corrected violations causes an infinite retry loop.
+    if [ -n "$IMPL_FAILURES" ]; then
+      GATE_FAILURES="${SCOPE_GATE:+$SCOPE_GATE
 }${IMPL_FAILURES}"
+    else
+      GATE_FAILURES=""
+    fi
+
+    # False-GREEN guard: if all changes were reverted as scope violations but no
+    # in-scope file was actually written, the developer produced no real implementation.
+    if [ -z "$GATE_FAILURES" ] && [ -n "$SCOPE_VIOLATIONS" ]; then
+      IN_SCOPE_CHANGED=$(python3 -c "
+import json, subprocess, sys
+files = json.loads(sys.argv[1])
+repo  = sys.argv[2]
+result = subprocess.run(
+    ['git', '-C', repo, 'diff', '--name-only', 'HEAD'],
+    capture_output=True, text=True
+)
+changed = set(result.stdout.splitlines())
+print('yes' if any(f in changed for f in files) else 'no')
+" "$FILES_IN_SCOPE_JSON" "$REPO_ROOT" 2>/dev/null || echo "no")
+      if [ "$IN_SCOPE_CHANGED" = "no" ]; then
+        GATE_FAILURES="${SCOPE_GATE}
+=== No in-scope files were modified ===
+All of your changes were in files outside files_in_scope and have been reverted.
+You MUST write implementation code to the files listed in files_in_scope."
+      fi
+    fi
 
     if [ -z "$GATE_FAILURES" ]; then
       GREEN_PASSED=true

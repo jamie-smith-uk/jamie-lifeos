@@ -31,12 +31,20 @@ fi
 
 APPROVAL_FILE="$REPO_ROOT/pipeline/phase-$PHASE/approval.json"
 
-python3 -c "
-import json, datetime
-data = {'signal': '$SIGNAL', 'timestamp': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), 'source': 'claude-code'}
-$([ -n "$CHANGES" ] && echo "data['changes'] = '$CHANGES'")
-with open('$APPROVAL_FILE', 'w') as f:
+# Write approval.json using sys.argv so no shell variable is ever interpolated
+# into Python source code — prevents code injection via $CHANGES (S-01/B-04 fix).
+python3 - "$APPROVAL_FILE" "$SIGNAL" "$CHANGES" <<'PYEOF'
+import json, datetime, sys
+approval_file, signal, changes = sys.argv[1], sys.argv[2], sys.argv[3]
+data = {
+    'signal': signal,
+    'timestamp': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+    'source': 'claude-code',
+}
+if changes:
+    data['changes'] = changes
+with open(approval_file, 'w') as f:
     json.dump(data, f, indent=2)
-"
+PYEOF
 
 echo "✅ Phase $PHASE: signal '$SIGNAL' written to approval.json"
