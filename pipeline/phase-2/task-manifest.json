@@ -4,7 +4,8 @@
     "title": "Implement people graph database tools",
     "description": "Create people.ts tool module with functions to create, get, update, and log interactions with people. Support fuzzy name matching and relationship tracking for email-to-person linking.",
     "files_in_scope": [
-      "packages/orchestrator/src/tools/people.ts"
+      "packages/orchestrator/src/tools/people.ts",
+      "packages/orchestrator/src/__tests__/people.test.ts"
     ],
     "dependencies": [],
     "acceptance_criteria": [
