@@ -1,0 +1,187 @@
+name: Agent Pipeline
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: "Phase number"
+        required: true
+        default: "1"
+
+# Cancel any in-progress run for the same phase when a new one is triggered.
+concurrency:
+  group: agent-pipeline-phase-${{ github.event.inputs.phase || '1' }}
+  cancel-in-progress: false
+
+jobs:
+  # ── Job 1: Architect ────────────────────────────────────────────────────────
+  # Runs AG-01 + AG-02 and uploads the pipeline/ artifact.
+  # GitHub sends an approval notification via the pipeline-approval environment.
+  architect:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' && github.event.label.name == 'agent-ready')
+
+    env:
+      PHASE: ${{ github.event.inputs.phase || '1' }}
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: lifeos
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: lifeos
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install opencode
+        run: npm install -g opencode-ai
+
+      - name: Run AG-01 Architect + AG-02 Reviewer
+        run: ARCHITECT_ONLY=1 ./orchestrator/run-phase.sh --phase "$PHASE"
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          POSTGRES_USER: lifeos
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: lifeos
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: "5432"
+          DATABASE_URL: postgresql://lifeos:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/lifeos
+
+      - name: Upload pipeline artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-phase-${{ env.PHASE }}
+          path: pipeline/
+          retention-days: 7
+
+  # ── Job 2: Approve ──────────────────────────────────────────────────────────
+  # Declares the pipeline-approval GitHub Environment. GitHub pauses the
+  # workflow here and sends an approval notification to configured reviewers.
+  # No code runs — the approval itself is the gate.
+  approve:
+    needs: architect
+    runs-on: ubuntu-latest
+    environment: pipeline-approval
+
+    steps:
+      - name: Approved
+        run: echo "Pipeline approved — proceeding to implementation"
+
+  # ── Job 3: Implement ────────────────────────────────────────────────────────
+  # Downloads the pipeline artifact, runs the full task loop (AG-03 through
+  # AG-08), and commits results back to the repo.
+  implement:
+    needs: [architect, approve]
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+
+    env:
+      PHASE: ${{ github.event.inputs.phase || '1' }}
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: lifeos
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: lifeos
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history so git log and tagging work correctly
+          fetch-depth: 0
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install opencode
+        run: npm install -g opencode-ai
+
+      - name: Download pipeline artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pipeline-phase-${{ env.PHASE }}
+          path: pipeline/
+
+      - name: Run pending migrations
+        run: |
+          if [ -d migrations ] && ls migrations/*.sql 2>/dev/null | head -1; then
+            pnpm exec node-pg-migrate up
+          else
+            echo "No migrations to run"
+          fi
+        env:
+          DATABASE_URL: postgresql://lifeos:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/lifeos
+
+      - name: Run implementation (AG-03 → AG-08)
+        run: SKIP_ARCHITECT=1 ./orchestrator/run-phase.sh --phase "$PHASE"
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TODOIST_API_TOKEN: ${{ secrets.TODOIST_API_TOKEN }}
+          POSTGRES_USER: lifeos
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: lifeos
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: "5432"
+          DATABASE_URL: postgresql://lifeos:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/lifeos
+
+      - name: Commit and push results
+        if: success()
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+          else
+            git commit -m "chore(pipeline): phase ${PHASE} implementation [skip ci]"
+            git push
+          fi
+
+

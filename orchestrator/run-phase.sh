@@ -637,10 +637,21 @@ if [ "$PHASE" -gt 1 ]; then
   fi
 fi
 
+if [[ "${SKIP_ARCHITECT:-}" == "1" ]]; then
+  log "SKIP_ARCHITECT=1 — skipping AG-01, AG-02, and human gate"
+  if [ ! -f "$PIPELINE_DIR/task-manifest.json" ]; then
+    halt "task-manifest.json not found" "orchestrator" \
+      "SKIP_ARCHITECT=1 requires task-manifest.json to already exist in $PIPELINE_DIR/"
+  fi
+  log "task-manifest.json found — proceeding to task execution"
+fi
+
 # ── Header ────────────────────────────────────────────────────────────────────
 log "========================================"
 log "Life OS Pipeline — Phase $PHASE"
 log "========================================"
+
+if [[ "${SKIP_ARCHITECT:-}" != "1" ]]; then
 
 # ── AG-01 Architect ───────────────────────────────────────────────────────────
 log ""
@@ -955,6 +966,12 @@ if [ ! -f "$SUMMARY_FILE" ]; then
   halt "reviewer-summary.md not produced" "AG-02" "Reviewer did not write the summary file"
 fi
 
+if [[ "${ARCHITECT_ONLY:-}" == "1" ]]; then
+  log "ARCHITECT_ONLY=1 — planning complete, exiting before human gate"
+  log "Manifest and reviewer summary written to $PIPELINE_DIR/"
+  exit 0
+fi
+
 # ── Human gate ────────────────────────────────────────────────────────────────
 
 APPROVAL=$(wait_for_approval)
@@ -1023,6 +1040,8 @@ data['approved_at'] = '$(date -u +"%Y-%m-%dT%H:%M:%SZ")'
 with open('$PIPELINE_DIR/approval.json', 'w') as f:
     json.dump(data, f, indent=2)
 "
+
+fi # end of SKIP_ARCHITECT != 1 block
 
 # ── Task loop ─────────────────────────────────────────────────────────────────
 TASKS=$(python3 -c "

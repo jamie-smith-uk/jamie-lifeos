@@ -37,9 +37,6 @@ MANIFEST="$PIPELINE_DIR/task-manifest.json"
 # ── Read manifest ──────────────────────────────────────────────────────────────
 if [ ! -f "$MANIFEST" ]; then
   TEXT="❌ Phase $PHASE has not started — no task manifest found."
-  curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-    --data-urlencode "text=$TEXT" \
-    -d "chat_id=${TELEGRAM_ALLOWED_CHAT_ID}" > /dev/null
   echo "$TEXT"
   exit 0
 fi
@@ -126,10 +123,5 @@ if [ -n "$RECENT_USAGE" ]; then
   MESSAGE="$MESSAGE
 🔢 Last token usage: $RECENT_USAGE"
 fi
-
-# ── Send to Telegram ──────────────────────────────────────────────────────────
-curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-  --data-urlencode "text=$MESSAGE" \
-  -d "chat_id=${TELEGRAM_ALLOWED_CHAT_ID}" > /dev/null
 
 echo "$MESSAGE"
