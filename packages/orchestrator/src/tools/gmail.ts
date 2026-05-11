@@ -304,17 +304,16 @@ async function getInboxSummary(_input: Record<string, unknown>): Promise<string>
 // ---------------------------------------------------------------------------
 
 async function getThread(input: Record<string, unknown>): Promise<string> {
-  const threadId = typeof input["thread_id"] === "string" ? input["thread_id"] : "";
+  const threadId = typeof input.thread_id === "string" ? input.thread_id : "";
 
   if (!threadId.trim() || threadId.length > MAX_THREAD_ID_LEN) {
     return JSON.stringify({ error: "get_thread: invalid 'thread_id'" });
   }
 
   try {
-    const thread = (await gmailGet(
-      `/threads/${encodeURIComponent(threadId)}`,
-      { format: "full" },
-    )) as GmailApiThread;
+    const thread = (await gmailGet(`/threads/${encodeURIComponent(threadId)}`, {
+      format: "full",
+    })) as GmailApiThread;
 
     const messages = thread.messages ?? [];
     const lines: string[] = [

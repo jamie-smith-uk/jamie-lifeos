@@ -732,9 +732,9 @@ export async function runAgent(msg: IncomingMessage): Promise<AgentResult> {
 
           if (toolUse.name === "create_event") {
             // Extract and validate the event data from tool input.
-            const title = typeof toolInput["title"] === "string" ? toolInput["title"] : "";
-            const start = typeof toolInput["start"] === "string" ? toolInput["start"] : "";
-            const end = typeof toolInput["end"] === "string" ? toolInput["end"] : "";
+            const title = typeof toolInput.title === "string" ? toolInput.title : "";
+            const start = typeof toolInput.start === "string" ? toolInput.start : "";
+            const end = typeof toolInput.end === "string" ? toolInput.end : "";
 
             if (!title || !start || !end) {
               syntheticResult = JSON.stringify({
@@ -742,11 +742,11 @@ export async function runAgent(msg: IncomingMessage): Promise<AgentResult> {
               });
             } else {
               const data: CreateEventData = { title, start, end };
-              if (typeof toolInput["location"] === "string") data.location = toolInput["location"];
-              if (typeof toolInput["description"] === "string")
-                data.description = toolInput["description"];
-              if (Array.isArray(toolInput["attendees"]))
-                data.attendees = toolInput["attendees"] as string[];
+              if (typeof toolInput.location === "string") data.location = toolInput.location;
+              if (typeof toolInput.description === "string")
+                data.description = toolInput.description;
+              if (Array.isArray(toolInput.attendees))
+                data.attendees = toolInput.attendees as string[];
 
               const summary = buildCreateEventSummary(data);
 
@@ -779,7 +779,7 @@ export async function runAgent(msg: IncomingMessage): Promise<AgentResult> {
             // T-18: Intercept update_event — build before/after summary and
             // save ConfirmationPayload { action: 'update_event', eventId, data }.
             // ------------------------------------------------------------------
-            const eventId = typeof toolInput["eventId"] === "string" ? toolInput["eventId"] : "";
+            const eventId = typeof toolInput.eventId === "string" ? toolInput.eventId : "";
 
             if (!eventId) {
               syntheticResult = JSON.stringify({
@@ -788,15 +788,14 @@ export async function runAgent(msg: IncomingMessage): Promise<AgentResult> {
             } else {
               // Build UpdateEventData from partial tool input fields.
               const updateData: UpdateEventData = { eventId };
-              if (typeof toolInput["title"] === "string") updateData.title = toolInput["title"];
-              if (typeof toolInput["start"] === "string") updateData.start = toolInput["start"];
-              if (typeof toolInput["end"] === "string") updateData.end = toolInput["end"];
-              if (typeof toolInput["location"] === "string")
-                updateData.location = toolInput["location"];
-              if (typeof toolInput["description"] === "string")
-                updateData.description = toolInput["description"];
-              if (Array.isArray(toolInput["attendees"]))
-                updateData.attendees = toolInput["attendees"] as string[];
+              if (typeof toolInput.title === "string") updateData.title = toolInput.title;
+              if (typeof toolInput.start === "string") updateData.start = toolInput.start;
+              if (typeof toolInput.end === "string") updateData.end = toolInput.end;
+              if (typeof toolInput.location === "string") updateData.location = toolInput.location;
+              if (typeof toolInput.description === "string")
+                updateData.description = toolInput.description;
+              if (Array.isArray(toolInput.attendees))
+                updateData.attendees = toolInput.attendees as string[];
 
               const summary = buildUpdateEventSummary(updateData);
 

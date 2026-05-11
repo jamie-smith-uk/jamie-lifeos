@@ -252,7 +252,7 @@ lines[n-1] = '// MUTATED: ' + lines[n-1]
 open(fp, 'w').writelines(lines)
 " "$full" "$line_num"
 
-    if timeout 60 bash -c "cd '$REPO_ROOT' && pnpm test --run" > /dev/null 2>&1; then
+    if timeout 60 bash -c "cd '$REPO_ROOT' && pnpm test" > /dev/null 2>&1; then
       survived_list+="  - $f line $line_num\n"
       log "  ⚠ Mutation survived: $f:$line_num"
     else
@@ -601,9 +601,9 @@ ${out}
     fi
   fi
 
-  out=$(cd "$REPO_ROOT" && pnpm test --run 2>&1); rc=$?
+  out=$(cd "$REPO_ROOT" && pnpm test 2>&1); rc=$?
   if [ $rc -ne 0 ]; then
-    failures+="=== pnpm test --run ===
+    failures+="=== pnpm test ===
 ${out}
 
 "
@@ -1202,7 +1202,7 @@ Follow your system prompt exactly."
 
     # Informational: verify tests fail before implementation (expect non-zero exit)
     log "Confirming tests fail before implementation (RED check)..."
-    if (cd "$REPO_ROOT" && pnpm test --run > "$TASK_DIR/test-red-output.txt" 2>&1); then
+    if (cd "$REPO_ROOT" && pnpm test > "$TASK_DIR/test-red-output.txt" 2>&1); then
       log "WARNING: Tests pass before implementation — verify tests have meaningful assertions"
     else
       log "RED confirmed — tests fail as expected"
@@ -1315,7 +1315,7 @@ Verified by orchestrator hard gate after Developer attempt $DEV_ATTEMPTS.
 
 - tsc --noEmit: PASS
 - eslint (files_in_scope): PASS
-- pnpm test --run: PASS
+- pnpm test: PASS
 
 $(cat "$TASK_DIR/test-red-output.txt" 2>/dev/null | head -20 || true)
 REPORT
@@ -1343,7 +1343,7 @@ Verified by orchestrator hard gate (restored on resume).
 
 - tsc --noEmit: PASS
 - eslint (files_in_scope): PASS
-- pnpm test --run: PASS
+- pnpm test: PASS
 REPORT
     fi
   fi

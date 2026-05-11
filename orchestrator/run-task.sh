@@ -291,7 +291,7 @@ Do NOT write implementation code. Do NOT write test-report.md."
   [ ! -f "$TESTS_WRITTEN_FILE" ] && halt "Tester did not write tests" "AG-03" "tests-written.txt not found"
 
   log "Confirming tests fail before implementation..."
-  if (cd "$REPO_ROOT" && pnpm test --run > "$TASK_DIR/test-red-output.txt" 2>&1); then
+  if (cd "$REPO_ROOT" && pnpm test > "$TASK_DIR/test-red-output.txt" 2>&1); then
     log "WARNING: Tests pass before implementation — verify assertions are meaningful"
   else
     log "RED confirmed — tests fail as expected"
@@ -391,7 +391,7 @@ Verified by orchestrator hard gate after Developer attempt $DEV_ATTEMPTS.
 
 - tsc --noEmit: PASS
 - eslint (files_in_scope): PASS
-- pnpm test --run: PASS
+- pnpm test: PASS
 REPORT
       record_task_metrics "$TASK_ID" "$TASK_TITLE" "green" $(( $(date +%s) - GREEN_START )) "$DEV_ATTEMPTS" "pass"
       log "Code health (pre-refactor baseline):"
