@@ -847,6 +847,8 @@ PYEOF
 )
 
 if [ -n "$SCHEMA_ERRORS" ]; then
+  log "Schema validation errors:"
+  while IFS= read -r err; do log "  ✗ $err"; done <<< "$SCHEMA_ERRORS"
   halt "task-manifest.json failed schema validation" "AG-01" \
     "Fix these issues in the manifest before proceeding:
 $SCHEMA_ERRORS"
