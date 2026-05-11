@@ -1,0 +1,519 @@
+{
+  "phase": 1,
+  "phase_name": "Foundation",
+  "produced_by": "AG-01 Architect",
+  "produced_at": "2026-04-20",
+  "epics_in_scope": ["EP-01", "EP-02"],
+  "exit_criteria": [
+    "User can message the bot and receive a response from Claude within 8 seconds",
+    "Bot silently drops messages from any chat_id not matching TELEGRAM_ALLOWED_CHAT_ID",
+    "User can ask 'what have I got today?' and receive a formatted list of calendar events",
+    "User can ask about events on a specific date or range",
+    "Conversation context persists across messages (rolling 20-message window)",
+    "Bot sends typing indicator while agent is processing",
+    "User can create a calendar event from natural language with confirmation",
+    "User can update an existing calendar event with confirmation",
+    "User can delete a calendar event with confirmation",
+    "User can ask if they are free at a given time"
+  ],
+  "tasks": [
+    {
+      "id": "T-01",
+      "epic": "EP-00",
+      "title": "Repository and monorepo scaffold",
+      "description": "Initialise pnpm workspace with packages/bot, packages/orchestrator, packages/shared. Configure TypeScript strict mode for all packages. Add root tsconfig.json with project references. Add .env.example documenting all required environment variables.",
+      "files": [
+        "pnpm-workspace.yaml",
+        "package.json",
+        "tsconfig.json",
+        "packages/bot/package.json",
+        "packages/bot/tsconfig.json",
+        "packages/orchestrator/package.json",
+        "packages/orchestrator/tsconfig.json",
+        "packages/shared/package.json",
+        "packages/shared/tsconfig.json",
+        ".env.example"
+      ],
+      "depends_on": [],
+      "acceptance": [
+        "pnpm install completes without errors",
+        "tsc --noEmit passes for all packages",
+        ".env.example lists TELEGRAM_BOT_TOKEN, TELEGRAM_ALLOWED_CHAT_ID, ANTHROPIC_API_KEY, DATABASE_URL, DIGEST_CRON, TZ"
+      ]
+    },
+    {
+      "id": "T-02",
+      "epic": "EP-00",
+      "title": "Shared: db, logger, env, types",
+      "description": "Implement packages/shared/src/db.ts (pg Pool singleton), packages/shared/src/logger.ts (pino structured logger), packages/shared/src/env.ts (validated env config using a schema — throws on missing vars at startup), packages/shared/src/types.ts (shared TypeScript interfaces: ConversationMessage, ConfirmationPayload, etc.).",
+      "files": [
+        "packages/shared/src/db.ts",
+        "packages/shared/src/logger.ts",
+        "packages/shared/src/env.ts",
+        "packages/shared/src/types.ts"
+      ],
+      "depends_on": ["T-01"],
+      "acceptance": [
+        "db.ts exports a Pool instance; Pool is created once and reused",
+        "env.ts throws a descriptive error if any required variable is missing at startup",
+        "logger.ts exports a pino logger with level configurable via LOG_LEVEL env var",
+        "types.ts exports ConversationMessage and ConfirmationPayload interfaces"
+      ]
+    },
+    {
+      "id": "T-03",
+      "epic": "EP-00",
+      "title": "Database migrations runner",
+      "description": "Implement a migrations runner script at packages/shared/src/migrate.ts. On startup, creates the migrations table if absent, then applies any unapplied SQL migration files from a db/migrations/ directory in order. Migration filenames are zero-padded integers (e.g. 0001_init.sql). Applied migrations are recorded in the migrations table and never re-run.",
+      "files": [
+        "packages/shared/src/migrate.ts",
+        "db/migrations/0001_init.sql"
+      ],
+      "depends_on": ["T-02"],
+      "acceptance": [
+        "Running migrate.ts twice applies migrations exactly once",
+        "0001_init.sql creates conversation_context table with correct schema and index",
+        "Migration failures log the error and exit with code 1"
+      ]
+    },
+    {
+      "id": "T-04",
+      "epic": "EP-00",
+      "title": "conversation_context schema migration",
+      "description": "Write db/migrations/0001_init.sql. Creates conversation_context table with id, chat_id, role (CHECK: user|assistant), content, created_at, and an active_confirmation JSONB column (nullable) on the row keyed by chat_id for the confirmation pattern. Adds the index on (chat_id, created_at DESC). Also creates the migrations table itself if not handled by the runner.",
+      "files": [
+        "db/migrations/0001_init.sql"
+      ],
+      "depends_on": ["T-03"],
+      "acceptance": [
+        "Migration runs cleanly against a fresh PostgreSQL 16 database",
+        "conversation_context table has all columns specified in architecture.md",
+        "Index idx_conversation_context_chat_id_created_at is created",
+        "active_confirmation JSONB column is present and nullable"
+      ]
+    },
+    {
+      "id": "T-05",
+      "epic": "EP-01",
+      "title": "Bot service: entrypoint and message handler",
+      "description": "Implement packages/bot/src/index.ts. Initialise node-telegram-bot-api in webhook or polling mode (configurable via BOT_MODE env var). Register onText('/.*/') handler that forwards the message payload to the orchestrator service over an internal HTTP call (ORCHESTRATOR_URL env var). Register callback_query handler that forwards callback data. Handle errors gracefully — log and send a plain 'Something went wrong' reply so the user is never left hanging.",
+      "files": [
+        "packages/bot/src/index.ts"
+      ],
+      "depends_on": ["T-02"],
+      "acceptance": [
+        "Bot starts without error when TELEGRAM_BOT_TOKEN is set",
+        "Incoming messages are forwarded to ORCHESTRATOR_URL via POST /message",
+        "Callback queries are forwarded to ORCHESTRATOR_URL via POST /callback",
+        "Network errors to orchestrator are caught; user receives error message"
+      ]
+    },
+    {
+      "id": "T-06",
+      "epic": "EP-01",
+      "title": "Bot service: chat_id whitelist middleware",
+      "description": "Implement packages/bot/src/middleware.ts. Export a function isAllowedChat(chatId: number): boolean that compares against TELEGRAM_ALLOWED_CHAT_ID. In index.ts, call this before forwarding to orchestrator. Unauthorised messages are silently dropped and logged at WARN level with the offending chat_id. No reply is sent to the unauthorised sender.",
+      "files": [
+        "packages/bot/src/middleware.ts",
+        "packages/bot/src/index.ts"
+      ],
+      "depends_on": ["T-05"],
+      "acceptance": [
+        "Message from TELEGRAM_ALLOWED_CHAT_ID is forwarded to orchestrator",
+        "Message from any other chat_id is dropped with no reply",
+        "A WARN log entry is written containing the unauthorised chat_id",
+        "Unit test: isAllowedChat returns true for allowed ID, false for any other"
+      ]
+    },
+    {
+      "id": "T-07",
+      "epic": "EP-01",
+      "title": "Bot service: inline keyboard builder",
+      "description": "Implement packages/bot/src/keyboard.ts. Export buildConfirmKeyboard(): InlineKeyboardMarkup that returns a three-button inline keyboard: Confirm (callback_data: 'confirm'), Edit (callback_data: 'edit'), Cancel (callback_data: 'cancel'). Export buildDismissKeyboard(nudgeId: number): InlineKeyboardMarkup for nudge dismiss buttons.",
+      "files": [
+        "packages/bot/src/keyboard.ts"
+      ],
+      "depends_on": ["T-05"],
+      "acceptance": [
+        "buildConfirmKeyboard returns valid InlineKeyboardMarkup with three buttons",
+        "buildDismissKeyboard returns InlineKeyboardMarkup with a single Dismiss button",
+        "callback_data values are exactly 'confirm', 'edit', 'cancel', 'dismiss:<nudgeId>'"
+      ]
+    },
+    {
+      "id": "T-08",
+      "epic": "EP-01",
+      "title": "Orchestrator service: entrypoint and HTTP server",
+      "description": "Implement packages/orchestrator/src/index.ts. Start an HTTP server (Node http module, no framework). Handle POST /message: parse body, call agent, return reply text. Handle POST /callback: parse callback data, route to confirm/edit/cancel handler. Run migrations on startup before the server begins accepting requests. Log service start and port.",
+      "files": [
+        "packages/orchestrator/src/index.ts"
+      ],
+      "depends_on": ["T-03", "T-02"],
+      "acceptance": [
+        "POST /message with valid body returns 200 and a text reply",
+        "POST /callback with callback_data 'cancel' returns 200",
+        "Migrations run before first request is handled",
+        "Server listens on PORT env var, defaults to 3001"
+      ]
+    },
+    {
+      "id": "T-09",
+      "epic": "EP-01",
+      "title": "Orchestrator: conversation context persistence",
+      "description": "Implement context load and save in packages/orchestrator/src/agent.ts (or a dedicated context.ts). loadContext(chatId): fetches the last 20 messages from conversation_context ordered by created_at DESC, returns them oldest-first for the API messages array. saveMessage(chatId, role, content): inserts a row, then deletes any rows beyond the 20-message rolling window for that chat_id. All queries are parameterised.",
+      "files": [
+        "packages/orchestrator/src/agent.ts"
+      ],
+      "depends_on": ["T-04", "T-08"],
+      "acceptance": [
+        "loadContext returns messages in chronological order (oldest first)",
+        "After 21st message is saved, only 20 rows remain for that chat_id",
+        "All SQL uses parameterised queries — no string interpolation",
+        "Unit test: saving 25 messages leaves exactly 20 in DB"
+      ]
+    },
+    {
+      "id": "T-10",
+      "epic": "EP-01",
+      "title": "Orchestrator: agent core — Anthropic API client and tool loop",
+      "description": "Implement the agent loop in packages/orchestrator/src/agent.ts. Assemble system prompt with five blocks in order: Identity, Live context (current datetime + TZ), People index (empty in Phase 1), Pending nudges (empty in Phase 1), Active automations (empty in Phase 1). Append conversation history as messages array. Call claude-sonnet-4-20250514 with tool definitions. Implement tool loop: if response contains tool_use blocks, execute the tool, append tool_result, call API again. Return final text response. P95 latency target: 8 seconds.",
+      "files": [
+        "packages/orchestrator/src/agent.ts"
+      ],
+      "depends_on": ["T-09"],
+      "acceptance": [
+        "Agent returns a text response for a plain 'hello' message",
+        "Tool loop executes tools and feeds results back until no more tool_use blocks",
+        "System prompt contains all five blocks in correct order",
+        "Model ID is claude-sonnet-4-20250514 — not hardcoded elsewhere"
+      ]
+    },
+    {
+      "id": "T-11",
+      "epic": "EP-01",
+      "title": "Bot: typing indicator",
+      "description": "In the orchestrator's /message handler (or the bot's forwarding logic), send sendChatAction 'typing' to the bot service before invoking the agent. The bot service must expose a POST /typing endpoint (or the orchestrator calls the Telegram API directly if bot token is available). Typing indicator must be sent before the agent call and should not block the agent response.",
+      "files": [
+        "packages/bot/src/index.ts",
+        "packages/orchestrator/src/index.ts"
+      ],
+      "depends_on": ["T-08", "T-10"],
+      "acceptance": [
+        "Telegram shows 'typing...' before the agent response arrives",
+        "Typing action is sent before the Anthropic API call is initiated",
+        "Failure to send typing indicator does not prevent the agent from responding"
+      ]
+    },
+    {
+      "id": "T-12",
+      "epic": "EP-01",
+      "title": "Calendar tool wrappers: read operations",
+      "description": "Implement packages/orchestrator/src/tools/calendar.ts. Wrap Google Calendar MCP tools: get_todays_events (no params) and get_events_range (start: ISO 8601, end: ISO 8601). Export TypeScript functions that can be called by the agent tool loop. Export the corresponding Anthropic tool definition objects (name, description, input_schema) so they can be included in the API call.",
+      "files": [
+        "packages/orchestrator/src/tools/calendar.ts"
+      ],
+      "depends_on": ["T-10"],
+      "acceptance": [
+        "get_todays_events tool definition matches MCP contract",
+        "get_events_range accepts start and end as ISO 8601 strings",
+        "Tool definitions are exported and included in agent API call",
+        "Empty calendar response returns a graceful 'No events' message to user"
+      ]
+    },
+    {
+      "id": "T-13",
+      "epic": "EP-01",
+      "title": "EP-01-03: 'What have I got today?' intent",
+      "description": "Wire get_todays_events into the agent loop so that when the user asks about today's events, the agent calls the tool and formats the result as a readable list. Handle empty calendar gracefully ('You have nothing scheduled today.'). Events should be listed chronologically with start time, title, and location if present.",
+      "files": [
+        "packages/orchestrator/src/tools/calendar.ts",
+        "packages/orchestrator/src/agent.ts"
+      ],
+      "depends_on": ["T-12"],
+      "acceptance": [
+        "Smoke test 3: 'what have I got today?' returns a formatted event list",
+        "Empty calendar returns a clear empty-state message",
+        "Events are in chronological order with time and title"
+      ]
+    },
+    {
+      "id": "T-14",
+      "epic": "EP-01",
+      "title": "EP-01-04: Events on a specific date or range",
+      "description": "Wire get_events_range into the agent loop. Agent must resolve natural language date references ('next Tuesday', 'this week', 'tomorrow') to ISO 8601 before calling the tool. Live context block in system prompt provides current datetime and TZ to enable this resolution. Handle multi-day ranges and single-day queries.",
+      "files": [
+        "packages/orchestrator/src/tools/calendar.ts",
+        "packages/orchestrator/src/agent.ts"
+      ],
+      "depends_on": ["T-13"],
+      "acceptance": [
+        "'What have I got next Tuesday?' calls get_events_range with correct ISO dates",
+        "'What's on this week?' calls get_events_range from Monday to Sunday of current week",
+        "Natural language date resolution uses TZ from env, not UTC"
+      ]
+    },
+    {
+      "id": "T-15",
+      "epic": "EP-02",
+      "title": "Calendar tool wrappers: write operations",
+      "description": "Extend packages/orchestrator/src/tools/calendar.ts with write tool wrappers: create_event (title, start, end, location?, description?, attendees?), update_event (eventId, partial fields), delete_event (eventId), check_free_busy (start, end). Export tool definition objects for each. These tools must NOT be called by the agent directly — they are only called by the orchestrator's confirmation executor after user confirms.",
+      "files": [
+        "packages/orchestrator/src/tools/calendar.ts"
+      ],
+      "depends_on": ["T-12"],
+      "acceptance": [
+        "create_event, update_event, delete_event, check_free_busy tool definitions exported",
+        "All four tools included in agent's tool definitions array",
+        "Tool functions accept correct TypeScript types matching MCP contracts"
+      ]
+    },
+    {
+      "id": "T-16",
+      "epic": "EP-02",
+      "title": "Confirmation pattern: active_confirmation storage",
+      "description": "Implement confirmation record storage using the active_confirmation JSONB column on conversation_context. Write saveConfirmation(chatId, payload: ConfirmationPayload): stores the payload keyed to the chat_id by upserting the latest row's active_confirmation column. Write loadConfirmation(chatId): returns pending ConfirmationPayload or null. Write clearConfirmation(chatId): nulls the column. Implement 10-minute expiry check on load.",
+      "files": [
+        "packages/orchestrator/src/agent.ts",
+        "packages/shared/src/types.ts"
+      ],
+      "depends_on": ["T-09", "T-15"],
+      "acceptance": [
+        "saveConfirmation upserts payload for chat_id",
+        "loadConfirmation returns null if no pending confirmation",
+        "loadConfirmation returns null if confirmation is older than 10 minutes",
+        "clearConfirmation sets column to null",
+        "Only one active confirmation per chat_id — new proposal overwrites old"
+      ]
+    },
+    {
+      "id": "T-17",
+      "epic": "EP-02",
+      "title": "EP-02-01/02: Create calendar event with confirmation",
+      "description": "Wire the create event flow end-to-end. When user describes a meeting, agent extracts who/what/when/where/duration and responds with a structured proposal (formatted text summary). Orchestrator calls saveConfirmation with ConfirmationPayload {action: 'create_event', data: {...}}. Bot renders Confirm/Edit/Cancel inline keyboard. On Confirm callback, orchestrator calls create_event tool and sends success message. On Cancel, clears confirmation and sends cancellation message.",
+      "files": [
+        "packages/orchestrator/src/index.ts",
+        "packages/orchestrator/src/agent.ts",
+        "packages/bot/src/index.ts"
+      ],
+      "depends_on": ["T-16", "T-07"],
+      "acceptance": [
+        "Smoke test 4: 'add a meeting with Tom at 3pm Friday' → proposal with Confirm/Edit/Cancel buttons",
+        "Smoke test 5: Confirm → event created in Google Calendar",
+        "Cancel → confirmation cleared, no event created",
+        "Proposal message includes: title, date, time, duration, location (if any)"
+      ]
+    },
+    {
+      "id": "T-18",
+      "epic": "EP-02",
+      "title": "EP-02-03: Update calendar event with confirmation",
+      "description": "Wire the update event flow. When user describes a change ('move my 3pm Friday to 4pm'), agent calls get_events_range to identify the event, then proposes an update with a before/after summary. Saves ConfirmationPayload {action: 'update_event', eventId, data: partialFields}. On Confirm, calls update_event. On Edit, prompts for further changes and proposes again.",
+      "files": [
+        "packages/orchestrator/src/index.ts",
+        "packages/orchestrator/src/agent.ts"
+      ],
+      "depends_on": ["T-17"],
+      "acceptance": [
+        "Smoke test 6: 'move my 3pm Friday to 4pm' → before/after proposal with confirmation buttons",
+        "Confirm → event updated in Google Calendar",
+        "Edit → agent re-prompts, user can change details, new proposal shown"
+      ]
+    },
+    {
+      "id": "T-19",
+      "epic": "EP-02",
+      "title": "EP-02-04: Delete calendar event with confirmation",
+      "description": "Wire the delete event flow. When user asks to delete an event, agent identifies it (using get_events_range). If ambiguous (multiple matches), agent lists options and asks user to clarify before proposing. Proposal shows event summary. Saves ConfirmationPayload {action: 'delete_event', eventId}. On Confirm, calls delete_event.",
+      "files": [
+        "packages/orchestrator/src/index.ts",
+        "packages/orchestrator/src/agent.ts"
+      ],
+      "depends_on": ["T-17"],
+      "acceptance": [
+        "Smoke test 7: 'delete my 3pm Friday' → event summary proposal with confirmation",
+        "Confirm → event deleted from Google Calendar",
+        "Ambiguous match → agent lists matching events and asks user to specify"
+      ]
+    },
+    {
+      "id": "T-20",
+      "epic": "EP-02",
+      "title": "EP-02-05: Free/busy check",
+      "description": "Wire the check_free_busy tool. When user asks 'am I free Thursday afternoon?', agent resolves the time range, calls check_free_busy, and returns a plain-language free/busy response. If busy, include the name of the adjacent or conflicting event. No confirmation step required (read-only operation).",
+      "files": [
+        "packages/orchestrator/src/tools/calendar.ts",
+        "packages/orchestrator/src/agent.ts"
+      ],
+      "depends_on": ["T-15"],
+      "acceptance": [
+        "Smoke test 8: 'am I free Thursday afternoon?' → clear free/busy response",
+        "If busy, response names the conflicting event",
+        "No Confirm/Edit/Cancel buttons shown (read-only)"
+      ]
+    },
+    {
+      "id": "T-21",
+      "epic": "EP-00",
+      "title": "Vitest test suite scaffold and unit tests",
+      "description": "Configure Vitest for all packages. Write unit tests for: middleware.ts isAllowedChat (T-06), context rolling window (T-09), confirmation expiry logic (T-16), keyboard builders (T-07), env.ts missing-var throw (T-02), migration idempotency (T-03). All tests must pass with pnpm test.",
+      "files": [
+        "packages/bot/src/middleware.test.ts",
+        "packages/bot/src/keyboard.test.ts",
+        "packages/orchestrator/src/agent.test.ts",
+        "packages/shared/src/env.test.ts",
+        "packages/shared/src/migrate.test.ts",
+        "vitest.config.ts"
+      ],
+      "depends_on": ["T-06", "T-07", "T-09", "T-16", "T-02", "T-03"],
+      "acceptance": [
+        "pnpm test passes with zero failures",
+        "isAllowedChat: allowed ID returns true, any other returns false",
+        "Rolling window: 25 saves leaves exactly 20 rows",
+        "Confirmation expiry: payload older than 10 min returns null",
+        "env.ts: missing required var throws at startup"
+      ]
+    },
+    {
+      "id": "T-22",
+      "epic": "EP-00",
+      "title": "Railway service configuration and deployment",
+      "description": "Add railway.json (or railway.toml) configuration for bot and orchestrator services. Add Dockerfile or nixpacks config for each. Confirm DATABASE_URL, TELEGRAM_BOT_TOKEN, TELEGRAM_ALLOWED_CHAT_ID, ANTHROPIC_API_KEY, ORCHESTRATOR_URL are documented in .env.example with descriptions. Deployments triggered by push to main. Tag phase completion as phase-1-complete after Validator PASS.",
+      "files": [
+        "railway.json",
+        ".env.example",
+        "packages/bot/Dockerfile",
+        "packages/orchestrator/Dockerfile"
+      ],
+      "depends_on": ["T-08", "T-05"],
+      "acceptance": [
+        "Both services deploy to Railway without build errors",
+        "Bot service can reach orchestrator via ORCHESTRATOR_URL on Railway private network",
+        "All environment variables documented in .env.example",
+        "No .env files committed to repository"
+      ]
+    }
+  ],
+  "task_order": [
+    "T-01",
+    "T-02",
+    "T-03",
+    "T-04",
+    "T-05",
+    "T-06",
+    "T-07",
+    "T-08",
+    "T-09",
+    "T-10",
+    "T-11",
+    "T-12",
+    "T-13",
+    "T-14",
+    "T-15",
+    "T-16",
+    "T-17",
+    "T-18",
+    "T-19",
+    "T-20",
+    "T-21",
+    "T-22"
+  ],
+  "dependency_graph": {
+    "T-01": [],
+    "T-02": ["T-01"],
+    "T-03": ["T-02"],
+    "T-04": ["T-03"],
+    "T-05": ["T-02"],
+    "T-06": ["T-05"],
+    "T-07": ["T-05"],
+    "T-08": ["T-03", "T-02"],
+    "T-09": ["T-04", "T-08"],
+    "T-10": ["T-09"],
+    "T-11": ["T-08", "T-10"],
+    "T-12": ["T-10"],
+    "T-13": ["T-12"],
+    "T-14": ["T-13"],
+    "T-15": ["T-12"],
+    "T-16": ["T-09", "T-15"],
+    "T-17": ["T-16", "T-07"],
+    "T-18": ["T-17"],
+    "T-19": ["T-17"],
+    "T-20": ["T-15"],
+    "T-21": ["T-06", "T-07", "T-09", "T-16", "T-02", "T-03"],
+    "T-22": ["T-08", "T-05"]
+  },
+  "parallel_tracks": [
+    {
+      "track": "Bot service",
+      "tasks": ["T-05", "T-06", "T-07"]
+    },
+    {
+      "track": "Shared foundation",
+      "tasks": ["T-02", "T-03", "T-04"]
+    },
+    {
+      "track": "Orchestrator core",
+      "tasks": ["T-08", "T-09", "T-10"]
+    },
+    {
+      "track": "Calendar read",
+      "tasks": ["T-12", "T-13", "T-14"]
+    },
+    {
+      "track": "Calendar write + confirmation",
+      "tasks": ["T-15", "T-16", "T-17", "T-18", "T-19", "T-20"]
+    }
+  ],
+  "smoke_tests": [
+    {
+      "id": "ST-01",
+      "description": "Send 'hello' to the bot — Claude responds within 8 seconds",
+      "covers": ["T-05", "T-10", "T-11"]
+    },
+    {
+      "id": "ST-02",
+      "description": "Send a message from a different chat_id — bot does not respond",
+      "covers": ["T-06"]
+    },
+    {
+      "id": "ST-03",
+      "description": "Send 'what have I got today?' — calendar events returned",
+      "covers": ["T-13"]
+    },
+    {
+      "id": "ST-04",
+      "description": "Send 'add a meeting with Tom at 3pm Friday' — agent proposes event with full details, Confirm/Edit/Cancel buttons appear",
+      "covers": ["T-17"]
+    },
+    {
+      "id": "ST-05",
+      "description": "Tap Confirm — event created in Google Calendar",
+      "covers": ["T-17"]
+    },
+    {
+      "id": "ST-06",
+      "description": "Send 'move my 3pm Friday to 4pm' — agent proposes update, user confirms",
+      "covers": ["T-18"]
+    },
+    {
+      "id": "ST-07",
+      "description": "Send 'delete my 3pm Friday' — agent proposes deletion, user confirms",
+      "covers": ["T-19"]
+    },
+    {
+      "id": "ST-08",
+      "description": "Send 'am I free Thursday afternoon?' — agent checks calendar and responds",
+      "covers": ["T-20"]
+    }
+  ],
+  "tech_stack": {
+    "runtime": "Node.js 20 LTS",
+    "language": "TypeScript (strict mode)",
+    "telegram": "node-telegram-bot-api",
+    "ai_model": "claude-sonnet-4-20250514",
+    "calendar": "Google Calendar MCP",
+    "database": "PostgreSQL 16 via pg (node-postgres), raw parameterised SQL only",
+    "testing": "Vitest",
+    "package_manager": "pnpm",
+    "infrastructure": "Railway"
+  }
+}
