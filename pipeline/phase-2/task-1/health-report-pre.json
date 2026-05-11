@@ -1,0 +1,49 @@
+{
+  "task_id": "task-1",
+  "files_checked": [
+    "packages/shared/dist/env.d.ts.map",
+    "packages/shared/src/env.ts",
+    "packages/orchestrator/src/tools/todoist.ts",
+    "packages/shared/dist/env.d.ts",
+    "packages/shared/dist/env.js"
+  ],
+  "complex_functions": [
+    {
+      "file": "packages/shared/src/env.ts",
+      "line": 63,
+      "lines": 52
+    },
+    {
+      "file": "packages/orchestrator/src/tools/todoist.ts",
+      "line": 97,
+      "lines": 28
+    },
+    {
+      "file": "packages/orchestrator/src/tools/todoist.ts",
+      "line": 131,
+      "lines": 41
+    },
+    {
+      "file": "packages/orchestrator/src/tools/todoist.ts",
+      "line": 178,
+      "lines": 27
+    },
+    {
+      "file": "packages/orchestrator/src/tools/todoist.ts",
+      "line": 211,
+      "lines": 27
+    },
+    {
+      "file": "packages/orchestrator/src/tools/todoist.ts",
+      "line": 244,
+      "lines": 41
+    },
+    {
+      "file": "packages/orchestrator/src/tools/todoist.ts",
+      "line": 297,
+      "lines": 23
+    }
+  ],
+  "duplication_pct": 8.0,
+  "coverage_pct": null
+}

@@ -1,0 +1,60 @@
+{
+  "task_id": "task-3",
+  "files_checked": [
+    "packages/orchestrator/src/agent.ts"
+  ],
+  "complex_functions": [
+    {
+      "file": "packages/orchestrator/src/agent.ts",
+      "line": 134,
+      "lines": 72
+    },
+    {
+      "file": "packages/orchestrator/src/agent.ts",
+      "line": 433,
+      "lines": 47
+    },
+    {
+      "file": "packages/orchestrator/src/agent.ts",
+      "line": 502,
+      "lines": 57
+    },
+    {
+      "file": "packages/orchestrator/src/agent.ts",
+      "line": 605,
+      "lines": 283
+    },
+    {
+      "file": "packages/orchestrator/src/agent.ts",
+      "line": 649,
+      "lines": 219
+    },
+    {
+      "file": "packages/orchestrator/src/agent.ts",
+      "line": 685,
+      "lines": 44
+    },
+    {
+      "file": "packages/orchestrator/src/agent.ts",
+      "line": 729,
+      "lines": 50
+    },
+    {
+      "file": "packages/orchestrator/src/agent.ts",
+      "line": 779,
+      "lines": 41
+    },
+    {
+      "file": "packages/orchestrator/src/agent.ts",
+      "line": 945,
+      "lines": 41
+    },
+    {
+      "file": "packages/orchestrator/src/agent.ts",
+      "line": 1014,
+      "lines": 38
+    }
+  ],
+  "duplication_pct": 2.0,
+  "coverage_pct": null
+}

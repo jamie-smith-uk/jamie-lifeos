@@ -1,0 +1,527 @@
+
+> jamie-lifeos@0.0.1 test /Users/jamie/Documents/jamie-lifeos
+> pnpm -r test --run
+
+Scope: 3 of 4 workspace projects
+packages/shared test$ vitest run --config vitest.config.ts --run
+packages/shared test:  RUN  v4.1.4 /Users/jamie/Documents/jamie-lifeos/packages/shared
+packages/shared test:  Test Files  7 passed (7)
+packages/shared test:       Tests  128 passed (128)
+packages/shared test:    Start at  06:33:34
+packages/shared test:    Duration  744ms (transform 292ms, setup 0ms, import 405ms, tests 617ms, environment 0ms)
+packages/shared test: Done
+packages/bot test$ vitest run --config vitest.config.ts --run
+packages/orchestrator test$ vitest run --config vitest.config.ts --run
+packages/orchestrator test:  RUN  v4.1.4 /Users/jamie/Documents/jamie-lifeos/packages/orchestrator
+packages/bot test:  RUN  v4.1.4 /Users/jamie/Documents/jamie-lifeos/packages/bot
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts (45 tests | 45 failed) 423ms
+packages/orchestrator test:      × gmail.ts exports executeGmailTool as a function 59ms
+packages/orchestrator test:      × executeGmailTool handles 'get_inbox_summary' operation 36ms
+packages/orchestrator test:      × executeGmailTool handles 'get_thread' operation 13ms
+packages/orchestrator test:      × executeGmailTool returns JSON error for unknown operation 9ms
+packages/orchestrator test:      × get_inbox_summary returns a string containing sender email 6ms
+packages/orchestrator test:      × get_inbox_summary returns a string containing subject line 10ms
+packages/orchestrator test:      × get_inbox_summary includes a one-line summary/snippet for each email 6ms
+packages/orchestrator test:      × get_inbox_summary limits results to at most 10 emails 5ms
+packages/orchestrator test:      × get_inbox_summary returns a graceful message when inbox is empty 8ms
+packages/orchestrator test:      × get_inbox_summary includes thread ID or message ID for traceability 6ms
+packages/orchestrator test:      × get_inbox_summary only returns unread emails 4ms
+packages/orchestrator test:      × get_inbox_summary handles multiple emails and lists all of them (up to 10) 3ms
+packages/orchestrator test:      × get_thread returns the content of all messages in the thread 6ms
+packages/orchestrator test:      × get_thread sends the thread_id to the MCP server 3ms
+packages/orchestrator test:      × get_thread returns plain-text content (not raw HTML) 9ms
+packages/orchestrator test:      × get_thread returns error JSON when thread_id is missing 6ms
+packages/orchestrator test:      × get_thread returns error JSON when thread_id is an empty string 3ms
+packages/orchestrator test:      × get_thread includes message dates in the output 6ms
+packages/orchestrator test:      × get_thread includes subject lines from messages 3ms
+packages/orchestrator test:      × get_inbox_summary classifies emails that require action as 'action required' 4ms
+packages/orchestrator test:      × get_inbox_summary classifies informational emails as 'FYI' 30ms
+packages/orchestrator test:      × get_inbox_summary classifies emails awaiting response as 'waiting on' 8ms
+packages/orchestrator test:      × get_inbox_summary assigns exactly one classification per email 3ms
+packages/orchestrator test:      × classification is present for all emails in the inbox summary 4ms
+packages/orchestrator test:      × get_inbox_summary makes a fetch call to gmail.mcp.claude.com 3ms
+packages/orchestrator test:      × get_thread makes a fetch call to gmail.mcp.claude.com 6ms
+packages/orchestrator test:      × MCP requests use HTTPS (not plain HTTP) 2ms
+packages/orchestrator test:      × MCP requests use JSON-RPC 2.0 protocol format 3ms
+packages/orchestrator test:      × MCP requests send Content-Type: application/json header 2ms
+packages/orchestrator test:      × MCP requests use HTTP POST method 3ms
+packages/orchestrator test:      × get_inbox_summary handles network error gracefully (returns error JSON, no throw) 2ms
+packages/orchestrator test:      × get_thread handles network error gracefully (returns error JSON, no throw) 2ms
+packages/orchestrator test:      × get_inbox_summary handles HTTP 401 Unauthorized from MCP server gracefully 2ms
+packages/orchestrator test:      × get_inbox_summary handles HTTP 503 Service Unavailable from MCP server gracefully 3ms
+packages/orchestrator test:      × get_thread handles HTTP 500 Internal Server Error from MCP server gracefully 3ms
+packages/orchestrator test:      × get_inbox_summary handles MCP JSON-RPC error response gracefully 3ms
+packages/orchestrator test:      × get_thread handles MCP JSON-RPC error response gracefully 3ms
+packages/orchestrator test:      × executeGmailTool never throws — all errors are returned as strings 3ms
+packages/orchestrator test:      × error response contains a meaningful message describing the failure 3ms
+packages/orchestrator test:      × executeGmailTool always returns a string — never undefined or null 3ms
+packages/orchestrator test:      × error responses are valid JSON with an 'error' key 2ms
+packages/orchestrator test:      × get_inbox_summary success response is human-readable text, not a raw JSON array 11ms
+packages/orchestrator test:      × get_thread success response is human-readable text containing message bodies 67ms
+packages/orchestrator test:      × unknown operation error response is valid JSON with 'error' key 25ms
+packages/orchestrator test:      × get_inbox_summary response is parseable by agent for downstream processing 23ms
+packages/bot test:  Test Files  2 passed (2)
+packages/bot test:       Tests  63 passed | 1 skipped (64)
+packages/bot test:    Start at  06:33:35
+packages/bot test:    Duration  1.26s (transform 139ms, setup 0ms, import 160ms, tests 989ms, environment 0ms)
+packages/bot test: Done
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯ Failed Tests 45 ⎯⎯⎯⎯⎯⎯⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC1 — executeGmailTool exported and routes inbox and thread operations > gmail.ts exports executeGmailTool as a function
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:174:17
+packages/orchestrator test:     172|       logger: buildLoggerMock(),
+packages/orchestrator test:     173|     }));
+packages/orchestrator test:     174|     const mod = await import("../tools/gmail.js");
+packages/orchestrator test:        |                 ^
+packages/orchestrator test:     175|     expect(typeof mod.executeGmailTool).toBe("function");
+packages/orchestrator test:     176|   });
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC1 — executeGmailTool exported and routes inbox and thread operations > executeGmailTool handles 'get_inbox_summary' operation
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:184:34
+packages/orchestrator test:     182|     }));
+packages/orchestrator test:     183|     global.fetch = buildMcpSuccessFetch({ emails: [makeEmail()] });
+packages/orchestrator test:     184|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     185|
+packages/orchestrator test:     186|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC1 — executeGmailTool exported and routes inbox and thread operations > executeGmailTool handles 'get_thread' operation
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:197:34
+packages/orchestrator test:     195|     }));
+packages/orchestrator test:     196|     global.fetch = buildMcpSuccessFetch({ thread: makeThread() });
+packages/orchestrator test:     197|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     198|
+packages/orchestrator test:     199|     const result = await executeGmailTool("get_thread", { thread_id: "…
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC1 — executeGmailTool exported and routes inbox and thread operations > executeGmailTool returns JSON error for unknown operation
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:209:34
+packages/orchestrator test:     207|       logger: buildLoggerMock(),
+packages/orchestrator test:     208|     }));
+packages/orchestrator test:     209|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     210|
+packages/orchestrator test:     211|     const result = await executeGmailTool("unknown_gmail_operation", {…
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC2 — get_inbox_summary: up to 10 unread emails with sender, subject, one-line summary > get_inbox_summary returns a string containing sender email
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:243:34
+packages/orchestrator test:     241|       emails: [makeEmail({ from: "alice@example.com", subject: "Hello"…
+packages/orchestrator test:     242|     });
+packages/orchestrator test:     243|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     244|
+packages/orchestrator test:     245|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC2 — get_inbox_summary: up to 10 unread emails with sender, subject, one-line summary > get_inbox_summary returns a string containing subject line
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:257:34
+packages/orchestrator test:     255|       emails: [makeEmail({ subject: "Q2 planning review" })],
+packages/orchestrator test:     256|     });
+packages/orchestrator test:     257|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     258|
+packages/orchestrator test:     259|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC2 — get_inbox_summary: up to 10 unread emails with sender, subject, one-line summary > get_inbox_summary includes a one-line summary/snippet for each email
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:276:34
+packages/orchestrator test:     274|       ],
+packages/orchestrator test:     275|     });
+packages/orchestrator test:     276|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     277|
+packages/orchestrator test:     278|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC2 — get_inbox_summary: up to 10 unread emails with sender, subject, one-line summary > get_inbox_summary limits results to at most 10 emails
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:293:34
+packages/orchestrator test:     291|     );
+packages/orchestrator test:     292|     global.fetch = buildMcpSuccessFetch({ emails });
+packages/orchestrator test:     293|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     294|
+packages/orchestrator test:     295|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC2 — get_inbox_summary: up to 10 unread emails with sender, subject, one-line summary > get_inbox_summary returns a graceful message when inbox is empty
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:307:34
+packages/orchestrator test:     305|     }));
+packages/orchestrator test:     306|     global.fetch = buildMcpSuccessFetch({ emails: [] });
+packages/orchestrator test:     307|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     308|
+packages/orchestrator test:     309|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC2 — get_inbox_summary: up to 10 unread emails with sender, subject, one-line summary > get_inbox_summary includes thread ID or message ID for traceability
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:323:34
+packages/orchestrator test:     321|       emails: [makeEmail({ threadId: "thread-xyz-789", id: "msg-xyz-78…
+packages/orchestrator test:     322|     });
+packages/orchestrator test:     323|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     324|
+packages/orchestrator test:     325|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC2 — get_inbox_summary: up to 10 unread emails with sender, subject, one-line summary > get_inbox_summary only returns unread emails
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:338:34
+packages/orchestrator test:     336|     const fetchMock = buildMcpSuccessFetch({ emails: [makeEmail({ isUn…
+packages/orchestrator test:     337|     global.fetch = fetchMock;
+packages/orchestrator test:     338|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     339|
+packages/orchestrator test:     340|     await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC2 — get_inbox_summary: up to 10 unread emails with sender, subject, one-line summary > get_inbox_summary handles multiple emails and lists all of them (up to 10)
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:361:34
+packages/orchestrator test:     359|       ],
+packages/orchestrator test:     360|     });
+packages/orchestrator test:     361|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     362|
+packages/orchestrator test:     363|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC3 — get_thread: accepts thread ID and returns full thread with plain-text content > get_thread returns the content of all messages in the thread
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:412:34
+packages/orchestrator test:     410|       }),
+packages/orchestrator test:     411|     });
+packages/orchestrator test:     412|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     413|
+packages/orchestrator test:     414|     const result = await executeGmailTool("get_thread", { thread_id: "…
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC3 — get_thread: accepts thread ID and returns full thread with plain-text content > get_thread sends the thread_id to the MCP server
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:428:34
+packages/orchestrator test:     426|     const fetchMock = buildMcpSuccessFetch({ thread: makeThread() });
+packages/orchestrator test:     427|     global.fetch = fetchMock;
+packages/orchestrator test:     428|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     429|
+packages/orchestrator test:     430|     await executeGmailTool("get_thread", { thread_id: "thread-specific…
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC3 — get_thread: accepts thread ID and returns full thread with plain-text content > get_thread returns plain-text content (not raw HTML)
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:454:34
+packages/orchestrator test:     452|       }),
+packages/orchestrator test:     453|     });
+packages/orchestrator test:     454|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     455|
+packages/orchestrator test:     456|     const result = await executeGmailTool("get_thread", { thread_id: "…
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC3 — get_thread: accepts thread ID and returns full thread with plain-text content > get_thread returns error JSON when thread_id is missing
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:469:34
+packages/orchestrator test:     467|     const fetchMock = vi.fn();
+packages/orchestrator test:     468|     global.fetch = fetchMock;
+packages/orchestrator test:     469|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     470|
+packages/orchestrator test:     471|     const result = await executeGmailTool("get_thread", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC3 — get_thread: accepts thread ID and returns full thread with plain-text content > get_thread returns error JSON when thread_id is an empty string
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:484:34
+packages/orchestrator test:     482|     const fetchMock = vi.fn();
+packages/orchestrator test:     483|     global.fetch = fetchMock;
+packages/orchestrator test:     484|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     485|
+packages/orchestrator test:     486|     const result = await executeGmailTool("get_thread", { thread_id: "…
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC3 — get_thread: accepts thread ID and returns full thread with plain-text content > get_thread includes message dates in the output
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:510:34
+packages/orchestrator test:     508|       }),
+packages/orchestrator test:     509|     });
+packages/orchestrator test:     510|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     511|
+packages/orchestrator test:     512|     const result = await executeGmailTool("get_thread", { thread_id: "…
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC3 — get_thread: accepts thread ID and returns full thread with plain-text content > get_thread includes subject lines from messages
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:535:34
+packages/orchestrator test:     533|       }),
+packages/orchestrator test:     534|     });
+packages/orchestrator test:     535|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     536|
+packages/orchestrator test:     537|     const result = await executeGmailTool("get_thread", { thread_id: "…
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC4 — Email classification into action required, FYI, waiting on categories > get_inbox_summary classifies emails that require action as 'action required'
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:572:34
+packages/orchestrator test:     570|       ],
+packages/orchestrator test:     571|     });
+packages/orchestrator test:     572|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     573|
+packages/orchestrator test:     574|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC4 — Email classification into action required, FYI, waiting on categories > get_inbox_summary classifies informational emails as 'FYI'
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:591:34
+packages/orchestrator test:     589|       ],
+packages/orchestrator test:     590|     });
+packages/orchestrator test:     591|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     592|
+packages/orchestrator test:     593|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC4 — Email classification into action required, FYI, waiting on categories > get_inbox_summary classifies emails awaiting response as 'waiting on'
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:610:34
+packages/orchestrator test:     608|       ],
+packages/orchestrator test:     609|     });
+packages/orchestrator test:     610|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     611|
+packages/orchestrator test:     612|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC4 — Email classification into action required, FYI, waiting on categories > get_inbox_summary assigns exactly one classification per email
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:640:34
+packages/orchestrator test:     638|       ],
+packages/orchestrator test:     639|     });
+packages/orchestrator test:     640|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     641|
+packages/orchestrator test:     642|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC4 — Email classification into action required, FYI, waiting on categories > classification is present for all emails in the inbox summary
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:668:34
+packages/orchestrator test:     666|       ],
+packages/orchestrator test:     667|     });
+packages/orchestrator test:     668|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     669|
+packages/orchestrator test:     670|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC5 — Integration targets Gmail MCP server at gmail.mcp.claude.com > get_inbox_summary makes a fetch call to gmail.mcp.claude.com
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:704:34
+packages/orchestrator test:     702|     const fetchMock = buildMcpSuccessFetch({ emails: [] });
+packages/orchestrator test:     703|     global.fetch = fetchMock;
+packages/orchestrator test:     704|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     705|
+packages/orchestrator test:     706|     await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC5 — Integration targets Gmail MCP server at gmail.mcp.claude.com > get_thread makes a fetch call to gmail.mcp.claude.com
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:721:34
+packages/orchestrator test:     719|     const fetchMock = buildMcpSuccessFetch({ thread: makeThread() });
+packages/orchestrator test:     720|     global.fetch = fetchMock;
+packages/orchestrator test:     721|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     722|
+packages/orchestrator test:     723|     await executeGmailTool("get_thread", { thread_id: "thread-mcp-chec…
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC5 — Integration targets Gmail MCP server at gmail.mcp.claude.com > MCP requests use HTTPS (not plain HTTP)
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:737:34
+packages/orchestrator test:     735|     const fetchMock = buildMcpSuccessFetch({ emails: [] });
+packages/orchestrator test:     736|     global.fetch = fetchMock;
+packages/orchestrator test:     737|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     738|
+packages/orchestrator test:     739|     await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC5 — Integration targets Gmail MCP server at gmail.mcp.claude.com > MCP requests use JSON-RPC 2.0 protocol format
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:753:34
+packages/orchestrator test:     751|     const fetchMock = buildMcpSuccessFetch({ emails: [] });
+packages/orchestrator test:     752|     global.fetch = fetchMock;
+packages/orchestrator test:     753|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     754|
+packages/orchestrator test:     755|     await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC5 — Integration targets Gmail MCP server at gmail.mcp.claude.com > MCP requests send Content-Type: application/json header
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:774:34
+packages/orchestrator test:     772|     const fetchMock = buildMcpSuccessFetch({ emails: [] });
+packages/orchestrator test:     773|     global.fetch = fetchMock;
+packages/orchestrator test:     774|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     775|
+packages/orchestrator test:     776|     await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC5 — Integration targets Gmail MCP server at gmail.mcp.claude.com > MCP requests use HTTP POST method
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:793:34
+packages/orchestrator test:     791|     const fetchMock = buildMcpSuccessFetch({ emails: [] });
+packages/orchestrator test:     792|     global.fetch = fetchMock;
+packages/orchestrator test:     793|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     794|
+packages/orchestrator test:     795|     await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC6 — Proper error handling for MCP connection and API failures > get_inbox_summary handles network error gracefully (returns error JSON, no throw)
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:825:34
+packages/orchestrator test:     823|     }));
+packages/orchestrator test:     824|     global.fetch = buildNetworkErrorFetch();
+packages/orchestrator test:     825|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     826|
+packages/orchestrator test:     827|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC6 — Proper error handling for MCP connection and API failures > get_thread handles network error gracefully (returns error JSON, no throw)
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:839:34
+packages/orchestrator test:     837|     }));
+packages/orchestrator test:     838|     global.fetch = buildNetworkErrorFetch();
+packages/orchestrator test:     839|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     840|
+packages/orchestrator test:     841|     const result = await executeGmailTool("get_thread", { thread_id: "…
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC6 — Proper error handling for MCP connection and API failures > get_inbox_summary handles HTTP 401 Unauthorized from MCP server gracefully
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:853:34
+packages/orchestrator test:     851|     }));
+packages/orchestrator test:     852|     global.fetch = buildHttpErrorFetch(401, "Unauthorized");
+packages/orchestrator test:     853|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     854|
+packages/orchestrator test:     855|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC6 — Proper error handling for MCP connection and API failures > get_inbox_summary handles HTTP 503 Service Unavailable from MCP server gracefully
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:867:34
+packages/orchestrator test:     865|     }));
+packages/orchestrator test:     866|     global.fetch = buildHttpErrorFetch(503, "Service Unavailable");
+packages/orchestrator test:     867|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     868|
+packages/orchestrator test:     869|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC6 — Proper error handling for MCP connection and API failures > get_thread handles HTTP 500 Internal Server Error from MCP server gracefully
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:881:34
+packages/orchestrator test:     879|     }));
+packages/orchestrator test:     880|     global.fetch = buildHttpErrorFetch(500, "Internal Server Error");
+packages/orchestrator test:     881|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     882|
+packages/orchestrator test:     883|     const result = await executeGmailTool("get_thread", { thread_id: "…
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC6 — Proper error handling for MCP connection and API failures > get_inbox_summary handles MCP JSON-RPC error response gracefully
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:895:34
+packages/orchestrator test:     893|     }));
+packages/orchestrator test:     894|     global.fetch = buildMcpErrorFetch(-32000, "Gmail API quota exceede…
+packages/orchestrator test:     895|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     896|
+packages/orchestrator test:     897|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC6 — Proper error handling for MCP connection and API failures > get_thread handles MCP JSON-RPC error response gracefully
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:909:34
+packages/orchestrator test:     907|     }));
+packages/orchestrator test:     908|     global.fetch = buildMcpErrorFetch(-32001, "Thread not found");
+packages/orchestrator test:     909|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     910|
+packages/orchestrator test:     911|     const result = await executeGmailTool("get_thread", { thread_id: "…
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC6 — Proper error handling for MCP connection and API failures > executeGmailTool never throws — all errors are returned as strings
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:923:34
+packages/orchestrator test:     921|     }));
+packages/orchestrator test:     922|     global.fetch = buildNetworkErrorFetch("catastrophic failure");
+packages/orchestrator test:     923|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     924|
+packages/orchestrator test:     925|     // Both operations must not throw even on catastrophic failure
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC6 — Proper error handling for MCP connection and API failures > error response contains a meaningful message describing the failure
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:936:34
+packages/orchestrator test:     934|     }));
+packages/orchestrator test:     935|     global.fetch = buildNetworkErrorFetch("ECONNREFUSED: gmail.mcp.cla…
+packages/orchestrator test:     936|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     937|
+packages/orchestrator test:     938|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC7 — Response format matches agent expectations with JSON serialization > executeGmailTool always returns a string — never undefined or null
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:967:34
+packages/orchestrator test:     965|       logger: buildLoggerMock(),
+packages/orchestrator test:     966|     }));
+packages/orchestrator test:     967|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     968|
+packages/orchestrator test:     969|     const ops: Array<[string, Record<string, unknown>]> = [
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC7 — Response format matches agent expectations with JSON serialization > error responses are valid JSON with an 'error' key
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:991:34
+packages/orchestrator test:     989|     }));
+packages/orchestrator test:     990|     global.fetch = buildNetworkErrorFetch();
+packages/orchestrator test:     991|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     992|
+packages/orchestrator test:     993|     const failOps: Array<[string, Record<string, unknown>]> = [
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC7 — Response format matches agent expectations with JSON serialization > get_inbox_summary success response is human-readable text, not a raw JSON array
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:1022:34
+packages/orchestrator test:     1020|       ],
+packages/orchestrator test:     1021|     });
+packages/orchestrator test:     1022|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     1023|
+packages/orchestrator test:     1024|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC7 — Response format matches agent expectations with JSON serialization > get_thread success response is human-readable text containing message bodies
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:1049:34
+packages/orchestrator test:     1047|       }),
+packages/orchestrator test:     1048|     });
+packages/orchestrator test:     1049|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     1050|
+packages/orchestrator test:     1051|     const result = await executeGmailTool("get_thread", { thread_id: "…
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC7 — Response format matches agent expectations with JSON serialization > unknown operation error response is valid JSON with 'error' key
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:1061:34
+packages/orchestrator test:     1059|       logger: buildLoggerMock(),
+packages/orchestrator test:     1060|     }));
+packages/orchestrator test:     1061|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     1062|
+packages/orchestrator test:     1063|     const result = await executeGmailTool("not_a_real_gmail_op", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/45]⎯
+packages/orchestrator test:  FAIL  src/__tests__/gmail-task2.test.ts > AC7 — Response format matches agent expectations with JSON serialization > get_inbox_summary response is parseable by agent for downstream processing
+packages/orchestrator test: Error: Cannot find module '/src/tools/gmail.js' imported from /Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/__tests__/gmail-task2.test.ts
+packages/orchestrator test:  ❯ src/__tests__/gmail-task2.test.ts:1087:34
+packages/orchestrator test:     1085|       ],
+packages/orchestrator test:     1086|     });
+packages/orchestrator test:     1087|     const { executeGmailTool } = await import("../tools/gmail.js");
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     1088|
+packages/orchestrator test:     1089|     const result = await executeGmailTool("get_inbox_summary", {});
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/45]⎯
+packages/orchestrator test:  Test Files  1 failed | 12 passed (13)
+packages/orchestrator test:       Tests  45 failed | 325 passed (370)
+packages/orchestrator test:    Start at  06:33:35
+packages/orchestrator test:    Duration  1.94s (transform 854ms, setup 0ms, import 1.08s, tests 5.42s, environment 1ms)
+packages/orchestrator test: Failed
+/Users/jamie/Documents/jamie-lifeos/packages/orchestrator:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/orchestrator@0.0.1 test: `vitest run --config vitest.config.ts --run`
+Exit status 1
+ ELIFECYCLE  Test failed. See above for more details.

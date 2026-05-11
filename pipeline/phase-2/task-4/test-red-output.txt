@@ -1,0 +1,237 @@
+
+> jamie-lifeos@0.0.1 test /Users/jamie/Documents/jamie-lifeos
+> pnpm -r test --run
+
+Scope: 3 of 4 workspace projects
+packages/shared test$ vitest run --config vitest.config.ts --run
+packages/shared test:  RUN  v4.1.4 /Users/jamie/Documents/jamie-lifeos/packages/shared
+packages/shared test:  Test Files  7 passed (7)
+packages/shared test:       Tests  128 passed (128)
+packages/shared test:    Start at  08:12:01
+packages/shared test:    Duration  593ms (transform 209ms, setup 0ms, import 339ms, tests 505ms, environment 0ms)
+packages/shared test: Done
+packages/bot test$ vitest run --config vitest.config.ts --run
+packages/orchestrator test$ vitest run --config vitest.config.ts --run
+packages/bot test:  RUN  v4.1.4 /Users/jamie/Documents/jamie-lifeos/packages/bot
+packages/orchestrator test:  RUN  v4.1.4 /Users/jamie/Documents/jamie-lifeos/packages/orchestrator
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts (25 tests | 18 failed) 95ms
+packages/orchestrator test:      × TOOL_DEFINITIONS passed to Anthropic API includes 'get_inbox_summary' tool 40ms
+packages/orchestrator test:      × TOOL_DEFINITIONS passed to Anthropic API includes 'get_thread' tool 4ms
+packages/orchestrator test:      × both Gmail tool names are present in TOOL_DEFINITIONS simultaneously 2ms
+packages/orchestrator test:      × 'get_inbox_summary' tool definition has an input_schema object 3ms
+packages/orchestrator test:      × 'get_thread' tool definition has an input_schema object 2ms
+packages/orchestrator test:      × each Gmail tool definition has a non-empty description 2ms
+packages/orchestrator test:      × Gmail tool input_schema types are 'object' 2ms
+packages/orchestrator test:      × 'get_inbox_summary' is in GMAIL_TOOL_NAMES — routing reaches executeGmailTool 3ms
+packages/orchestrator test:      × 'get_thread' is in GMAIL_TOOL_NAMES — routing reaches executeGmailTool 2ms
+packages/orchestrator test:      × routing: agent loop calls executeGmailTool with correct tool name for 'get_inbox_summary' 2ms
+packages/orchestrator test:      × routing: agent loop calls executeGmailTool with correct tool name for 'get_thread' 3ms
+packages/orchestrator test:      × executeGmailTool receives the tool input forwarded from the agent's tool loop 2ms
+packages/orchestrator test:      × 'get_thread' tool definition includes 'thread_id' in its properties 3ms
+packages/orchestrator test:      × 'get_thread' tool definition marks 'thread_id' as a required property 2ms
+packages/orchestrator test:      × 'get_inbox_summary' tool definition has no required parameters 1ms
+packages/orchestrator test:      × 'get_thread' 'thread_id' property is typed as a string 3ms
+packages/orchestrator test:      × agent completes get_inbox_summary tool loop and returns non-empty text reply 3ms
+packages/orchestrator test:      × agent completes get_thread tool loop and returns non-empty text reply 2ms
+packages/bot test:  Test Files  2 passed (2)
+packages/bot test:       Tests  63 passed | 1 skipped (64)
+packages/bot test:    Start at  08:12:02
+packages/bot test:    Duration  1.26s (transform 114ms, setup 0ms, import 98ms, tests 1.01s, environment 0ms)
+packages/bot test: Done
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC1 — TOOL_DEFINITIONS includes Gmail tools with proper schemas > TOOL_DEFINITIONS passed to Anthropic API includes 'get_inbox_summary' tool
+packages/orchestrator test: AssertionError: expected [ 'get_tasks', 'create_task', …(3) ] to include 'get_inbox_summary'
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:416:23
+packages/orchestrator test:     414|
+packages/orchestrator test:     415|     const toolNames = getCapturedTools().map((t) => t.name);
+packages/orchestrator test:     416|     expect(toolNames).toContain("get_inbox_summary");
+packages/orchestrator test:        |                       ^
+packages/orchestrator test:     417|   });
+packages/orchestrator test:     418|
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC1 — TOOL_DEFINITIONS includes Gmail tools with proper schemas > TOOL_DEFINITIONS passed to Anthropic API includes 'get_thread' tool
+packages/orchestrator test: AssertionError: expected [ 'get_tasks', 'create_task', …(3) ] to include 'get_thread'
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:438:23
+packages/orchestrator test:     436|
+packages/orchestrator test:     437|     const toolNames = getCapturedTools().map((t) => t.name);
+packages/orchestrator test:     438|     expect(toolNames).toContain("get_thread");
+packages/orchestrator test:        |                       ^
+packages/orchestrator test:     439|   });
+packages/orchestrator test:     440|
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC1 — TOOL_DEFINITIONS includes Gmail tools with proper schemas > both Gmail tool names are present in TOOL_DEFINITIONS simultaneously
+packages/orchestrator test: AssertionError: expected [ 'get_tasks', 'create_task', …(3) ] to include 'get_inbox_summary'
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:460:23
+packages/orchestrator test:     458|
+packages/orchestrator test:     459|     const toolNames = getCapturedTools().map((t) => t.name);
+packages/orchestrator test:     460|     expect(toolNames).toContain("get_inbox_summary");
+packages/orchestrator test:        |                       ^
+packages/orchestrator test:     461|     expect(toolNames).toContain("get_thread");
+packages/orchestrator test:     462|   });
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC1 — TOOL_DEFINITIONS includes Gmail tools with proper schemas > 'get_inbox_summary' tool definition has an input_schema object
+packages/orchestrator test: AssertionError: expected undefined to be defined
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:483:18
+packages/orchestrator test:     481|
+packages/orchestrator test:     482|     const tool = getCapturedTools().find((t) => t.name === "get_inbox_…
+packages/orchestrator test:     483|     expect(tool).toBeDefined();
+packages/orchestrator test:        |                  ^
+packages/orchestrator test:     484|     expect(tool!.input_schema).toBeDefined();
+packages/orchestrator test:     485|     expect(typeof tool!.input_schema).toBe("object");
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC1 — TOOL_DEFINITIONS includes Gmail tools with proper schemas > 'get_thread' tool definition has an input_schema object
+packages/orchestrator test: AssertionError: expected undefined to be defined
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:507:18
+packages/orchestrator test:     505|
+packages/orchestrator test:     506|     const tool = getCapturedTools().find((t) => t.name === "get_thread…
+packages/orchestrator test:     507|     expect(tool).toBeDefined();
+packages/orchestrator test:        |                  ^
+packages/orchestrator test:     508|     expect(tool!.input_schema).toBeDefined();
+packages/orchestrator test:     509|     expect(typeof tool!.input_schema).toBe("object");
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC1 — TOOL_DEFINITIONS includes Gmail tools with proper schemas > each Gmail tool definition has a non-empty description
+packages/orchestrator test: AssertionError: Tool 'get_inbox_summary' should be in TOOL_DEFINITIONS: expected undefined to be defined
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:535:68
+packages/orchestrator test:     533|     for (const name of gmailNames) {
+packages/orchestrator test:     534|       const tool = tools.find((t) => t.name === name);
+packages/orchestrator test:     535|       expect(tool, `Tool '${name}' should be in TOOL_DEFINITIONS`).toB…
+packages/orchestrator test:        |                                                                    ^
+packages/orchestrator test:     536|       expect(
+packages/orchestrator test:     537|         (tool as { description?: string })?.description?.trim().length,
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC1 — TOOL_DEFINITIONS includes Gmail tools with proper schemas > Gmail tool input_schema types are 'object'
+packages/orchestrator test: AssertionError: get_inbox_summary should be in TOOL_DEFINITIONS: expected undefined to be defined
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:566:61
+packages/orchestrator test:     564|     for (const name of gmailNames) {
+packages/orchestrator test:     565|       const tool = tools.find((t) => t.name === name);
+packages/orchestrator test:     566|       expect(tool, `${name} should be in TOOL_DEFINITIONS`).toBeDefine…
+packages/orchestrator test:        |                                                             ^
+packages/orchestrator test:     567|       const schema = tool!.input_schema as { type?: string };
+packages/orchestrator test:     568|       expect(schema.type, `${name} input_schema.type should be 'object…
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC2 — GMAIL_TOOL_NAMES set contains Gmail tool names > 'get_inbox_summary' is in GMAIL_TOOL_NAMES — routing reaches executeGmailTool
+packages/orchestrator test: AssertionError: expected "vi.fn()" to be called with arguments: [ 'get_inbox_summary', Any<Object> ]
+packages/orchestrator test: Number of calls: 0
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:618:34
+packages/orchestrator test:     616|     await runAgent({ chat_id: 2001, text: "show me my inbox", message_…
+packages/orchestrator test:     617|
+packages/orchestrator test:     618|     expect(executeGmailToolMock).toHaveBeenCalledWith("get_inbox_summa…
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     619|   });
+packages/orchestrator test:     620|
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/18]⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC2 — GMAIL_TOOL_NAMES set contains Gmail tool names > 'get_thread' is in GMAIL_TOOL_NAMES — routing reaches executeGmailTool
+packages/orchestrator test: AssertionError: expected "vi.fn()" to be called with arguments: [ 'get_thread', Any<Object> ]
+packages/orchestrator test: Number of calls: 0
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:644:34
+packages/orchestrator test:     642|     await runAgent({ chat_id: 2002, text: "show me thread thread-abc-1…
+packages/orchestrator test:     643|
+packages/orchestrator test:     644|     expect(executeGmailToolMock).toHaveBeenCalledWith("get_thread", ex…
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     645|   });
+packages/orchestrator test:     646|
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/18]⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC3 — executeTool routes Gmail tools to executeGmailTool > routing: agent loop calls executeGmailTool with correct tool name for 'get_inbox_summary'
+packages/orchestrator test: AssertionError: expected "vi.fn()" to be called with arguments: [ 'get_inbox_summary', Any<Object> ]
+packages/orchestrator test: Number of calls: 0
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:748:34
+packages/orchestrator test:     746|     });
+packages/orchestrator test:     747|
+packages/orchestrator test:     748|     expect(executeGmailToolMock).toHaveBeenCalledWith("get_inbox_summa…
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     749|     expect(typeof result.text).toBe("string");
+packages/orchestrator test:     750|   });
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/18]⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC3 — executeTool routes Gmail tools to executeGmailTool > routing: agent loop calls executeGmailTool with correct tool name for 'get_thread'
+packages/orchestrator test: AssertionError: expected "vi.fn()" to be called with arguments: [ 'get_thread', Any<Object> ]
+packages/orchestrator test: Number of calls: 0
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:779:34
+packages/orchestrator test:     777|     });
+packages/orchestrator test:     778|
+packages/orchestrator test:     779|     expect(executeGmailToolMock).toHaveBeenCalledWith("get_thread", ex…
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     780|     expect(typeof result.text).toBe("string");
+packages/orchestrator test:     781|   });
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/18]⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC3 — executeTool routes Gmail tools to executeGmailTool > executeGmailTool receives the tool input forwarded from the agent's tool loop
+packages/orchestrator test: AssertionError: expected "vi.fn()" to be called with arguments: [ 'get_thread', ObjectContaining{…} ]
+packages/orchestrator test: Number of calls: 0
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:810:34
+packages/orchestrator test:     808|     });
+packages/orchestrator test:     809|
+packages/orchestrator test:     810|     expect(executeGmailToolMock).toHaveBeenCalledWith(
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     811|       "get_thread",
+packages/orchestrator test:     812|       expect.objectContaining({ thread_id: "forwarded-thread-id" }),
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/18]⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC4 — Tool definitions specify required parameters > 'get_thread' tool definition includes 'thread_id' in its properties
+packages/orchestrator test: AssertionError: expected undefined to be defined
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:922:18
+packages/orchestrator test:     920|
+packages/orchestrator test:     921|     const tool = getCapturedTools().find((t) => t.name === "get_thread…
+packages/orchestrator test:     922|     expect(tool).toBeDefined();
+packages/orchestrator test:        |                  ^
+packages/orchestrator test:     923|     const schema = tool!.input_schema as {
+packages/orchestrator test:     924|       properties?: Record<string, unknown>;
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/18]⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC4 — Tool definitions specify required parameters > 'get_thread' tool definition marks 'thread_id' as a required property
+packages/orchestrator test: AssertionError: expected undefined to be defined
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:949:18
+packages/orchestrator test:     947|
+packages/orchestrator test:     948|     const tool = getCapturedTools().find((t) => t.name === "get_thread…
+packages/orchestrator test:     949|     expect(tool).toBeDefined();
+packages/orchestrator test:        |                  ^
+packages/orchestrator test:     950|     const schema = tool!.input_schema as { required?: string[] };
+packages/orchestrator test:     951|     expect(schema.required).toBeDefined();
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/18]⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC4 — Tool definitions specify required parameters > 'get_inbox_summary' tool definition has no required parameters
+packages/orchestrator test: AssertionError: expected undefined to be defined
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:974:18
+packages/orchestrator test:     972|
+packages/orchestrator test:     973|     const tool = getCapturedTools().find((t) => t.name === "get_inbox_…
+packages/orchestrator test:     974|     expect(tool).toBeDefined();
+packages/orchestrator test:        |                  ^
+packages/orchestrator test:     975|     const schema = tool!.input_schema as { required?: string[] };
+packages/orchestrator test:     976|     // Either no required array, or an empty one — inbox summary takes…
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/18]⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC4 — Tool definitions specify required parameters > 'get_thread' 'thread_id' property is typed as a string
+packages/orchestrator test: AssertionError: expected undefined to be defined
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:1000:18
+packages/orchestrator test:     998|
+packages/orchestrator test:     999|     const tool = getCapturedTools().find((t) => t.name === "get_thread…
+packages/orchestrator test:     1000|     expect(tool).toBeDefined();
+packages/orchestrator test:        |                  ^
+packages/orchestrator test:     1001|     const schema = tool!.input_schema as {
+packages/orchestrator test:     1002|       properties?: Record<string, { type?: string }>;
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/18]⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC5 — Agent successfully calls Gmail tools in the tool loop > agent completes get_inbox_summary tool loop and returns non-empty text reply
+packages/orchestrator test: AssertionError: expected "vi.fn()" to be called with arguments: [ 'get_inbox_summary', Any<Object> ]
+packages/orchestrator test: Number of calls: 0
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:1056:34
+packages/orchestrator test:     1054|     });
+packages/orchestrator test:     1055|
+packages/orchestrator test:     1056|     expect(executeGmailToolMock).toHaveBeenCalledWith("get_inbox_summa…
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     1057|     expect(result.text.length).toBeGreaterThan(0);
+packages/orchestrator test:     1058|   });
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/18]⎯
+packages/orchestrator test:  FAIL  src/__tests__/agent-task4.test.ts > AC5 — Agent successfully calls Gmail tools in the tool loop > agent completes get_thread tool loop and returns non-empty text reply
+packages/orchestrator test: AssertionError: expected "vi.fn()" to be called with arguments: [ 'get_thread', Any<Object> ]
+packages/orchestrator test: Number of calls: 0
+packages/orchestrator test:  ❯ src/__tests__/agent-task4.test.ts:1091:34
+packages/orchestrator test:     1089|     });
+packages/orchestrator test:     1090|
+packages/orchestrator test:     1091|     expect(executeGmailToolMock).toHaveBeenCalledWith("get_thread", ex…
+packages/orchestrator test:        |                                  ^
+packages/orchestrator test:     1092|     expect(result.text.length).toBeGreaterThan(0);
+packages/orchestrator test:     1093|   });
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/18]⎯
+packages/orchestrator test:  Test Files  1 failed | 13 passed (14)
+packages/orchestrator test:       Tests  18 failed | 374 passed (392)
+packages/orchestrator test:    Start at  08:12:02
+packages/orchestrator test:    Duration  2.14s (transform 1.11s, setup 0ms, import 1.30s, tests 5.45s, environment 1ms)
+packages/orchestrator test: Failed
+/Users/jamie/Documents/jamie-lifeos/packages/orchestrator:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/orchestrator@0.0.1 test: `vitest run --config vitest.config.ts --run`
+Exit status 1
+ ELIFECYCLE  Test failed. See above for more details.

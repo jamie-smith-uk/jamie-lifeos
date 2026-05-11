@@ -1,0 +1,25 @@
+{
+  "task_id": "task-2",
+  "files_checked": [
+    "packages/orchestrator/src/tools/gmail.ts"
+  ],
+  "complex_functions": [
+    {
+      "file": "packages/orchestrator/src/tools/gmail.ts",
+      "line": 78,
+      "lines": 30
+    },
+    {
+      "file": "packages/orchestrator/src/tools/gmail.ts",
+      "line": 196,
+      "lines": 56
+    },
+    {
+      "file": "packages/orchestrator/src/tools/gmail.ts",
+      "line": 266,
+      "lines": 61
+    }
+  ],
+  "duplication_pct": 2.0,
+  "coverage_pct": null
+}
