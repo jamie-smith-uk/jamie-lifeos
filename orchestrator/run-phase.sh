@@ -66,7 +66,9 @@ $detail
 EOF
   printf "\a"  # terminal bell
   log "PIPELINE HALTED: $reason (agent: $agent)"
-  log "See HALT.md for full detail."
+  echo "=== HALT DETAIL ===" >&2
+  echo "$detail" >&2
+  echo "===================" >&2
   exit 1
 }
 
@@ -847,11 +849,11 @@ PYEOF
 )
 
 if [ -n "$SCHEMA_ERRORS" ]; then
-  echo "=== SCHEMA VALIDATION ERRORS ==="
-  echo "$SCHEMA_ERRORS"
-  echo "=== RAW MANIFEST ==="
-  cat "$PIPELINE_DIR/task-manifest.json" || true
-  echo "================================="
+  echo "=== SCHEMA VALIDATION ERRORS ===" >&2
+  echo "$SCHEMA_ERRORS" >&2
+  echo "=== RAW MANIFEST ===" >&2
+  cat "$PIPELINE_DIR/task-manifest.json" >&2 || true
+  echo "=================================" >&2
   halt "task-manifest.json failed schema validation" "AG-01" \
     "Fix these issues in the manifest before proceeding:
 $SCHEMA_ERRORS"
