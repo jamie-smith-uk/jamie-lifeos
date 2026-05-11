@@ -849,11 +849,14 @@ PYEOF
 )
 
 if [ -n "$SCHEMA_ERRORS" ]; then
-  echo "=== SCHEMA VALIDATION ERRORS ===" >&2
-  echo "$SCHEMA_ERRORS" >&2
-  echo "=== RAW MANIFEST ===" >&2
-  cat "$PIPELINE_DIR/task-manifest.json" >&2 || true
-  echo "=================================" >&2
+  # Write debug info to a file so the workflow can always cat it
+  {
+    echo "=== SCHEMA VALIDATION ERRORS ==="
+    echo "$SCHEMA_ERRORS"
+    echo ""
+    echo "=== RAW MANIFEST ==="
+    cat "$PIPELINE_DIR/task-manifest.json" 2>/dev/null || echo "(manifest file not found)"
+  } | tee "$PIPELINE_DIR/schema-errors.txt"
   halt "task-manifest.json failed schema validation" "AG-01" \
     "Fix these issues in the manifest before proceeding:
 $SCHEMA_ERRORS"

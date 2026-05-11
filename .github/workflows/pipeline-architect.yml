@@ -78,6 +78,11 @@ jobs:
           cat HALT.md 2>/dev/null || echo "(no HALT.md)"
           echo ""
           echo "════════════════════════════════════════"
+          echo "  schema-errors.txt"
+          echo "════════════════════════════════════════"
+          cat "pipeline/phase-${PHASE}/schema-errors.txt" 2>/dev/null || echo "(no schema errors file)"
+          echo ""
+          echo "════════════════════════════════════════"
           echo "  task-manifest.json (raw)"
           echo "════════════════════════════════════════"
           cat "pipeline/phase-${PHASE}/task-manifest.json" 2>/dev/null || echo "(no manifest)"
@@ -106,8 +111,10 @@ jobs:
           echo "────────────────────────────────────────"
 
       - name: Upload pipeline artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pipeline-phase-${{ env.PHASE }}
           path: pipeline/
           retention-days: 7
+          if-no-files-found: warn
