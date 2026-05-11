@@ -1,0 +1,118 @@
+[
+  {
+    "id": "task-1",
+    "title": "Implement people graph database tools",
+    "description": "Create people.ts tool module with functions to create, get, update, and log interactions with people. Support fuzzy name matching and relationship tracking for email-to-person linking.",
+    "files_in_scope": [
+      "packages/orchestrator/src/tools/people.ts"
+    ],
+    "dependencies": [],
+    "acceptance_criteria": [
+      "create_person function inserts new people records with name, relationship_type, how_known, notes",
+      "get_person function returns full record by name using fuzzy matching",
+      "update_person function merges new notes into existing record",
+      "log_interaction function inserts interactions record and updates last_interaction_at",
+      "get_lapsed_contacts function returns people sorted by last_interaction_at with threshold filter",
+      "All functions return JSON strings and never throw exceptions",
+      "All database queries use parameterized statements"
+    ],
+    "security_sensitive": true,
+    "estimated_complexity": "medium"
+  },
+  {
+    "id": "task-2",
+    "title": "Add people tools to agent system",
+    "description": "Register people graph tools in agent.ts tool definitions and executor, and update system prompt to include people index in the live context.",
+    "files_in_scope": [
+      "packages/orchestrator/src/agent.ts"
+    ],
+    "dependencies": ["task-1"],
+    "acceptance_criteria": [
+      "People tool definitions added to TOOL_DEFINITIONS array",
+      "PEOPLE_TOOL_NAMES set created with all people tool names",
+      "executeTool function routes people tools to executePeopleTool",
+      "buildSystemPrompt loads people index from database and includes in People Index block",
+      "People index shows names and relationship types for all known people"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-3",
+    "title": "Implement task confirmation flows",
+    "description": "Add confirmation pattern support for task operations (create, complete, delete, update) by intercepting these tools in the agent loop and saving confirmation payloads.",
+    "files_in_scope": [
+      "packages/orchestrator/src/agent.ts",
+      "packages/shared/src/types.ts"
+    ],
+    "dependencies": [],
+    "acceptance_criteria": [
+      "CONFIRMATION_GATED_TOOLS updated to include create_task, complete_task, delete_task, update_task",
+      "ConfirmationAction type extended with task action types",
+      "ConfirmationPayload data field supports task data types",
+      "Task confirmation payloads include task details in human-readable summary",
+      "Agent intercepts task write operations and returns synthetic pending_confirmation results",
+      "showConfirmationKeyboard flag set to true when task confirmations are saved"
+    ],
+    "security_sensitive": true,
+    "estimated_complexity": "medium"
+  },
+  {
+    "id": "task-4",
+    "title": "Implement task confirmation executor",
+    "description": "Add task confirmation execution logic to orchestrator index.ts to handle confirmed task operations by calling the appropriate Todoist API endpoints.",
+    "files_in_scope": [
+      "packages/orchestrator/src/index.ts"
+    ],
+    "dependencies": ["task-3"],
+    "acceptance_criteria": [
+      "executeConfirmation function handles task confirmation actions",
+      "create_task confirmations call executeToDoistTool with create_task operation",
+      "complete_task confirmations call executeToDoistTool with complete_task operation", 
+      "delete_task confirmations call executeToDoistTool with delete_task operation",
+      "update_task confirmations call executeToDoistTool with update_task operation",
+      "All task confirmations return success/error messages to user",
+      "Confirmation payloads are cleared after execution"
+    ],
+    "security_sensitive": true,
+    "estimated_complexity": "medium"
+  },
+  {
+    "id": "task-5",
+    "title": "Implement email implied action detection",
+    "description": "Add logic to detect calendar events and tasks implied in email content and propose adding them to calendar or Todoist with user confirmation.",
+    "files_in_scope": [
+      "packages/orchestrator/src/tools/gmail.ts",
+      "packages/orchestrator/src/agent.ts"
+    ],
+    "dependencies": ["task-2", "task-3"],
+    "acceptance_criteria": [
+      "extract_implied_actions function analyzes email content for flight confirmations, meeting invites, deadlines",
+      "Function returns structured data with proposed calendar events and tasks",
+      "Agent can propose calendar events from email content using existing create_event confirmation flow",
+      "Agent can propose tasks from email content using task confirmation flow",
+      "Each implied action requires separate user confirmation",
+      "Email content parsing handles common patterns for dates, times, locations, and action items"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "high"
+  },
+  {
+    "id": "task-6",
+    "title": "Implement email-to-people linking",
+    "description": "Add logic to link emails from known people to the people graph and offer to log interactions when emails are from or about known people.",
+    "files_in_scope": [
+      "packages/orchestrator/src/tools/gmail.ts"
+    ],
+    "dependencies": ["task-2"],
+    "acceptance_criteria": [
+      "get_inbox_summary and get_thread functions check sender email addresses against people records",
+      "When email is from a known person, response includes person name and relationship",
+      "Agent can offer to log email interactions using log_interaction tool",
+      "Email sender matching handles common email address formats and display names",
+      "People linking works for both direct emails and emails mentioning known people in content"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "medium"
+  }
+]
