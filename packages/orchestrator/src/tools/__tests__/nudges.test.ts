@@ -76,7 +76,7 @@ describe("Nudges Tools", () => {
         expect(parsed.nudge.person_id).toBe(1);
         expect(parsed.nudge.life_event_id).toBe(1);
         expect(parsed.nudge.message).toBe("Remember Alice's birthday is coming up");
-        expect(parsed.nudge.trigger_at).toBe("2026-05-20T09:00:00Z");
+        expect(parsed.nudge.trigger_at).toBe("2026-05-20T09:00:00.000Z");
         expect(parsed.nudge.status).toBe("pending");
       });
 

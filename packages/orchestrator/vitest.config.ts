@@ -8,6 +8,7 @@ export default defineConfig({
       "src/__tests__/**/*.test.ts",
       "src/tools/__tests__/people.test.ts",
       "src/tools/__tests__/life_events.test.ts",
+      "src/tools/__tests__/nudges.test.ts",
     ],
     isolate: true,
     pool: "forks",
