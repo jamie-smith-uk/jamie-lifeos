@@ -131,6 +131,16 @@ Rules:
 - Write tests only for the current task's files_in_scope
 - Do not rewrite or delete existing tests unless they directly conflict with the current task
 
+### Migration tasks — read architecture.md before writing tests
+If `files_in_scope` contains any file under `migrations/`, read the relevant table
+definitions in `docs/architecture.md` (the `## Database schema` section) before writing
+any integration tests. Your tests must assert the schema that architecture.md specifies —
+correct column types, NOT NULL constraints, DEFAULT values, and FK rules — not just what
+the task spec mentions. The task spec describes intent; architecture.md defines the exact
+contract that AG-05 will verify. If your tests assert a weaker schema (e.g. nullable
+columns that architecture.md marks NOT NULL), the Developer will implement that weaker
+schema and AG-05 will FAIL the task.
+
 ### Priority
 - Security-critical paths must have 100% test coverage: authentication and whitelist checks, parameterised query functions, secret handling, all input validation
 - State machines must be fully tested: every branch of every state transition
