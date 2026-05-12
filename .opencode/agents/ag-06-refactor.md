@@ -1,6 +1,6 @@
 ---
 description: Refactors security-cleared Developer output without changing behaviour. Runs after the green gate passes. Tests must still pass after every change. Conservative by default.
-mode: subagent
+mode: agent
 model: anthropic/claude-haiku-4-5-20251001
 temperature: 0.1
 permissions:

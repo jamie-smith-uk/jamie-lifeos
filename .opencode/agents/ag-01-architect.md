@@ -1,6 +1,6 @@
 ---
 description: Plans the implementation of a phase. Produces an ordered task manifest before any code is written. Read-only — does not modify source files.
-mode: subagent
+mode: agent
 model: anthropic/claude-sonnet-4-20250514
 temperature: 0.2
 permissions:
