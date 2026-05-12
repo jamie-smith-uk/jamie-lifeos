@@ -1,0 +1,11 @@
+{
+  "task_id": "task-6b",
+  "files_checked": [
+    "packages/orchestrator/src/tools/__tests__/nudges.test.ts",
+    "packages/orchestrator/vitest.config.ts",
+    "packages/orchestrator/tsconfig.json"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 70.5,
+  "coverage_pct": null
+}

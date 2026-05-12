@@ -105,3 +105,18 @@
 ⚠ task-6a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-6b — Add tests for nudges module
+
+**Files:** packages/orchestrator/src/tools/__tests__/nudges.test.ts, packages/orchestrator/vitest.config.ts, packages/orchestrator/tsconfig.json
+
+- **Nudges test structure**: The nudges test file follows the established pattern with comprehensive mocking of `@lifeos/shared` module. Tests are organized by function (`create_nudge`, `dismiss_nudge`) and then by concern (input validation, response format, error handling).
+
+- **Tool routing pattern**: The `executeNudgesTool` function uses an operation-based routing system where `operation: "dismiss_nudge"` routes to dismiss functionality, while the absence of an operation field defaults to create_nudge. This pattern should be maintained for consistency.
+
+- **Nudges validation patterns**: The nudges module uses comprehensive input validation with specific error messages for each field. The `person_id` is required and must be an integer, `life_event_id` can be null, `message` is required and cannot be empty, and `trigger_at` must be a valid ISO date string.
+
+- **Database response formatting**: Nudges responses convert database timestamps to ISO strings and convert numeric IDs to strings in the response objects. The `rowToNudgeInfo` helper function handles this conversion consistently.
+
+- **Error handling consistency**: All nudges functions catch exceptions and return JSON strings with error objects rather than throwing. This maintains the tool interface contract and prevents crashes in the agent loop.
+
+---
