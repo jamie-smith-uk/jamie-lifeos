@@ -30,11 +30,28 @@ You have a **5-minute budget**. Spend it writing tests, not exploring the codeba
 ## Your outputs
 1. Test files written to the correct __tests__/ directories, covering every
    acceptance criterion in the task spec
-2. A confirmation file: write the single line `tests-written` to
+2. Biome lint check run and passing on every test file you wrote (see below)
+3. A confirmation file: write the single line `tests-written` to
    /pipeline/phase-N/task-N/tests-written.txt
 
 You do **not** write test-report.md. The orchestrator writes that after the hard
 gate passes. Do not create it.
+
+## Before writing tests-written.txt — biome is required
+
+After writing your test files, run biome on them in this order:
+```bash
+pnpm exec biome check --write <your test files>
+pnpm exec biome check <your test files>
+```
+The second command must exit zero. Fix any remaining errors before writing
+tests-written.txt. Common issues biome catches:
+- Unsorted imports (auto-fixed by `--write`)
+- Unused variables — rename to `_varName` or remove the declaration
+- Formatter violations (trailing commas, quote style) — auto-fixed by `--write`
+
+Do not skip this step. Test files with biome errors will fail the CI pre-flight
+check on the next run, causing the entire pipeline to abort before any task runs.
 
 ## Rules
 
