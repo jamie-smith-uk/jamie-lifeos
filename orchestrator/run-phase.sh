@@ -514,7 +514,7 @@ summary_file = os.path.join(repo_root, 'coverage', 'coverage-summary.json')
 try:
     if not skip_tests:
         subprocess.run(
-            ['pnpm', 'test', '--run', '--coverage', '--coverage.reporter=json-summary'],
+            ['pnpm', 'test', '--coverage', '--coverage.reporter=json-summary'],
             capture_output=True, text=True, cwd=repo_root, timeout=120
         )
     if os.path.exists(summary_file):
@@ -655,7 +655,7 @@ print(' '.join('--filter ' + p for p in sorted(pkgs)) if pkgs else '')
 " "$files_in_scope_json" 2>/dev/null)
 
   # shellcheck disable=SC2086
-  out=$(cd "$REPO_ROOT" && pnpm ${affected_pkgs} test --run 2>&1); rc=$?
+  out=$(cd "$REPO_ROOT" && pnpm ${affected_pkgs} test 2>&1); rc=$?
   if [ $rc -ne 0 ]; then
     # When a baseline file exists, filter out failures that were already present
     # before the developer ran. Only surface genuinely new failures.
@@ -1408,7 +1408,7 @@ Do not modify the test files.
 \`\`\`bash
 pnpm exec tsc --noEmit
 pnpm exec biome check ${FILES_IN_SCOPE_JSON_EXPANDED:-packages/}
-pnpm${AFFECTED_PKGS:+ $AFFECTED_PKGS} test --run
+pnpm${AFFECTED_PKGS:+ $AFFECTED_PKGS} test
 \`\`\`
 
 You are not done until you have run these yourself and seen zero errors and all tests passing.

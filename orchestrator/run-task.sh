@@ -347,7 +347,7 @@ Failing tests are in __tests__/. Make them pass. Do not modify tests.
 \`\`\`bash
 pnpm exec tsc --noEmit
 pnpm exec biome check ${FILES_IN_SCOPE_JSON_EXPANDED:-packages/}
-pnpm${AFFECTED_PKGS:+ $AFFECTED_PKGS} test --run
+pnpm${AFFECTED_PKGS:+ $AFFECTED_PKGS} test
 \`\`\`
 
 You are not done until you have run these yourself and seen zero errors and all tests passing.
