@@ -53,3 +53,18 @@
 ⚠ task-4b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-5a — Implement create_life_event function
+
+**Files:** packages/orchestrator/src/tools/life_events.ts
+
+- **Life events database pattern**: All life event operations use parameterized queries through `pool.query()` from `@lifeos/shared`. The `life_events` table has foreign key constraints to the `people` table with CASCADE delete behavior.
+
+- **Fuzzy name matching consistency**: The `findPersonByName()` helper function provides the same fuzzy matching logic as `findPersonByNameForUpdate()` in people.ts. It uses ILIKE with wildcards and prioritizes exact matches. Always reuse this pattern for person lookups across all modules.
+
+- **Recurring event type logic**: The `isRecurringEventType()` function determines if an event should be recurring based on event type. Currently supports "birthday" and "anniversary" (case-insensitive). This logic is centralized and can be extended for additional recurring event types.
+
+- **Life event response format**: Success responses include `success: true`, a complete `life_event` object with all database fields converted to appropriate types (id as string, timestamps as ISO strings), and a human-readable `message`. This matches the pattern established in people.ts.
+
+- **Input validation pattern**: The `validateLifeEventInputs()` function enforces string length constraints for security (person_name: 255 chars, event_type: 100 chars, notes: 10000 chars) and validates date format. This follows the same validation pattern as people.ts with the `validateStringLength()` helper.
+
+---

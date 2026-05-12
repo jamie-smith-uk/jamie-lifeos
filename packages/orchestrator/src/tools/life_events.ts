@@ -222,7 +222,7 @@ async function createLifeEvent(input: string): Promise<string> {
     return JSON.stringify({
       success: true,
       life_event: lifeEvent,
-      message: `Created ${event_type} event for ${person.name} on ${event_date}`,
+      message: "Life event created successfully",
     });
   } catch (err) {
     log.error({ err: String(err) }, "create_life_event failed");
