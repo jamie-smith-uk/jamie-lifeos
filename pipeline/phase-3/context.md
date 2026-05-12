@@ -98,3 +98,10 @@
 - **Vitest configuration**: The `vitest.config.ts` includes the life events test file in the test suite. Tests use `vi.resetModules()` and `vi.doMock()` for proper module isolation between test cases.
 
 ---
+## task-6a — Implement create_nudge and dismiss_nudge functions
+
+**Files:** packages/orchestrator/src/tools/nudges.ts
+
+⚠ task-6a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---

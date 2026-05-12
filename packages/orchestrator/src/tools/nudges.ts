@@ -208,7 +208,7 @@ async function createNudge(input: string): Promise<string> {
     );
 
     const nudge = rowToNudgeInfo(result.rows[0]);
-    log.info({ nudge_id: nudge.id, person_id }, "Nudge created");
+    log.info({ nudge_id: nudge.id }, "Nudge created");
 
     return JSON.stringify({
       success: true,
