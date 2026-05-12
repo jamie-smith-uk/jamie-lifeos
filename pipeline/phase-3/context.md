@@ -68,3 +68,18 @@
 - **Input validation pattern**: The `validateLifeEventInputs()` function enforces string length constraints for security (person_name: 255 chars, event_type: 100 chars, notes: 10000 chars) and validates date format. This follows the same validation pattern as people.ts with the `validateStringLength()` helper.
 
 ---
+## task-5b — Implement get_upcoming_life_events function
+
+**Files:** packages/orchestrator/src/tools/life_events.ts, packages/orchestrator/vitest.config.ts, packages/orchestrator/tsconfig.json
+
+- **Life events date filtering pattern**: The `get_upcoming_life_events` function uses JavaScript-based filtering after database query to handle recurring event logic. This approach provides precise control over date adjustments and is more maintainable than complex SQL date arithmetic.
+
+- **Recurring event adjustment logic**: The `adjustRecurringEventDate()` helper function extracts month/day from the original event date and applies it to a target year. This pattern should be reused for any future recurring event functionality.
+
+- **Date range validation pattern**: The `validateDateRangeInputs()` function provides comprehensive validation for date range queries including format validation, required field checks, and logical validation (start_date not after end_date). This pattern should be used for any future date range operations.
+
+- **Life events tool executor pattern**: The `executeLifeEventsTool()` function now supports both "create_life_event" and "get_upcoming_life_events" operations. New life event operations should be added to this switch statement following the same pattern.
+
+- **Biome complexity suppression**: Used `// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: date filtering and recurring event logic requires multiple conditions` to suppress complexity warnings for the date filtering logic, which legitimately requires multiple conditional branches for proper recurring event handling.
+
+---

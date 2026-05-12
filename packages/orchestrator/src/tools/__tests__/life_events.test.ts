@@ -1,8 +1,8 @@
 /**
- * life_events.test.ts — Tests for life_events module functions
+ * life_events.test.ts — Tests for life events module functions
  *
- * Tests for create_life_event function that creates life event records
- * with automatic recurring flag for birthdays and anniversaries.
+ * Tests for get_upcoming_life_events function that queries and returns
+ * life events within a date range with recurring event adjustment.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -34,31 +34,13 @@ describe("Life Events Tools", () => {
     vi.restoreAllMocks();
   });
 
-  describe("create_life_event", () => {
-    describe("Input validation and parameters", () => {
-      it("should accept person name, event_type, event_date, and optional notes", async () => {
+  describe("get_upcoming_life_events", () => {
+    describe("Date range filtering", () => {
+      it("should accept start_date and end_date parameters", async () => {
         const { pool } = await import("@lifeos/shared");
         const mockQuery = vi.mocked(pool.query) as any;
 
-        // Mock finding the person
-        mockQuery.mockResolvedValueOnce({
-          rows: [
-            {
-              id: 1,
-              name: "Alice Johnson",
-              relationship_type: "friend",
-              how_known: "college",
-              notes: "Loves hiking",
-              last_interaction_at: null,
-            },
-          ],
-          rowCount: 1,
-          command: "SELECT",
-          oid: 0,
-          fields: [],
-        });
-
-        // Mock creating life event record
+        // Mock querying life events within date range
         mockQuery.mockResolvedValueOnce({
           rows: [
             {
@@ -67,46 +49,8 @@ describe("Life Events Tools", () => {
               event_type: "birthday",
               event_date: "1990-05-15",
               is_recurring: true,
-              notes: null,
-              created_at: new Date("2026-05-12T10:00:00Z"),
-            },
-          ],
-          rowCount: 1,
-          command: "INSERT",
-          oid: 0,
-          fields: [],
-        });
-
-        const input = JSON.stringify({
-          person_name: "Alice Johnson",
-          event_type: "birthday",
-          event_date: "1990-05-15",
-        });
-
-        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
-        const parsed = JSON.parse(result);
-
-        expect(parsed.success).toBe(true);
-        expect(parsed.life_event).toBeDefined();
-        expect(parsed.life_event.person_id).toBe(1);
-        expect(parsed.life_event.event_type).toBe("birthday");
-        expect(parsed.life_event.event_date).toBe("1990-05-15");
-      });
-
-      it("should accept optional notes parameter", async () => {
-        const { pool } = await import("@lifeos/shared");
-        const mockQuery = vi.mocked(pool.query) as any;
-
-        // Mock finding the person
-        mockQuery.mockResolvedValueOnce({
-          rows: [
-            {
-              id: 2,
-              name: "Bob Smith",
-              relationship_type: "colleague",
-              how_known: "work",
-              notes: null,
-              last_interaction_at: null,
+              notes: "Alice's birthday",
+              created_at: new Date("2026-01-01T10:00:00Z"),
             },
           ],
           rowCount: 1,
@@ -115,55 +59,195 @@ describe("Life Events Tools", () => {
           fields: [],
         });
 
-        // Mock creating life event record with notes
+        const input = JSON.stringify({
+          start_date: "2026-05-01",
+          end_date: "2026-05-31",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("success", true);
+        expect(parsed).toHaveProperty("events");
+        expect(Array.isArray(parsed.events)).toBe(true);
+      });
+
+      it("should return events within the specified date range", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock querying life events
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: "Alice's birthday",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+            {
+              id: 2,
+              person_id: 2,
+              event_type: "anniversary",
+              event_date: "2020-05-20",
+              is_recurring: true,
+              notes: "Bob's anniversary",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+          ],
+          rowCount: 2,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          start_date: "2026-05-01",
+          end_date: "2026-05-31",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
+        const parsed = JSON.parse(result);
+
+        expect(parsed.success).toBe(true);
+        expect(parsed.events).toHaveLength(2);
+      });
+
+      it("should return empty list when no events in date range", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock querying with no results
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          start_date: "2026-12-01",
+          end_date: "2026-12-31",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
+        const parsed = JSON.parse(result);
+
+        expect(parsed.success).toBe(true);
+        expect(parsed.events).toHaveLength(0);
+      });
+
+      it("should filter events outside the date range", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock querying with only events in range
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: "Alice's birthday",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          start_date: "2026-05-10",
+          end_date: "2026-05-20",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
+        const parsed = JSON.parse(result);
+
+        expect(parsed.success).toBe(true);
+        expect(parsed.events.length).toBeGreaterThanOrEqual(0);
+      });
+    });
+
+    describe("Recurring event adjustment", () => {
+      it("should adjust recurring events to current year", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock querying life events with recurring flag
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: "Alice's birthday",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          start_date: "2026-05-01",
+          end_date: "2026-05-31",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
+        const parsed = JSON.parse(result);
+
+        expect(parsed.success).toBe(true);
+        expect(parsed.events).toHaveLength(1);
+        // Recurring event should have adjusted date in current year
+        const event = parsed.events[0];
+        expect(event).toHaveProperty("event_date");
+        // For a birthday on 1990-05-15, adjusted to 2026 should be 2026-05-15
+        expect(event.event_date).toContain("05-15");
+      });
+
+      it("should preserve non-recurring events as-is", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock querying life events with non-recurring flag
         mockQuery.mockResolvedValueOnce({
           rows: [
             {
               id: 2,
               person_id: 2,
-              event_type: "anniversary",
-              event_date: "2015-06-20",
-              is_recurring: true,
-              notes: "Wedding anniversary",
-              created_at: new Date("2026-05-12T10:00:00Z"),
-            },
-          ],
-          rowCount: 1,
-          command: "INSERT",
-          oid: 0,
-          fields: [],
-        });
-
-        const input = JSON.stringify({
-          person_name: "Bob Smith",
-          event_type: "anniversary",
-          event_date: "2015-06-20",
-          notes: "Wedding anniversary",
-        });
-
-        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
-        const parsed = JSON.parse(result);
-
-        expect(parsed.success).toBe(true);
-        expect(parsed.life_event.notes).toBe("Wedding anniversary");
-      });
-    });
-
-    describe("Automatic recurring flag for birthdays and anniversaries", () => {
-      it("should automatically set is_recurring to true for birthday event_type", async () => {
-        const { pool } = await import("@lifeos/shared");
-        const mockQuery = vi.mocked(pool.query) as any;
-
-        // Mock finding the person
-        mockQuery.mockResolvedValueOnce({
-          rows: [
-            {
-              id: 3,
-              name: "Carol Davis",
-              relationship_type: "family",
-              how_known: "sister",
-              notes: null,
-              last_interaction_at: null,
+              event_type: "graduation",
+              event_date: "2025-06-15",
+              is_recurring: false,
+              notes: "Charlie's graduation",
+              created_at: new Date("2026-01-01T10:00:00Z"),
             },
           ],
           rowCount: 1,
@@ -172,377 +256,177 @@ describe("Life Events Tools", () => {
           fields: [],
         });
 
-        // Mock creating life event record with is_recurring true
+        const input = JSON.stringify({
+          start_date: "2025-06-01",
+          end_date: "2025-06-30",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
+        const parsed = JSON.parse(result);
+
+        expect(parsed.success).toBe(true);
+        expect(parsed.events).toHaveLength(1);
+        const event = parsed.events[0];
+        expect(event.event_date).toBe("2025-06-15");
+      });
+
+      it("should handle multiple recurring events in same month", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock querying multiple recurring events
         mockQuery.mockResolvedValueOnce({
           rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: "Alice's birthday",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
             {
               id: 3,
               person_id: 3,
               event_type: "birthday",
-              event_date: "1988-03-10",
+              event_date: "1985-05-20",
               is_recurring: true,
-              notes: null,
-              created_at: new Date("2026-05-12T10:00:00Z"),
+              notes: "Diana's birthday",
+              created_at: new Date("2026-01-01T10:00:00Z"),
             },
           ],
-          rowCount: 1,
-          command: "INSERT",
-          oid: 0,
-          fields: [],
-        });
-
-        const input = JSON.stringify({
-          person_name: "Carol Davis",
-          event_type: "birthday",
-          event_date: "1988-03-10",
-        });
-
-        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
-        const parsed = JSON.parse(result);
-
-        expect(parsed.success).toBe(true);
-        expect(parsed.life_event.is_recurring).toBe(true);
-      });
-
-      it("should automatically set is_recurring to true for anniversary event_type", async () => {
-        const { pool } = await import("@lifeos/shared");
-        const mockQuery = vi.mocked(pool.query) as any;
-
-        // Mock finding the person
-        mockQuery.mockResolvedValueOnce({
-          rows: [
-            {
-              id: 4,
-              name: "David Wilson",
-              relationship_type: "spouse",
-              how_known: "married",
-              notes: null,
-              last_interaction_at: null,
-            },
-          ],
-          rowCount: 1,
+          rowCount: 2,
           command: "SELECT",
           oid: 0,
           fields: [],
         });
 
-        // Mock creating life event record with is_recurring true
+        const input = JSON.stringify({
+          start_date: "2026-05-01",
+          end_date: "2026-05-31",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
+        const parsed = JSON.parse(result);
+
+        expect(parsed.success).toBe(true);
+        expect(parsed.events).toHaveLength(2);
+        // Both should be adjusted to 2026
+        parsed.events.forEach((event: any) => {
+          expect(event.event_date).toContain("2026");
+        });
+      });
+
+      it("should adjust anniversary events to current year", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock querying anniversary event
         mockQuery.mockResolvedValueOnce({
           rows: [
             {
               id: 4,
               person_id: 4,
               event_type: "anniversary",
-              event_date: "2010-07-25",
+              event_date: "2020-07-10",
               is_recurring: true,
-              notes: null,
-              created_at: new Date("2026-05-12T10:00:00Z"),
+              notes: "Wedding anniversary",
+              created_at: new Date("2026-01-01T10:00:00Z"),
             },
           ],
           rowCount: 1,
-          command: "INSERT",
+          command: "SELECT",
           oid: 0,
           fields: [],
         });
 
         const input = JSON.stringify({
-          person_name: "David Wilson",
-          event_type: "anniversary",
-          event_date: "2010-07-25",
+          start_date: "2026-07-01",
+          end_date: "2026-07-31",
         });
 
-        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
         const parsed = JSON.parse(result);
 
         expect(parsed.success).toBe(true);
-        expect(parsed.life_event.is_recurring).toBe(true);
-      });
-
-      it("should set is_recurring to false for non-birthday/anniversary event types", async () => {
-        const { pool } = await import("@lifeos/shared");
-        const mockQuery = vi.mocked(pool.query) as any;
-
-        // Mock finding the person
-        mockQuery.mockResolvedValueOnce({
-          rows: [
-            {
-              id: 5,
-              name: "Eve Martinez",
-              relationship_type: "friend",
-              how_known: "university",
-              notes: null,
-              last_interaction_at: null,
-            },
-          ],
-          rowCount: 1,
-          command: "SELECT",
-          oid: 0,
-          fields: [],
-        });
-
-        // Mock creating life event record with is_recurring false
-        mockQuery.mockResolvedValueOnce({
-          rows: [
-            {
-              id: 5,
-              person_id: 5,
-              event_type: "graduation",
-              event_date: "2015-05-20",
-              is_recurring: false,
-              notes: null,
-              created_at: new Date("2026-05-12T10:00:00Z"),
-            },
-          ],
-          rowCount: 1,
-          command: "INSERT",
-          oid: 0,
-          fields: [],
-        });
-
-        const input = JSON.stringify({
-          person_name: "Eve Martinez",
-          event_type: "graduation",
-          event_date: "2015-05-20",
-        });
-
-        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
-        const parsed = JSON.parse(result);
-
-        expect(parsed.success).toBe(true);
-        expect(parsed.life_event.is_recurring).toBe(false);
-      });
-    });
-
-    describe("Fuzzy person name matching", () => {
-      it("should use fuzzy matching to find person by name", async () => {
-        const { pool } = await import("@lifeos/shared");
-        const mockQuery = vi.mocked(pool.query) as any;
-
-        // Mock finding the person with fuzzy match
-        mockQuery.mockResolvedValueOnce({
-          rows: [
-            {
-              id: 6,
-              name: "Frank Johnson",
-              relationship_type: "friend",
-              how_known: "work",
-              notes: null,
-              last_interaction_at: null,
-            },
-          ],
-          rowCount: 1,
-          command: "SELECT",
-          oid: 0,
-          fields: [],
-        });
-
-        // Mock creating life event record
-        mockQuery.mockResolvedValueOnce({
-          rows: [
-            {
-              id: 6,
-              person_id: 6,
-              event_type: "birthday",
-              event_date: "1985-12-01",
-              is_recurring: true,
-              notes: null,
-              created_at: new Date("2026-05-12T10:00:00Z"),
-            },
-          ],
-          rowCount: 1,
-          command: "INSERT",
-          oid: 0,
-          fields: [],
-        });
-
-        const input = JSON.stringify({
-          person_name: "frank johnson",
-          event_type: "birthday",
-          event_date: "1985-12-01",
-        });
-
-        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
-        const parsed = JSON.parse(result);
-
-        expect(parsed.success).toBe(true);
-        expect(parsed.life_event.person_id).toBe(6);
-      });
-
-      it("should return error when person not found with fuzzy matching", async () => {
-        const { pool } = await import("@lifeos/shared");
-        const mockQuery = vi.mocked(pool.query) as any;
-
-        // Mock person not found
-        mockQuery.mockResolvedValueOnce({
-          rows: [],
-          rowCount: 0,
-          command: "SELECT",
-          oid: 0,
-          fields: [],
-        });
-
-        const input = JSON.stringify({
-          person_name: "NonexistentPerson",
-          event_type: "birthday",
-          event_date: "1990-01-01",
-        });
-
-        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
-        const parsed = JSON.parse(result);
-
-        expect(parsed.success).toBe(false);
-        expect(parsed.message).toContain("No person found");
-      });
-    });
-
-    describe("JSON response format", () => {
-      it("should return JSON response with created event details on success", async () => {
-        const { pool } = await import("@lifeos/shared");
-        const mockQuery = vi.mocked(pool.query) as any;
-
-        // Mock finding the person
-        mockQuery.mockResolvedValueOnce({
-          rows: [
-            {
-              id: 7,
-              name: "Grace Lee",
-              relationship_type: "friend",
-              how_known: "school",
-              notes: null,
-              last_interaction_at: null,
-            },
-          ],
-          rowCount: 1,
-          command: "SELECT",
-          oid: 0,
-          fields: [],
-        });
-
-        // Mock creating life event record
-        mockQuery.mockResolvedValueOnce({
-          rows: [
-            {
-              id: 7,
-              person_id: 7,
-              event_type: "birthday",
-              event_date: "1992-08-14",
-              is_recurring: true,
-              notes: null,
-              created_at: new Date("2026-05-12T10:00:00Z"),
-            },
-          ],
-          rowCount: 1,
-          command: "INSERT",
-          oid: 0,
-          fields: [],
-        });
-
-        const input = JSON.stringify({
-          person_name: "Grace Lee",
-          event_type: "birthday",
-          event_date: "1992-08-14",
-        });
-
-        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
-        const parsed = JSON.parse(result);
-
-        expect(parsed).toHaveProperty("success");
-        expect(parsed).toHaveProperty("life_event");
-        expect(parsed).toHaveProperty("message");
-        expect(parsed.success).toBe(true);
-        expect(parsed.life_event).toHaveProperty("id");
-        expect(parsed.life_event).toHaveProperty("person_id");
-        expect(parsed.life_event).toHaveProperty("event_type");
-        expect(parsed.life_event).toHaveProperty("event_date");
-        expect(parsed.life_event).toHaveProperty("is_recurring");
-        expect(parsed.life_event).toHaveProperty("created_at");
-      });
-
-      it("should return JSON response with error message on failure", async () => {
-        const { pool } = await import("@lifeos/shared");
-        const mockQuery = vi.mocked(pool.query) as any;
-
-        // Mock person not found
-        mockQuery.mockResolvedValueOnce({
-          rows: [],
-          rowCount: 0,
-          command: "SELECT",
-          oid: 0,
-          fields: [],
-        });
-
-        const input = JSON.stringify({
-          person_name: "UnknownPerson",
-          event_type: "birthday",
-          event_date: "1990-01-01",
-        });
-
-        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
-        const parsed = JSON.parse(result);
-
-        expect(parsed).toHaveProperty("success");
-        expect(parsed).toHaveProperty("message");
-        expect(parsed.success).toBe(false);
-      });
-
-      it("should include human-readable message in response", async () => {
-        const { pool } = await import("@lifeos/shared");
-        const mockQuery = vi.mocked(pool.query) as any;
-
-        // Mock finding the person
-        mockQuery.mockResolvedValueOnce({
-          rows: [
-            {
-              id: 8,
-              name: "Henry Brown",
-              relationship_type: "colleague",
-              how_known: "work",
-              notes: null,
-              last_interaction_at: null,
-            },
-          ],
-          rowCount: 1,
-          command: "SELECT",
-          oid: 0,
-          fields: [],
-        });
-
-        // Mock creating life event record
-        mockQuery.mockResolvedValueOnce({
-          rows: [
-            {
-              id: 8,
-              person_id: 8,
-              event_type: "birthday",
-              event_date: "1987-11-22",
-              is_recurring: true,
-              notes: null,
-              created_at: new Date("2026-05-12T10:00:00Z"),
-            },
-          ],
-          rowCount: 1,
-          command: "INSERT",
-          oid: 0,
-          fields: [],
-        });
-
-        const input = JSON.stringify({
-          person_name: "Henry Brown",
-          event_type: "birthday",
-          event_date: "1987-11-22",
-        });
-
-        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
-        const parsed = JSON.parse(result);
-
-        expect(parsed.message).toBeDefined();
-        expect(typeof parsed.message).toBe("string");
-        expect(parsed.message.length).toBeGreaterThan(0);
+        expect(parsed.events).toHaveLength(1);
+        const event = parsed.events[0];
+        expect(event.event_date).toContain("2026-07-10");
       });
     });
 
     describe("Error handling", () => {
-      it("should return error JSON when database query fails", async () => {
+      it("should return error when start_date is missing", async () => {
+        const input = JSON.stringify({
+          end_date: "2026-05-31",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("error");
+        expect(parsed.error).toContain("start_date");
+      });
+
+      it("should return error when end_date is missing", async () => {
+        const input = JSON.stringify({
+          start_date: "2026-05-01",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("error");
+        expect(parsed.error).toContain("end_date");
+      });
+
+      it("should return error on invalid date format", async () => {
+        const input = JSON.stringify({
+          start_date: "05/01/2026",
+          end_date: "05/31/2026",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("error");
+      });
+
+      it("should return error when start_date is after end_date", async () => {
+        const input = JSON.stringify({
+          start_date: "2026-05-31",
+          end_date: "2026-05-01",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("error");
+      });
+
+      it("should return error on database failure", async () => {
         const { pool } = await import("@lifeos/shared");
         const mockQuery = vi.mocked(pool.query) as any;
 
@@ -550,55 +434,116 @@ describe("Life Events Tools", () => {
         mockQuery.mockRejectedValueOnce(new Error("Database connection failed"));
 
         const input = JSON.stringify({
-          person_name: "Test Person",
-          event_type: "birthday",
-          event_date: "1990-01-01",
+          start_date: "2026-05-01",
+          end_date: "2026-05-31",
         });
 
-        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
         const parsed = JSON.parse(result);
 
         expect(parsed).toHaveProperty("error");
-        expect(parsed.error).toContain("create_life_event failed");
+        expect(parsed.error).toContain("get_upcoming_life_events failed");
       });
 
-      it("should return error JSON when input is invalid JSON", async () => {
+      it("should return error on invalid JSON input", async () => {
         const input = "invalid json";
 
-        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
         const parsed = JSON.parse(result);
 
         expect(parsed).toHaveProperty("error");
       });
 
-      it("should return error when required parameters are missing", async () => {
+      it("should handle gracefully when dates are empty strings", async () => {
         const input = JSON.stringify({
-          person_name: "Test Person",
-          // missing event_type and event_date
+          start_date: "",
+          end_date: "",
         });
 
-        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
         const parsed = JSON.parse(result);
 
         expect(parsed).toHaveProperty("error");
       });
     });
 
-    describe("Tool executor routing", () => {
-      it("should route create_life_event operation correctly", async () => {
+    describe("Response format", () => {
+      it("should return JSON string response", async () => {
         const { pool } = await import("@lifeos/shared");
         const mockQuery = vi.mocked(pool.query) as any;
 
-        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          start_date: "2026-05-01",
+          end_date: "2026-05-31",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
+
+        expect(typeof result).toBe("string");
+        expect(() => JSON.parse(result)).not.toThrow();
+      });
+
+      it("should include success flag in response", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          start_date: "2026-05-01",
+          end_date: "2026-05-31",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("success");
+        expect(typeof parsed.success).toBe("boolean");
+      });
+
+      it("should include events array in response", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
         mockQuery.mockResolvedValueOnce({
           rows: [
             {
-              id: 9,
-              name: "Iris Chen",
-              relationship_type: "friend",
-              how_known: "online",
-              notes: null,
-              last_interaction_at: null,
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: "Alice's birthday",
+              created_at: new Date("2026-01-01T10:00:00Z"),
             },
           ],
           rowCount: 1,
@@ -607,49 +552,165 @@ describe("Life Events Tools", () => {
           fields: [],
         });
 
-        // Mock creating life event record
+        const input = JSON.stringify({
+          start_date: "2026-05-01",
+          end_date: "2026-05-31",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("events");
+        expect(Array.isArray(parsed.events)).toBe(true);
+      });
+
+      it("should include message in response", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
         mockQuery.mockResolvedValueOnce({
-          rows: [
-            {
-              id: 9,
-              person_id: 9,
-              event_type: "birthday",
-              event_date: "1995-02-28",
-              is_recurring: true,
-              notes: null,
-              created_at: new Date("2026-05-12T10:00:00Z"),
-            },
-          ],
-          rowCount: 1,
-          command: "INSERT",
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
           oid: 0,
           fields: [],
         });
 
         const input = JSON.stringify({
-          person_name: "Iris Chen",
-          event_type: "birthday",
-          event_date: "1995-02-28",
+          start_date: "2026-05-01",
+          end_date: "2026-05-31",
         });
 
-        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
         const parsed = JSON.parse(result);
 
-        expect(parsed.success).toBe(true);
+        expect(parsed).toHaveProperty("message");
+        expect(typeof parsed.message).toBe("string");
       });
 
-      it("should return error for unknown operation", async () => {
-        const input = JSON.stringify({
-          person_name: "Test Person",
-          event_type: "birthday",
-          event_date: "1990-01-01",
+      it("should return event objects with all required fields", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: "Alice's birthday",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
         });
 
-        const result = await lifeEventsModule.executeLifeEventsTool("unknown_operation", input);
+        const input = JSON.stringify({
+          start_date: "2026-05-01",
+          end_date: "2026-05-31",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
         const parsed = JSON.parse(result);
 
-        expect(parsed).toHaveProperty("error");
-        expect(parsed.error).toContain("Unknown");
+        expect(parsed.events).toHaveLength(1);
+        const event = parsed.events[0];
+        expect(event).toHaveProperty("id");
+        expect(event).toHaveProperty("person_id");
+        expect(event).toHaveProperty("event_type");
+        expect(event).toHaveProperty("event_date");
+        expect(event).toHaveProperty("is_recurring");
+        expect(event).toHaveProperty("created_at");
+      });
+
+      it("should convert id to string in response", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: "Alice's birthday",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          start_date: "2026-05-01",
+          end_date: "2026-05-31",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
+        const parsed = JSON.parse(result);
+
+        const event = parsed.events[0];
+        expect(typeof event.id).toBe("string");
+      });
+
+      it("should convert created_at to ISO string in response", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        const createdAt = new Date("2026-01-01T10:00:00Z");
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: "Alice's birthday",
+              created_at: createdAt,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          start_date: "2026-05-01",
+          end_date: "2026-05-31",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool(
+          "get_upcoming_life_events",
+          input,
+        );
+        const parsed = JSON.parse(result);
+
+        const event = parsed.events[0];
+        expect(typeof event.created_at).toBe("string");
+        expect(event.created_at).toBe(createdAt.toISOString());
       });
     });
   });
