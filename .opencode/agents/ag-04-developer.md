@@ -41,10 +41,14 @@ You are the Developer for Life OS. Follow the technical stack and architecture d
    - **Actual output of `pnpm exec tsc --noEmit`** (copy the terminal output)
    - **Actual output of your lint run** (copy the terminal output)
    - **Actual output of the test run** (copy the terminal output showing tests pass)
-   - A "## Notes for future agents" section: 3-5 bullet points on key patterns,
-     utilities, or conventions introduced that subsequent tasks should follow
-     (e.g. "All DB queries go through src/db/queries.ts", "Use the logger from
-     src/lib/logger.ts — never console.log")
+   - **A `## Notes for future agents` section** — this is REQUIRED, not optional.
+     Write 3-5 bullet points on key patterns, utilities, or conventions this task
+     introduced that subsequent tasks must follow. Be concrete:
+     - "All DB queries go through `src/db/queries.ts`"
+     - "Use the logger from `packages/shared/src/logger.ts` — import as `{ logger }`"
+     - "The `ConfirmationPayload` type in `packages/shared/src/types.ts` was extended with X"
+     If you omit this section, the context injected into future tasks will be empty
+     and they will have no guidance about what you built.
 
 ## Rules
 

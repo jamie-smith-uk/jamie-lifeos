@@ -1712,6 +1712,16 @@ Read every file in files_in_scope and the corresponding test files.
 Make conservative, targeted improvements only.
 Do NOT modify test files. Do NOT change public interfaces.
 
+## Required: run validation before writing the report
+Run these in order and fix every error:
+\`\`\`bash
+pnpm exec tsc --noEmit
+pnpm exec biome check --write ${FILES_IN_SCOPE_JSON_EXPANDED:-packages/}
+pnpm exec biome check ${FILES_IN_SCOPE_JSON_EXPANDED:-packages/}
+pnpm${AFFECTED_PKGS:+ $AFFECTED_PKGS} test
+\`\`\`
+Do not write refactor-report.md until all four pass.
+
 Write refactor-report.md to pipeline/phase-$PHASE/$TASK_ID/
 Follow your system prompt exactly."
 
@@ -1812,13 +1822,16 @@ PYEOF
 
     SEC_PROMPT="You are AG-07 Security Agent for Life OS.
 
-Review all code written for task $TASK_ID.
+Review the code written for task $TASK_ID.
 Task spec:
 $TASK_SPEC
 ${CONTEXT_BLOCK:+
 $CONTEXT_BLOCK}
 
-Apply every rule in .opencode/agents/security-rules.md to every file in files_in_scope.
+Files to review (read every one before writing findings):
+$(python3 -c "import json,sys; print('\n'.join('  - ' + f for f in json.loads(sys.argv[1])))" "$FILES_IN_SCOPE_JSON")
+
+Apply every rule in .opencode/agents/security-rules.md to every file listed above.
 Write security-report.md to pipeline/phase-$PHASE/$TASK_ID/
 Return PASS or FAIL with specific findings."
 
@@ -1841,7 +1854,8 @@ Return PASS or FAIL with specific findings."
 
       SEC_FIX_PROMPT="You are AG-04 Developer for Life OS.
 
-The Security Agent has rejected task $TASK_ID. Fix every finding below.
+The Security Agent has rejected task $TASK_ID. Fix every finding below, then run all
+validation commands before marking done.
 
 <security-findings>
 $(cat "$SEC_REPORT")
@@ -1852,12 +1866,20 @@ $TASK_SPEC
 ${CONTEXT_BLOCK:+
 $CONTEXT_BLOCK}
 
-Constraints:
-- Only modify files listed in files_in_scope: $(python3 -c "import json,sys; print(', '.join(json.loads(sys.argv[1])))" "$FILES_IN_SCOPE_JSON")
-- Do not modify test files.
-- Your changes must not break tsc, eslint, or pnpm test — the hard gate runs immediately after.
-- Update self-assessment.md after fixing.
-- Use process.env.DATABASE_URL for any database connections."
+Files in scope (only modify these):
+$(python3 -c "import json,sys; print('\n'.join('  - ' + f for f in json.loads(sys.argv[1])))" "$FILES_IN_SCOPE_JSON")
+
+Do not modify test files.
+
+## Validation commands — run all four before marking done
+\`\`\`bash
+pnpm exec tsc --noEmit
+pnpm exec biome check --write ${FILES_IN_SCOPE_JSON_EXPANDED:-packages/}
+pnpm exec biome check ${FILES_IN_SCOPE_JSON_EXPANDED:-packages/}
+pnpm${AFFECTED_PKGS:+ $AFFECTED_PKGS} test
+\`\`\`
+Fix everything before updating self-assessment.md.
+Use process.env.DATABASE_URL for any database connections."
 
       run_agent "ag-04-developer" "$SEC_FIX_PROMPT" \
         "$TASK_DIR/dev-secfix-$SECURITY_ATTEMPTS.md"
@@ -1896,15 +1918,18 @@ $POST_SEC_FAILURES"
 import json, sys
 print(', '.join(json.loads(sys.argv[1])))
 " "$FILES_IN_SCOPE_JSON")"
-    python3 - "$TASK_DIR/self-assessment.md" <<'PYEOF'
+    python3 - "$TASK_DIR/self-assessment.md" "$TASK_ID" <<'PYEOF'
 import re, sys
+task_id = sys.argv[2] if len(sys.argv) > 2 else '?'
 try:
     content = open(sys.argv[1]).read()
     m = re.search(r'## Notes for future agents\n(.*?)(\n## |\Z)', content, re.DOTALL)
     if m:
         print(m.group(1).strip())
+    else:
+        print(f"⚠ {task_id}: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.")
 except Exception:
-    pass
+    print(f"⚠ {task_id}: self-assessment.md not found or unreadable.")
 PYEOF
     printf "\n---\n"
   } >> "$PIPELINE_DIR/context.md"

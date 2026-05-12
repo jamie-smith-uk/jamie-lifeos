@@ -571,7 +571,19 @@ REFACTOR_EOF
 Improve without changing behaviour: $TASK_SPEC
 ${CONTEXT_BLOCK:+
 $CONTEXT_BLOCK}
-Write refactor-report.md to $TASK_DIR/" "$TASK_DIR/refactor-output.md"
+
+Files in scope: ${FILES_IN_SCOPE_JSON_EXPANDED:-packages/}
+
+## Required: run validation before writing the report
+\`\`\`bash
+pnpm exec tsc --noEmit
+pnpm exec biome check --write ${FILES_IN_SCOPE_JSON_EXPANDED:-packages/}
+pnpm exec biome check ${FILES_IN_SCOPE_JSON_EXPANDED:-packages/}
+pnpm${AFFECTED_PKGS:+ $AFFECTED_PKGS} test
+\`\`\`
+Do not write refactor-report.md until all four pass.
+Write refactor-report.md to $TASK_DIR/
+Follow your system prompt exactly." "$TASK_DIR/refactor-output.md"
     [ ! -f "$TASK_DIR/refactor-report.md" ] && halt "Refactor report not written" "AG-06" ""
   fi
 
@@ -629,9 +641,16 @@ if [ "$OPT_NO_SECURITY" != "true" ] && ! ([ -f "$SEC_REPORT" ] && report_passes 
     log "Security attempt $SECURITY_ATTEMPTS/3..."
 
     run_agent "ag-07-security" "You are AG-07 Security Agent for Life OS.
-Review all code for: $TASK_SPEC
-Apply every rule in .opencode/agents/security-rules.md to every file in files_in_scope.
-Write security-report.md to $TASK_DIR/" "$TASK_DIR/sec-output-$SECURITY_ATTEMPTS.md"
+
+Review the code written for this task.
+Task spec: $TASK_SPEC
+
+Files to review (read every one before writing findings):
+$(python3 -c "import json,sys; print('\n'.join('  - ' + f for f in json.loads(sys.argv[1])))" "$FILES_IN_SCOPE_JSON")
+
+Apply every rule in .opencode/agents/security-rules.md to every file listed above.
+Write security-report.md to $TASK_DIR/
+Return PASS or FAIL with specific findings." "$TASK_DIR/sec-output-$SECURITY_ATTEMPTS.md"
 
     if [ -f "$SEC_REPORT" ] && report_passes "$SEC_REPORT"; then
       SECURITY_PASSED=true
@@ -646,12 +665,29 @@ Write security-report.md to $TASK_DIR/" "$TASK_DIR/sec-output-$SECURITY_ATTEMPTS
         "$(cat "$SEC_REPORT")"
 
       run_agent "ag-04-developer" "You are AG-04 Developer for Life OS.
-Fix every security finding:
+
+The Security Agent has rejected this task. Fix every finding below, then run all
+validation commands before marking done.
+
 <security-findings>
 $(cat "$SEC_REPORT")
 </security-findings>
-Task context: $TASK_SPEC
-Do not modify test files. Use process.env.DATABASE_URL for DB connections." \
+
+Task spec for context: $TASK_SPEC
+
+Files in scope (only modify these):
+$(python3 -c "import json,sys; print('\n'.join('  - ' + f for f in json.loads(sys.argv[1])))" "$FILES_IN_SCOPE_JSON")
+
+Do not modify test files.
+
+## Validation commands — run all four before marking done
+\`\`\`bash
+pnpm exec tsc --noEmit
+pnpm exec biome check --write ${FILES_IN_SCOPE_JSON_EXPANDED:-packages/}
+pnpm exec biome check ${FILES_IN_SCOPE_JSON_EXPANDED:-packages/}
+pnpm${AFFECTED_PKGS:+ $AFFECTED_PKGS} test
+\`\`\`
+Use process.env.DATABASE_URL for DB connections." \
         "$TASK_DIR/dev-secfix-$SECURITY_ATTEMPTS.md"
 
       SCOPE_VIOLATIONS=$(check_scope_compliance "$FILES_IN_SCOPE_JSON") || true
