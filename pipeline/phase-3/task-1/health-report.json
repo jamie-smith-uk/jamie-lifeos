@@ -1,0 +1,9 @@
+{
+  "task_id": "task-1",
+  "files_checked": [
+    "migrations/002_life_events.sql"
+  ],
+  "complex_functions": [],
+  "duplication_pct": null,
+  "coverage_pct": null
+}
