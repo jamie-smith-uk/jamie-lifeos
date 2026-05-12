@@ -1,0 +1,316 @@
+Title: Test Report — task-5b — PASS
+
+Verified by orchestrator hard gate after Developer attempt 1.
+
+- tsc --noEmit: PASS
+- eslint (files_in_scope): PASS
+- pnpm test: PASS
+
+
+> jamie-lifeos@0.0.1 test /home/runner/work/jamie-lifeos/jamie-lifeos
+> pnpm -r test
+
+Scope: 3 of 4 workspace projects
+packages/shared test$ vitest run --config vitest.config.ts
+packages/shared test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared[39m
+packages/shared test:  [32m✓[39m src/__tests__/logger.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 124[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/env.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 93[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 99[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/types.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate-async-await.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/db.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+packages/shared test: [2m Test Files [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+packages/shared test: [2m      Tests [22m [1m[32m89 passed[39m[22m[90m (89)[39m
+packages/shared test: [2m   Start at [22m 18:24:55
+packages/shared test: [2m   Duration [22m 660ms[2m (transform 331ms, setup 0ms, import 368ms, tests 362ms, environment 1ms)[22m
+packages/shared test: Done
+packages/bot test$ vitest run --config vitest.config.ts
+packages/orchestrator test$ vitest run --config vitest.config.ts
+packages/orchestrator test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator[39m
+packages/bot test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot[39m
+packages/bot test:  [32m✓[39m src/__tests__/keyboard.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+packages/orchestrator test:  [31m❯[39m src/tools/__tests__/life_events.test.ts [2m([22m[2m22 tests[22m[2m | [22m[31m17 failed[39m[2m)[22m[32m 193[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should accept start_date and end_date parameters[39m[32m 103[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should return events within the specified date range[39m[32m 6[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should return empty list when no events in date range[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should filter events outside the date range[39m[32m 8[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should adjust recurring events to current year[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should preserve non-recurring events as-is[39m[32m 4[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should handle multiple recurring events in same month[39m[32m 7[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should adjust anniversary events to current year[39m[32m 19[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should return error when start_date is missing[39m[32m 5[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should return error when end_date is missing[39m[32m 3[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should return error on invalid date format[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should return error when start_date is after end_date[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should return error on database failure[39m[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should return error on invalid JSON input[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle gracefully when dates are empty strings[32m 1[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should return JSON string response[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should include success flag in response[39m[32m 5[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should include events array in response[39m[32m 4[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should include message in response[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should return event objects with all required fields[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should convert id to string in response[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should convert created_at to ISO string in response[39m[32m 1[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m36 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 1071[2mms[22m[39m
+packages/bot test: [2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+packages/bot test: [2m      Tests [22m [1m[32m63 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (64)[39m
+packages/bot test: [2m   Start at [22m 18:24:56
+packages/bot test: [2m   Duration [22m 1.51s[2m (transform 231ms, setup 0ms, import 348ms, tests 1.10s, environment 0ms)[22m
+packages/bot test: Done
+packages/orchestrator test:  [32m✓[39m src/__tests__/typing-indicator-t11.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 1386[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m25 tests[22m[2m)[22m[33m 1035[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t16.test.ts [2m([22m[2m35 tests[22m[2m)[22m[33m 401[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task3.test.ts [2m([22m[2m42 tests[22m[2m)[22m[33m 389[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 161[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/todoist-task1.test.ts [2m([22m[2m71 tests[22m[2m)[22m[32m 212[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task4.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 233[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t17.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 246[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t18.test.ts [2m([22m[2m38 tests[22m[2m)[22m[32m 268[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t10.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 220[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t20.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 139[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t19.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 185[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/people.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 104[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-implied-actions.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 166[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/index-async-await.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/gmail-email-interactions.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 108[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/typecheck-async-await.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 5701[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/shared typechecks without errors (tsc --noEmit) [33m 1362[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/orchestrator typechecks without errors (tsc --noEmit) [33m 1412[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/shared typecheck output contains no 'error TS' messages [33m 1615[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/orchestrator typecheck output contains no 'error TS' messages [33m 1309[2mms[22m[39m
+packages/orchestrator test: [31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 17 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events.test.ts[2m > [22mLife Events Tools[2m > [22mget_upcoming_life_events[2m > [22mDate range filtering[2m > [22mshould accept start_date and end_date parameters
+packages/orchestrator test: [31m[1mAssertionError[22m: expected { Object (error) } to have property "success" with value true[39m
+packages/orchestrator test: [32m- Expected:[39m
+packages/orchestrator test: true
+packages/orchestrator test: [31m+ Received:[39m
+packages/orchestrator test: undefined
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events.test.ts:[2m73:24[22m[39m
+packages/orchestrator test:     [90m 71|[39m         [35mconst[39m parsed [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(result)[33m;[39m
+packages/orchestrator test:     [90m 72|[39m
+packages/orchestrator test:     [90m 73|[39m         [34mexpect[39m(parsed)[33m.[39m[34mtoHaveProperty[39m([32m"success"[39m[33m,[39m [35mtrue[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                        [31m^[39m
+packages/orchestrator test:     [90m 74|[39m         [34mexpect[39m(parsed)[33m.[39m[34mtoHaveProperty[39m([32m"events"[39m)[33m;[39m
+packages/orchestrator test:     [90m 75|[39m         [34mexpect[39m([33mArray[39m[33m.[39m[34misArray[39m(parsed[33m.[39mevents))[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events.test.ts[2m > [22mLife Events Tools[2m > [22mget_upcoming_life_events[2m > [22mDate range filtering[2m > [22mshould return events within the specified date range
+packages/orchestrator test: [31m[1mAssertionError[22m: expected undefined to be true // Object.is equality[39m
+packages/orchestrator test: [32m- Expected:[39m
+packages/orchestrator test: true
+packages/orchestrator test: [31m+ Received:[39m
+packages/orchestrator test: undefined
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events.test.ts:[2m121:32[22m[39m
+packages/orchestrator test:     [90m119|[39m         [35mconst[39m parsed [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(result)[33m;[39m
+packages/orchestrator test:     [90m120|[39m
+packages/orchestrator test:     [90m121|[39m         [34mexpect[39m(parsed[33m.[39msuccess)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                [31m^[39m
+packages/orchestrator test:     [90m122|[39m         [34mexpect[39m(parsed[33m.[39mevents)[33m.[39m[34mtoHaveLength[39m([34m2[39m)[33m;[39m
+packages/orchestrator test:     [90m123|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events.test.ts[2m > [22mLife Events Tools[2m > [22mget_upcoming_life_events[2m > [22mDate range filtering[2m > [22mshould return empty list when no events in date range
+packages/orchestrator test: [31m[1mAssertionError[22m: expected undefined to be true // Object.is equality[39m
+packages/orchestrator test: [32m- Expected:[39m
+packages/orchestrator test: true
+packages/orchestrator test: [31m+ Received:[39m
+packages/orchestrator test: undefined
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events.test.ts:[2m149:32[22m[39m
+packages/orchestrator test:     [90m147|[39m         [35mconst[39m parsed [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(result)[33m;[39m
+packages/orchestrator test:     [90m148|[39m
+packages/orchestrator test:     [90m149|[39m         [34mexpect[39m(parsed[33m.[39msuccess)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                [31m^[39m
+packages/orchestrator test:     [90m150|[39m         [34mexpect[39m(parsed[33m.[39mevents)[33m.[39m[34mtoHaveLength[39m([34m0[39m)[33m;[39m
+packages/orchestrator test:     [90m151|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events.test.ts[2m > [22mLife Events Tools[2m > [22mget_upcoming_life_events[2m > [22mDate range filtering[2m > [22mshould filter events outside the date range
+packages/orchestrator test: [31m[1mAssertionError[22m: expected undefined to be true // Object.is equality[39m
+packages/orchestrator test: [32m- Expected:[39m
+packages/orchestrator test: true
+packages/orchestrator test: [31m+ Received:[39m
+packages/orchestrator test: undefined
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events.test.ts:[2m187:32[22m[39m
+packages/orchestrator test:     [90m185|[39m         [35mconst[39m parsed [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(result)[33m;[39m
+packages/orchestrator test:     [90m186|[39m
+packages/orchestrator test:     [90m187|[39m         [34mexpect[39m(parsed[33m.[39msuccess)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                [31m^[39m
+packages/orchestrator test:     [90m188|[39m         [34mexpect[39m(parsed[33m.[39mevents[33m.[39mlength)[33m.[39m[34mtoBeGreaterThanOrEqual[39m([34m0[39m)[33m;[39m
+packages/orchestrator test:     [90m189|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events.test.ts[2m > [22mLife Events Tools[2m > [22mget_upcoming_life_events[2m > [22mRecurring event adjustment[2m > [22mshould adjust recurring events to current year
+packages/orchestrator test: [31m[1mAssertionError[22m: expected undefined to be true // Object.is equality[39m
+packages/orchestrator test: [32m- Expected:[39m
+packages/orchestrator test: true
+packages/orchestrator test: [31m+ Received:[39m
+packages/orchestrator test: undefined
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events.test.ts:[2m227:32[22m[39m
+packages/orchestrator test:     [90m225|[39m         [35mconst[39m parsed [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(result)[33m;[39m
+packages/orchestrator test:     [90m226|[39m
+packages/orchestrator test:     [90m227|[39m         [34mexpect[39m(parsed[33m.[39msuccess)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                [31m^[39m
+packages/orchestrator test:     [90m228|[39m         [34mexpect[39m(parsed[33m.[39mevents)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+packages/orchestrator test:     [90m229|[39m         [90m// Recurring event should have adjusted date in current year[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events.test.ts[2m > [22mLife Events Tools[2m > [22mget_upcoming_life_events[2m > [22mRecurring event adjustment[2m > [22mshould preserve non-recurring events as-is
+packages/orchestrator test: [31m[1mAssertionError[22m: expected undefined to be true // Object.is equality[39m
+packages/orchestrator test: [32m- Expected:[39m
+packages/orchestrator test: true
+packages/orchestrator test: [31m+ Received:[39m
+packages/orchestrator test: undefined
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events.test.ts:[2m270:32[22m[39m
+packages/orchestrator test:     [90m268|[39m         [35mconst[39m parsed [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(result)[33m;[39m
+packages/orchestrator test:     [90m269|[39m
+packages/orchestrator test:     [90m270|[39m         [34mexpect[39m(parsed[33m.[39msuccess)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                [31m^[39m
+packages/orchestrator test:     [90m271|[39m         [34mexpect[39m(parsed[33m.[39mevents)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+packages/orchestrator test:     [90m272|[39m         [35mconst[39m event [33m=[39m parsed[33m.[39mevents[[34m0[39m][33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events.test.ts[2m > [22mLife Events Tools[2m > [22mget_upcoming_life_events[2m > [22mRecurring event adjustment[2m > [22mshould handle multiple recurring events in same month
+packages/orchestrator test: [31m[1mAssertionError[22m: expected undefined to be true // Object.is equality[39m
+packages/orchestrator test: [32m- Expected:[39m
+packages/orchestrator test: true
+packages/orchestrator test: [31m+ Received:[39m
+packages/orchestrator test: undefined
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events.test.ts:[2m319:32[22m[39m
+packages/orchestrator test:     [90m317|[39m         [35mconst[39m parsed [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(result)[33m;[39m
+packages/orchestrator test:     [90m318|[39m
+packages/orchestrator test:     [90m319|[39m         [34mexpect[39m(parsed[33m.[39msuccess)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                [31m^[39m
+packages/orchestrator test:     [90m320|[39m         [34mexpect[39m(parsed[33m.[39mevents)[33m.[39m[34mtoHaveLength[39m([34m2[39m)[33m;[39m
+packages/orchestrator test:     [90m321|[39m         [90m// Both should be adjusted to 2026[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events.test.ts[2m > [22mLife Events Tools[2m > [22mget_upcoming_life_events[2m > [22mRecurring event adjustment[2m > [22mshould adjust anniversary events to current year
+packages/orchestrator test: [31m[1mAssertionError[22m: expected undefined to be true // Object.is equality[39m
+packages/orchestrator test: [32m- Expected:[39m
+packages/orchestrator test: true
+packages/orchestrator test: [31m+ Received:[39m
+packages/orchestrator test: undefined
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events.test.ts:[2m361:32[22m[39m
+packages/orchestrator test:     [90m359|[39m         [35mconst[39m parsed [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(result)[33m;[39m
+packages/orchestrator test:     [90m360|[39m
+packages/orchestrator test:     [90m361|[39m         [34mexpect[39m(parsed[33m.[39msuccess)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                [31m^[39m
+packages/orchestrator test:     [90m362|[39m         [34mexpect[39m(parsed[33m.[39mevents)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+packages/orchestrator test:     [90m363|[39m         [35mconst[39m event [33m=[39m parsed[33m.[39mevents[[34m0[39m][33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events.test.ts[2m > [22mLife Events Tools[2m > [22mget_upcoming_life_events[2m > [22mError handling[2m > [22mshould return error when start_date is missing
+packages/orchestrator test: [31m[1mAssertionError[22m: expected 'Unknown life events operation: get_up…' to contain 'start_date'[39m
+packages/orchestrator test: Expected: [32m"start_date"[39m
+packages/orchestrator test: Received: [31m"Unknown life events operation: get_upcoming_life_events"[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events.test.ts:[2m381:30[22m[39m
+packages/orchestrator test:     [90m379|[39m
+packages/orchestrator test:     [90m380|[39m         [34mexpect[39m(parsed)[33m.[39m[34mtoHaveProperty[39m([32m"error"[39m)[33m;[39m
+packages/orchestrator test:     [90m381|[39m         [34mexpect[39m(parsed[33m.[39merror)[33m.[39m[34mtoContain[39m([32m"start_date"[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                              [31m^[39m
+packages/orchestrator test:     [90m382|[39m       })[33m;[39m
+packages/orchestrator test:     [90m383|[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events.test.ts[2m > [22mLife Events Tools[2m > [22mget_upcoming_life_events[2m > [22mError handling[2m > [22mshould return error when end_date is missing
+packages/orchestrator test: [31m[1mAssertionError[22m: expected 'Unknown life events operation: get_up…' to contain 'end_date'[39m
+packages/orchestrator test: Expected: [32m"end_date"[39m
+packages/orchestrator test: Received: [31m"Unknown life events operation: get_upcoming_life_events"[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events.test.ts:[2m396:30[22m[39m
+packages/orchestrator test:     [90m394|[39m
+packages/orchestrator test:     [90m395|[39m         [34mexpect[39m(parsed)[33m.[39m[34mtoHaveProperty[39m([32m"error"[39m)[33m;[39m
+packages/orchestrator test:     [90m396|[39m         [34mexpect[39m(parsed[33m.[39merror)[33m.[39m[34mtoContain[39m([32m"end_date"[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                              [31m^[39m
+packages/orchestrator test:     [90m397|[39m       })[33m;[39m
+packages/orchestrator test:     [90m398|[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events.test.ts[2m > [22mLife Events Tools[2m > [22mget_upcoming_life_events[2m > [22mError handling[2m > [22mshould return error on database failure
+packages/orchestrator test: [31m[1mAssertionError[22m: expected 'Unknown life events operation: get_up…' to contain 'get_upcoming_life_events failed'[39m
+packages/orchestrator test: Expected: [32m"get_upcoming_life_events[7m failed[27m"[39m
+packages/orchestrator test: Received: [31m"[7mUnknown life events operation: [27mget_upcoming_life_events"[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events.test.ts:[2m448:30[22m[39m
+packages/orchestrator test:     [90m446|[39m
+packages/orchestrator test:     [90m447|[39m         [34mexpect[39m(parsed)[33m.[39m[34mtoHaveProperty[39m([32m"error"[39m)[33m;[39m
+packages/orchestrator test:     [90m448|[39m         expect(parsed.error).toContain("get_upcoming_life_events faile…
+packages/orchestrator test:     [90m   |[39m                              [31m^[39m
+packages/orchestrator test:     [90m449|[39m       })[33m;[39m
+packages/orchestrator test:     [90m450|[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events.test.ts[2m > [22mLife Events Tools[2m > [22mget_upcoming_life_events[2m > [22mResponse format[2m > [22mshould include success flag in response
+packages/orchestrator test: [31m[1mAssertionError[22m: expected { Object (error) } to have property "success"[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events.test.ts:[2m529:24[22m[39m
+packages/orchestrator test:     [90m527|[39m         [35mconst[39m parsed [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(result)[33m;[39m
+packages/orchestrator test:     [90m528|[39m
+packages/orchestrator test:     [90m529|[39m         [34mexpect[39m(parsed)[33m.[39m[34mtoHaveProperty[39m([32m"success"[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                        [31m^[39m
+packages/orchestrator test:     [90m530|[39m         [34mexpect[39m([35mtypeof[39m parsed[33m.[39msuccess)[33m.[39m[34mtoBe[39m([32m"boolean"[39m)[33m;[39m
+packages/orchestrator test:     [90m531|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events.test.ts[2m > [22mLife Events Tools[2m > [22mget_upcoming_life_events[2m > [22mResponse format[2m > [22mshould include events array in response
+packages/orchestrator test: [31m[1mAssertionError[22m: expected { Object (error) } to have property "events"[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events.test.ts:[2m566:24[22m[39m
+packages/orchestrator test:     [90m564|[39m         [35mconst[39m parsed [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(result)[33m;[39m
+packages/orchestrator test:     [90m565|[39m
+packages/orchestrator test:     [90m566|[39m         [34mexpect[39m(parsed)[33m.[39m[34mtoHaveProperty[39m([32m"events"[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                        [31m^[39m
+packages/orchestrator test:     [90m567|[39m         [34mexpect[39m([33mArray[39m[33m.[39m[34misArray[39m(parsed[33m.[39mevents))[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+packages/orchestrator test:     [90m568|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events.test.ts[2m > [22mLife Events Tools[2m > [22mget_upcoming_life_events[2m > [22mResponse format[2m > [22mshould include message in response
+packages/orchestrator test: [31m[1mAssertionError[22m: expected { Object (error) } to have property "message"[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events.test.ts:[2m593:24[22m[39m
+packages/orchestrator test:     [90m591|[39m         [35mconst[39m parsed [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(result)[33m;[39m
+packages/orchestrator test:     [90m592|[39m
+packages/orchestrator test:     [90m593|[39m         [34mexpect[39m(parsed)[33m.[39m[34mtoHaveProperty[39m([32m"message"[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                        [31m^[39m
+packages/orchestrator test:     [90m594|[39m         [34mexpect[39m([35mtypeof[39m parsed[33m.[39mmessage)[33m.[39m[34mtoBe[39m([32m"string"[39m)[33m;[39m
+packages/orchestrator test:     [90m595|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events.test.ts[2m > [22mLife Events Tools[2m > [22mget_upcoming_life_events[2m > [22mResponse format[2m > [22mshould return event objects with all required fields
+packages/orchestrator test: [31m[1mAssertionError[22m: Target cannot be null or undefined.[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events.test.ts:[2m630:31[22m[39m
+packages/orchestrator test:     [90m628|[39m         [35mconst[39m parsed [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(result)[33m;[39m
+packages/orchestrator test:     [90m629|[39m
+packages/orchestrator test:     [90m630|[39m         [34mexpect[39m(parsed[33m.[39mevents)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                               [31m^[39m
+packages/orchestrator test:     [90m631|[39m         [35mconst[39m event [33m=[39m parsed[33m.[39mevents[[34m0[39m][33m;[39m
+packages/orchestrator test:     [90m632|[39m         [34mexpect[39m(event)[33m.[39m[34mtoHaveProperty[39m([32m"id"[39m)[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events.test.ts[2m > [22mLife Events Tools[2m > [22mget_upcoming_life_events[2m > [22mResponse format[2m > [22mshould convert id to string in response
+packages/orchestrator test: [31m[1mTypeError[22m: Cannot read properties of undefined (reading '0')[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events.test.ts:[2m673:30[22m[39m
+packages/orchestrator test:     [90m671|[39m         [35mconst[39m parsed [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(result)[33m;[39m
+packages/orchestrator test:     [90m672|[39m
+packages/orchestrator test:     [90m673|[39m         [35mconst[39m event [33m=[39m parsed[33m.[39mevents[[34m0[39m][33m;[39m
+packages/orchestrator test:     [90m   |[39m                              [31m^[39m
+packages/orchestrator test:     [90m674|[39m         [34mexpect[39m([35mtypeof[39m event[33m.[39mid)[33m.[39m[34mtoBe[39m([32m"string"[39m)[33m;[39m
+packages/orchestrator test:     [90m675|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events.test.ts[2m > [22mLife Events Tools[2m > [22mget_upcoming_life_events[2m > [22mResponse format[2m > [22mshould convert created_at to ISO string in response
+packages/orchestrator test: [31m[1mTypeError[22m: Cannot read properties of undefined (reading '0')[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events.test.ts:[2m711:30[22m[39m
+packages/orchestrator test:     [90m709|[39m         [35mconst[39m parsed [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(result)[33m;[39m
+packages/orchestrator test:     [90m710|[39m
+packages/orchestrator test:     [90m711|[39m         [35mconst[39m event [33m=[39m parsed[33m.[39mevents[[34m0[39m][33m;[39m
+packages/orchestrator test:     [90m   |[39m                              [31m^[39m
+packages/orchestrator test:     [90m712|[39m         [34mexpect[39m([35mtypeof[39m event[33m.[39mcreated_at)[33m.[39m[34mtoBe[39m([32m"string"[39m)[33m;[39m
+packages/orchestrator test:     [90m713|[39m         [34mexpect[39m(event[33m.[39mcreated_at)[33m.[39m[34mtoBe[39m(createdAt[33m.[39m[34mtoISOString[39m())[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/17]⎯[22m[39m
+packages/orchestrator test: [2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m17 passed[39m[22m[90m (18)[39m
+packages/orchestrator test: [2m      Tests [22m [1m[31m17 failed[39m[22m[2m | [22m[1m[32m459 passed[39m[22m[90m (476)[39m
+packages/orchestrator test: [2m   Start at [22m 18:24:56
+packages/orchestrator test: [2m   Duration [22m 6.06s[2m (transform 1.53s, setup 0ms, import 1.91s, tests 11.17s, environment 3ms)[22m
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events.test.ts,title=src/tools/__tests__/life_events.test.ts > Life Events Tools > get_upcoming_life_events > Date range filtering > should accept start_date and end_date parameters,line=73,column=24::AssertionError: expected { Object (error) } to have property "success" with value true%0A%0A- Expected:%0Atrue%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/tools/__tests__/life_events.test.ts:73:24%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events.test.ts,title=src/tools/__tests__/life_events.test.ts > Life Events Tools > get_upcoming_life_events > Date range filtering > should return events within the specified date range,line=121,column=32::AssertionError: expected undefined to be true // Object.is equality%0A%0A- Expected:%0Atrue%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/tools/__tests__/life_events.test.ts:121:32%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events.test.ts,title=src/tools/__tests__/life_events.test.ts > Life Events Tools > get_upcoming_life_events > Date range filtering > should return empty list when no events in date range,line=149,column=32::AssertionError: expected undefined to be true // Object.is equality%0A%0A- Expected:%0Atrue%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/tools/__tests__/life_events.test.ts:149:32%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events.test.ts,title=src/tools/__tests__/life_events.test.ts > Life Events Tools > get_upcoming_life_events > Date range filtering > should filter events outside the date range,line=187,column=32::AssertionError: expected undefined to be true // Object.is equality%0A%0A- Expected:%0Atrue%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/tools/__tests__/life_events.test.ts:187:32%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events.test.ts,title=src/tools/__tests__/life_events.test.ts > Life Events Tools > get_upcoming_life_events > Recurring event adjustment > should adjust recurring events to current year,line=227,column=32::AssertionError: expected undefined to be true // Object.is equality%0A%0A- Expected:%0Atrue%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/tools/__tests__/life_events.test.ts:227:32%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events.test.ts,title=src/tools/__tests__/life_events.test.ts > Life Events Tools > get_upcoming_life_events > Recurring event adjustment > should preserve non-recurring events as-is,line=270,column=32::AssertionError: expected undefined to be true // Object.is equality%0A%0A- Expected:%0Atrue%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/tools/__tests__/life_events.test.ts:270:32%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events.test.ts,title=src/tools/__tests__/life_events.test.ts > Life Events Tools > get_upcoming_life_events > Recurring event adjustment > should handle multiple recurring events in same month,line=319,column=32::AssertionError: expected undefined to be true // Object.is equality%0A%0A- Expected:%0Atrue%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/tools/__tests__/life_events.test.ts:319:32%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events.test.ts,title=src/tools/__tests__/life_events.test.ts > Life Events Tools > get_upcoming_life_events > Recurring event adjustment > should adjust anniversary events to current year,line=361,column=32::AssertionError: expected undefined to be true // Object.is equality%0A%0A- Expected:%0Atrue%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/tools/__tests__/life_events.test.ts:361:32%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events.test.ts,title=src/tools/__tests__/life_events.test.ts > Life Events Tools > get_upcoming_life_events > Error handling > should return error when start_date is missing,line=381,column=30::AssertionError: expected 'Unknown life events operation: get_up…' to contain 'start_date'%0A%0AExpected: "start_date"%0AReceived: "Unknown life events operation: get_upcoming_life_events"%0A%0A ❯ src/tools/__tests__/life_events.test.ts:381:30%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events.test.ts,title=src/tools/__tests__/life_events.test.ts > Life Events Tools > get_upcoming_life_events > Error handling > should return error when end_date is missing,line=396,column=30::AssertionError: expected 'Unknown life events operation: get_up…' to contain 'end_date'%0A%0AExpected: "end_date"%0AReceived: "Unknown life events operation: get_upcoming_life_events"%0A%0A ❯ src/tools/__tests__/life_events.test.ts:396:30%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events.test.ts,title=src/tools/__tests__/life_events.test.ts > Life Events Tools > get_upcoming_life_events > Error handling > should return error on database failure,line=448,column=30::AssertionError: expected 'Unknown life events operation: get_up…' to contain 'get_upcoming_life_events failed'%0A%0AExpected: "get_upcoming_life_events failed"%0AReceived: "Unknown life events operation: get_upcoming_life_events"%0A%0A ❯ src/tools/__tests__/life_events.test.ts:448:30%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events.test.ts,title=src/tools/__tests__/life_events.test.ts > Life Events Tools > get_upcoming_life_events > Response format > should include success flag in response,line=529,column=24::AssertionError: expected { Object (error) } to have property "success"%0A ❯ src/tools/__tests__/life_events.test.ts:529:24%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events.test.ts,title=src/tools/__tests__/life_events.test.ts > Life Events Tools > get_upcoming_life_events > Response format > should include events array in response,line=566,column=24::AssertionError: expected { Object (error) } to have property "events"%0A ❯ src/tools/__tests__/life_events.test.ts:566:24%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events.test.ts,title=src/tools/__tests__/life_events.test.ts > Life Events Tools > get_upcoming_life_events > Response format > should include message in response,line=593,column=24::AssertionError: expected { Object (error) } to have property "message"%0A ❯ src/tools/__tests__/life_events.test.ts:593:24%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events.test.ts,title=src/tools/__tests__/life_events.test.ts > Life Events Tools > get_upcoming_life_events > Response format > should return event objects with all required fields,line=630,column=31::AssertionError: Target cannot be null or undefined.%0A ❯ src/tools/__tests__/life_events.test.ts:630:31%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events.test.ts,title=src/tools/__tests__/life_events.test.ts > Life Events Tools > get_upcoming_life_events > Response format > should convert id to string in response,line=673,column=30::TypeError: Cannot read properties of undefined (reading '0')%0A ❯ src/tools/__tests__/life_events.test.ts:673:30%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events.test.ts,title=src/tools/__tests__/life_events.test.ts > Life Events Tools > get_upcoming_life_events > Response format > should convert created_at to ISO string in response,line=711,column=30::TypeError: Cannot read properties of undefined (reading '0')%0A ❯ src/tools/__tests__/life_events.test.ts:711:30%0A%0A
+packages/orchestrator test: Failed
+/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/orchestrator@0.0.1 test: `vitest run --config vitest.config.ts`
+Exit status 1
+ ELIFECYCLE  Test failed. See above for more details.

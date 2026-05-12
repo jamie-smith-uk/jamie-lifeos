@@ -181,6 +181,134 @@ function isRecurringEventType(eventType: string): boolean {
 // ---------------------------------------------------------------------------
 
 /**
+ * Validates date range inputs for get_upcoming_life_events.
+ */
+function validateDateRangeInputs(params: {
+  start_date?: string;
+  end_date?: string;
+}): string | null {
+  // Validate start_date (required)
+  if (
+    !params.start_date ||
+    typeof params.start_date !== "string" ||
+    params.start_date.trim().length === 0
+  ) {
+    return "'start_date' is required and cannot be empty";
+  }
+
+  // Validate end_date (required)
+  if (
+    !params.end_date ||
+    typeof params.end_date !== "string" ||
+    params.end_date.trim().length === 0
+  ) {
+    return "'end_date' is required and cannot be empty";
+  }
+
+  // Basic date format validation (YYYY-MM-DD)
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(params.start_date)) {
+    return "'start_date' must be in YYYY-MM-DD format";
+  }
+
+  if (!dateRegex.test(params.end_date)) {
+    return "'end_date' must be in YYYY-MM-DD format";
+  }
+
+  // Validate that start_date is not after end_date
+  const startDate = new Date(params.start_date);
+  const endDate = new Date(params.end_date);
+
+  if (startDate > endDate) {
+    return "'start_date' cannot be after 'end_date'";
+  }
+
+  return null;
+}
+
+/**
+ * Adjusts recurring events to the target year based on the date range.
+ */
+function adjustRecurringEventDate(eventDate: string, targetYear: number): string {
+  const [, month, day] = eventDate.split("-");
+  return `${targetYear}-${month}-${day}`;
+}
+
+/**
+ * Gets upcoming life events within a date range with recurring event adjustment.
+ */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: date filtering and recurring event logic requires multiple conditions
+async function getUpcomingLifeEvents(input: string): Promise<string> {
+  const log = logger.child({ tool: "get_upcoming_life_events" });
+
+  try {
+    const params = JSON.parse(input);
+    const { start_date, end_date } = params;
+
+    // Validate date range inputs
+    const validationError = validateDateRangeInputs(params);
+    if (validationError) {
+      return JSON.stringify({ error: `get_upcoming_life_events: ${validationError}` });
+    }
+
+    // Extract the year from the date range to determine target year for recurring events
+    const targetYear = new Date(start_date).getFullYear();
+
+    // Query all life events from the database
+    // We'll filter and adjust in JavaScript for better control over recurring event logic
+    const result = await pool.query(
+      `SELECT id, person_id, event_type, event_date, is_recurring, notes, created_at
+       FROM life_events
+       ORDER BY event_date`,
+    );
+
+    // Process the results and filter based on date range
+    const events: LifeEventInfo[] = [];
+    const startDate = new Date(start_date);
+    const endDate = new Date(end_date);
+
+    for (const row of result.rows) {
+      const lifeEvent = rowToLifeEventInfo(row);
+
+      if (lifeEvent.is_recurring) {
+        // Adjust recurring events to the target year
+        const adjustedDate = adjustRecurringEventDate(lifeEvent.event_date, targetYear);
+        const adjustedDateObj = new Date(adjustedDate);
+
+        // Check if the adjusted date falls within our range
+        if (adjustedDateObj >= startDate && adjustedDateObj <= endDate) {
+          lifeEvent.event_date = adjustedDate;
+          events.push(lifeEvent);
+        }
+      } else {
+        // For non-recurring events, check the actual date
+        const eventDateObj = new Date(lifeEvent.event_date);
+        if (eventDateObj >= startDate && eventDateObj <= endDate) {
+          events.push(lifeEvent);
+        }
+      }
+    }
+
+    // Sort events by date
+    events.sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
+
+    log.info(
+      { event_count: events.length, start_date, end_date },
+      "Retrieved upcoming life events",
+    );
+
+    return JSON.stringify({
+      success: true,
+      events,
+      message: `Found ${events.length} life events between ${start_date} and ${end_date}`,
+    });
+  } catch (err) {
+    log.error({ err: String(err) }, "get_upcoming_life_events failed");
+    return JSON.stringify({ error: "get_upcoming_life_events failed" });
+  }
+}
+
+/**
  * Creates a new life event record.
  */
 async function createLifeEvent(input: string): Promise<string> {
@@ -241,6 +369,9 @@ export async function executeLifeEventsTool(operation: string, input: string): P
   switch (operation) {
     case "create_life_event":
       return createLifeEvent(input);
+
+    case "get_upcoming_life_events":
+      return getUpcomingLifeEvents(input);
 
     default:
       return JSON.stringify({ error: `Unknown life events operation: ${operation}` });
