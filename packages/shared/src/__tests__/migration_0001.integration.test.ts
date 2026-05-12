@@ -17,18 +17,17 @@
  *   - No Telegram, Anthropic, Google Calendar, or Gmail calls are made.
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Database connection
 // Use DATABASE_URL directly — do NOT read .env
 // ---------------------------------------------------------------------------
-const DATABASE_URL =
-  "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos";
+const DATABASE_URL = "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos";
 
 const pool = new pg.Pool({ connectionString: DATABASE_URL });
 
@@ -53,9 +52,7 @@ const MIGRATION_PATH = path.resolve(
 
 /** Drop test objects so each test starts from a known-clean state. */
 async function teardownSchema(client: pg.PoolClient): Promise<void> {
-  await client.query(
-    "DROP TABLE IF EXISTS conversation_context CASCADE",
-  );
+  await client.query("DROP TABLE IF EXISTS conversation_context CASCADE");
   await client.query("DROP TABLE IF EXISTS migrations CASCADE");
 }
 
@@ -512,9 +509,7 @@ describe("T-04 — 0001_init.sql integration", () => {
       // The migration SQL only creates tables; it does NOT insert into migrations
       // itself — that is the runner's job. Verify the table is writable and
       // queryable as expected by the runner.
-      await client.query(
-        `INSERT INTO migrations (name) VALUES ('0001_init.sql')`,
-      );
+      await client.query(`INSERT INTO migrations (name) VALUES ('0001_init.sql')`);
       const result = await client.query<{ name: string }>(
         `SELECT name FROM migrations WHERE name = '0001_init.sql'`,
       );

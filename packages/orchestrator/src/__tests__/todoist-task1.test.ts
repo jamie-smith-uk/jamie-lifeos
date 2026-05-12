@@ -19,7 +19,7 @@
  * - Tests will FAIL in the RED phase because todoist.ts does not yet exist.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -203,7 +203,9 @@ describe("AC1 — executeToDoistTool exported and routes all 5 operations", () =
       env: buildEnvMock(),
       logger: buildLoggerMock(),
     }));
-    global.fetch = buildSuccessFetchMock(makeTodoistTask({ due: { date: "2026-04-30" }, priority: 3 }));
+    global.fetch = buildSuccessFetchMock(
+      makeTodoistTask({ due: { date: "2026-04-30" }, priority: 3 }),
+    );
     const { executeToDoistTool } = await import("../tools/todoist.js");
 
     const result = await executeToDoistTool("update_task", {
@@ -458,7 +460,7 @@ describe("AC3 — create_task: content, due_date, priority → returns task ID",
 
     const callArgs = fetchMock.mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(callArgs[1].body as string) as Record<string, unknown>;
-    expect(body["content"]).toBe("Review pull requests");
+    expect(body.content).toBe("Review pull requests");
   });
 
   it("create_task sends due_date in the request body", async () => {
@@ -479,8 +481,11 @@ describe("AC3 — create_task: content, due_date, priority → returns task ID",
     const callArgs = fetchMock.mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(callArgs[1].body as string) as Record<string, unknown>;
     // due_date maps to due_date or due_string depending on API
-    const hasDue = ("due_date" in body && body["due_date"] === "2026-05-01") ||
-      ("due_string" in body && typeof body["due_string"] === "string" && body["due_string"].includes("2026-05-01"));
+    const hasDue =
+      ("due_date" in body && body.due_date === "2026-05-01") ||
+      ("due_string" in body &&
+        typeof body.due_string === "string" &&
+        body.due_string.includes("2026-05-01"));
     expect(hasDue).toBe(true);
   });
 
@@ -501,7 +506,7 @@ describe("AC3 — create_task: content, due_date, priority → returns task ID",
 
     const callArgs = fetchMock.mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(callArgs[1].body as string) as Record<string, unknown>;
-    expect(body["priority"]).toBe(4);
+    expect(body.priority).toBe(4);
   });
 
   it("create_task returns error JSON when content is missing", async () => {
@@ -807,8 +812,10 @@ describe("AC5 — update_task: task ID and partial fields for updates", () => {
     const callArgs = fetchMock.mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(callArgs[1].body as string) as Record<string, unknown>;
     const hasDue =
-      ("due_date" in body && body["due_date"] === "2026-05-15") ||
-      ("due_string" in body && typeof body["due_string"] === "string" && body["due_string"].includes("2026-05-15"));
+      ("due_date" in body && body.due_date === "2026-05-15") ||
+      ("due_string" in body &&
+        typeof body.due_string === "string" &&
+        body.due_string.includes("2026-05-15"));
     expect(hasDue).toBe(true);
   });
 
@@ -828,7 +835,7 @@ describe("AC5 — update_task: task ID and partial fields for updates", () => {
 
     const callArgs = fetchMock.mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(callArgs[1].body as string) as Record<string, unknown>;
-    expect(body["priority"]).toBe(4);
+    expect(body.priority).toBe(4);
   });
 
   it("update_task omits due_date from request body when not provided", async () => {
@@ -938,10 +945,12 @@ describe("AC5 — update_task: task ID and partial fields for updates", () => {
     expect(typeof result).toBe("string");
     const callArgs = fetchMock.mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(callArgs[1].body as string) as Record<string, unknown>;
-    expect(body["priority"]).toBe(3);
+    expect(body.priority).toBe(3);
     const hasDue =
-      ("due_date" in body && body["due_date"] === "2026-05-05") ||
-      ("due_string" in body && typeof body["due_string"] === "string" && body["due_string"].includes("2026-05-05"));
+      ("due_date" in body && body.due_date === "2026-05-05") ||
+      ("due_string" in body &&
+        typeof body.due_string === "string" &&
+        body.due_string.includes("2026-05-05"));
     expect(hasDue).toBe(true);
   });
 });
@@ -976,7 +985,7 @@ describe("AC6 — TODOIST_API_TOKEN from env and proper HTTP error handling", ()
 
     const callArgs = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = callArgs[1].headers as Record<string, string>;
-    expect(headers["Authorization"]).toBe("Bearer my-secret-token-xyz");
+    expect(headers.Authorization).toBe("Bearer my-secret-token-xyz");
   });
 
   it("create_task sends Authorization: Bearer <TODOIST_API_TOKEN> header", async () => {
@@ -992,7 +1001,7 @@ describe("AC6 — TODOIST_API_TOKEN from env and proper HTTP error handling", ()
 
     const callArgs = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = callArgs[1].headers as Record<string, string>;
-    expect(headers["Authorization"]).toBe("Bearer create-token-abc");
+    expect(headers.Authorization).toBe("Bearer create-token-abc");
   });
 
   it("complete_task sends Authorization: Bearer <TODOIST_API_TOKEN> header", async () => {
@@ -1013,7 +1022,7 @@ describe("AC6 — TODOIST_API_TOKEN from env and proper HTTP error handling", ()
 
     const callArgs = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = callArgs[1].headers as Record<string, string>;
-    expect(headers["Authorization"]).toBe("Bearer complete-token-def");
+    expect(headers.Authorization).toBe("Bearer complete-token-def");
   });
 
   it("delete_task sends Authorization: Bearer <TODOIST_API_TOKEN> header", async () => {
@@ -1034,7 +1043,7 @@ describe("AC6 — TODOIST_API_TOKEN from env and proper HTTP error handling", ()
 
     const callArgs = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = callArgs[1].headers as Record<string, string>;
-    expect(headers["Authorization"]).toBe("Bearer delete-token-ghi");
+    expect(headers.Authorization).toBe("Bearer delete-token-ghi");
   });
 
   it("update_task sends Authorization: Bearer <TODOIST_API_TOKEN> header", async () => {
@@ -1050,7 +1059,7 @@ describe("AC6 — TODOIST_API_TOKEN from env and proper HTTP error handling", ()
 
     const callArgs = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = callArgs[1].headers as Record<string, string>;
-    expect(headers["Authorization"]).toBe("Bearer update-token-jkl");
+    expect(headers.Authorization).toBe("Bearer update-token-jkl");
   });
 
   it("get_tasks handles HTTP 401 Unauthorized gracefully (returns error JSON, no throw)", async () => {
@@ -1348,7 +1357,7 @@ describe("AC7 — Response format matches agent expectations with JSON serializa
       }).not.toThrow();
 
       // Must contain an 'error' key
-      expect((parsed as Record<string, unknown>)["error"]).toBeDefined();
+      expect((parsed as Record<string, unknown>).error).toBeDefined();
     }
   });
 

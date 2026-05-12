@@ -10,22 +10,22 @@
  * interface contracts.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 // We import types as type-only to verify they are exported; runtime objects
 // are constructed inline to verify structural conformance.
 import type {
-  ConversationMessage,
-  ConfirmationPayload,
-  ConfirmationAction,
-  MessageRole,
-  CreateEventData,
-  UpdateEventData,
-  DeleteEventData,
   CallbackAction,
-  IncomingMessage,
+  ConfirmationAction,
+  ConfirmationPayload,
+  ConversationMessage,
+  CreateEventData,
+  DeleteEventData,
   IncomingCallback,
+  IncomingMessage,
+  MessageRole,
   OrchestratorReply,
+  UpdateEventData,
 } from "../types.js";
 
 // ---------------------------------------------------------------------------
@@ -157,11 +157,7 @@ describe("types.ts — ConfirmationPayload interface", () => {
 
 describe("types.ts — ConfirmationAction type", () => {
   it("accepts all three valid action values", () => {
-    const actions: ConfirmationAction[] = [
-      "create_event",
-      "update_event",
-      "delete_event",
-    ];
+    const actions: ConfirmationAction[] = ["create_event", "update_event", "delete_event"];
     expect(actions).toHaveLength(3);
     expect(actions).toContain("create_event");
     expect(actions).toContain("update_event");

@@ -373,10 +373,10 @@ export async function createEvent(params: CreateEventParams): Promise<string> {
     start: { dateTime: start },
     end: { dateTime: end },
   };
-  if (location) body["location"] = location;
-  if (description) body["description"] = description;
+  if (location) body.location = location;
+  if (description) body.description = description;
   if (attendees?.length) {
-    body["attendees"] = attendees.map((email) => ({ email }));
+    body.attendees = attendees.map((email) => ({ email }));
   }
 
   try {
@@ -429,6 +429,7 @@ export const updateEventTool: Anthropic.Tool = {
   },
 };
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing complexity, tracked for refactor
 export async function updateEvent(params: UpdateEventParams): Promise<string> {
   const { eventId, title, start, end, location, description, attendees } = params;
 
@@ -441,12 +442,12 @@ export async function updateEvent(params: UpdateEventParams): Promise<string> {
   }
 
   const body: Record<string, unknown> = {};
-  if (title !== undefined) body["summary"] = title;
-  if (start !== undefined) body["start"] = { dateTime: start };
-  if (end !== undefined) body["end"] = { dateTime: end };
-  if (location !== undefined) body["location"] = location;
-  if (description !== undefined) body["description"] = description;
-  if (attendees !== undefined) body["attendees"] = attendees.map((email) => ({ email }));
+  if (title !== undefined) body.summary = title;
+  if (start !== undefined) body.start = { dateTime: start };
+  if (end !== undefined) body.end = { dateTime: end };
+  if (location !== undefined) body.location = location;
+  if (description !== undefined) body.description = description;
+  if (attendees !== undefined) body.attendees = attendees.map((email) => ({ email }));
 
   try {
     await calendarPatch(`/calendars/primary/events/${encodeURIComponent(eventId)}`, body);
@@ -576,6 +577,7 @@ export const calendarFreeBusyToolDefinitions: Anthropic.Tool[] = [checkFreeBusyT
 // Unified executor — called by agent.ts tool loop and confirmation executor
 // ---------------------------------------------------------------------------
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing complexity, tracked for refactor
 export async function executeCalendarTool(
   toolName: string,
   toolInput: Record<string, unknown>,
@@ -585,8 +587,8 @@ export async function executeCalendarTool(
       return getTodaysEvents();
 
     case "get_events_range": {
-      const start = typeof toolInput["start"] === "string" ? toolInput["start"] : "";
-      const end = typeof toolInput["end"] === "string" ? toolInput["end"] : "";
+      const start = typeof toolInput.start === "string" ? toolInput.start : "";
+      const end = typeof toolInput.end === "string" ? toolInput.end : "";
       if (!start || !end) {
         return JSON.stringify({ error: "get_events_range requires 'start' and 'end'" });
       }
@@ -594,41 +596,41 @@ export async function executeCalendarTool(
     }
 
     case "create_event": {
-      const title = typeof toolInput["title"] === "string" ? toolInput["title"] : "";
-      const start = typeof toolInput["start"] === "string" ? toolInput["start"] : "";
-      const end = typeof toolInput["end"] === "string" ? toolInput["end"] : "";
+      const title = typeof toolInput.title === "string" ? toolInput.title : "";
+      const start = typeof toolInput.start === "string" ? toolInput.start : "";
+      const end = typeof toolInput.end === "string" ? toolInput.end : "";
       if (!title || !start || !end) {
         return JSON.stringify({ error: "create_event requires 'title', 'start', and 'end'" });
       }
       const p: CreateEventParams = { title, start, end };
-      if (typeof toolInput["location"] === "string") p.location = toolInput["location"];
-      if (typeof toolInput["description"] === "string") p.description = toolInput["description"];
-      if (Array.isArray(toolInput["attendees"])) p.attendees = toolInput["attendees"] as string[];
+      if (typeof toolInput.location === "string") p.location = toolInput.location;
+      if (typeof toolInput.description === "string") p.description = toolInput.description;
+      if (Array.isArray(toolInput.attendees)) p.attendees = toolInput.attendees as string[];
       return createEvent(p);
     }
 
     case "update_event": {
-      const eventId = typeof toolInput["eventId"] === "string" ? toolInput["eventId"] : "";
+      const eventId = typeof toolInput.eventId === "string" ? toolInput.eventId : "";
       if (!eventId) return JSON.stringify({ error: "update_event requires 'eventId'" });
       const p: UpdateEventParams = { eventId };
-      if (typeof toolInput["title"] === "string") p.title = toolInput["title"];
-      if (typeof toolInput["start"] === "string") p.start = toolInput["start"];
-      if (typeof toolInput["end"] === "string") p.end = toolInput["end"];
-      if (typeof toolInput["location"] === "string") p.location = toolInput["location"];
-      if (typeof toolInput["description"] === "string") p.description = toolInput["description"];
-      if (Array.isArray(toolInput["attendees"])) p.attendees = toolInput["attendees"] as string[];
+      if (typeof toolInput.title === "string") p.title = toolInput.title;
+      if (typeof toolInput.start === "string") p.start = toolInput.start;
+      if (typeof toolInput.end === "string") p.end = toolInput.end;
+      if (typeof toolInput.location === "string") p.location = toolInput.location;
+      if (typeof toolInput.description === "string") p.description = toolInput.description;
+      if (Array.isArray(toolInput.attendees)) p.attendees = toolInput.attendees as string[];
       return updateEvent(p);
     }
 
     case "delete_event": {
-      const eventId = typeof toolInput["eventId"] === "string" ? toolInput["eventId"] : "";
+      const eventId = typeof toolInput.eventId === "string" ? toolInput.eventId : "";
       if (!eventId) return JSON.stringify({ error: "delete_event requires 'eventId'" });
       return deleteEvent({ eventId });
     }
 
     case "check_free_busy": {
-      const start = typeof toolInput["start"] === "string" ? toolInput["start"] : "";
-      const end = typeof toolInput["end"] === "string" ? toolInput["end"] : "";
+      const start = typeof toolInput.start === "string" ? toolInput.start : "";
+      const end = typeof toolInput.end === "string" ? toolInput.end : "";
       if (!start || !end) {
         return JSON.stringify({ error: "check_free_busy requires 'start' and 'end'" });
       }

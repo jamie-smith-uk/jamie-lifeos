@@ -21,20 +21,20 @@
  * The server is closed after each suite.
  */
 
-import http from "http";
-import type { AddressInfo } from "net";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import http from "node:http";
+import type { AddressInfo } from "node:net";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Environment — set required vars before any module that reads process.env
 // ---------------------------------------------------------------------------
-process.env["TELEGRAM_BOT_TOKEN"] = "bot:test_token";
-process.env["TELEGRAM_ALLOWED_CHAT_ID"] = "123456";
-process.env["ANTHROPIC_API_KEY"] = "sk-ant-test";
-process.env["DATABASE_URL"] =
+process.env.TELEGRAM_BOT_TOKEN = "bot:test_token";
+process.env.TELEGRAM_ALLOWED_CHAT_ID = "123456";
+process.env.ANTHROPIC_API_KEY = "sk-ant-test";
+process.env.DATABASE_URL =
   "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos";
-process.env["DIGEST_CRON"] = "0 7 * * *";
-process.env["TZ"] = "Europe/London";
+process.env.DIGEST_CRON = "0 7 * * *";
+process.env.TZ = "Europe/London";
 
 // ---------------------------------------------------------------------------
 // HTTP helpers
@@ -180,7 +180,7 @@ function waitForPort(port: number, timeoutMs = 3000): Promise<void> {
   return new Promise((resolve, reject) => {
     const start = Date.now();
     function attempt() {
-      const socket = new (require("net").Socket)();
+      const socket = new (require("node:net").Socket)();
       socket.setTimeout(200);
       socket
         .once("connect", () => {
@@ -293,7 +293,7 @@ describe("AC1 — POST /message returns 200 and a text reply", () => {
       message_id: 2,
     });
     const parsed = JSON.parse(res.body) as unknown;
-    expect(typeof (parsed as Record<string, unknown>)["text"]).toBe("string");
+    expect(typeof (parsed as Record<string, unknown>).text).toBe("string");
   });
 
   it("'text' property in response is non-empty", async () => {
@@ -303,7 +303,7 @@ describe("AC1 — POST /message returns 200 and a text reply", () => {
       message_id: 3,
     });
     const parsed = JSON.parse(res.body) as Record<string, unknown>;
-    expect((parsed["text"] as string).length).toBeGreaterThan(0);
+    expect((parsed.text as string).length).toBeGreaterThan(0);
   });
 
   it("returns 400 when chat_id is missing", async () => {
@@ -397,7 +397,7 @@ describe("AC2 — POST /callback with callback_data 'cancel' returns 200", () =>
       message_id: 6,
     });
     const parsed = JSON.parse(res.body) as Record<string, unknown>;
-    expect(typeof parsed["text"]).toBe("string");
+    expect(typeof parsed.text).toBe("string");
   });
 
   it("returns 200 for callback_data='confirm'", async () => {
@@ -824,9 +824,9 @@ describe("AC4 — server listens on PORT env var, defaults to 3001", () => {
     // Since we cannot import index.ts without a custom PORT (it would conflict
     // with other tests), we verify the default value is declared in shared/env.ts
     // by checking its compiled output.
-    const path = require("path") as typeof import("path");
+    const path = require("node:path") as typeof import("path");
     const sharedEnvDist = path.resolve(__dirname, "../../../../packages/shared/dist/env.js");
-    const fs = require("fs") as typeof import("fs");
+    const fs = require("node:fs") as typeof import("fs");
     const content = fs.readFileSync(sharedEnvDist, "utf8");
     // env.ts contains OPTIONAL_DEFAULTS with PORT: "3001"
     expect(content).toMatch(/PORT.*3001|3001.*PORT/);

@@ -16,10 +16,10 @@
  * function after the refactor — i.e. behaviour is preserved.
  */
 
-import { describe, it, expect } from "vitest";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Resolve the path to the source file under test
@@ -63,10 +63,7 @@ describe("AC1 — migrate.ts uses async/await, not .then()/.catch() chains", () 
       .join("\n");
 
     // Remove block comments /** ... */ and /* ... */
-    const sourceWithoutComments = sourceWithoutSingleLineComments.replace(
-      /\/\*[\s\S]*?\*\//g,
-      "",
-    );
+    const sourceWithoutComments = sourceWithoutSingleLineComments.replace(/\/\*[\s\S]*?\*\//g, "");
 
     const thenPattern = /\.then\s*\(/g;
     const matches = sourceWithoutComments.match(thenPattern);
@@ -82,10 +79,7 @@ describe("AC1 — migrate.ts uses async/await, not .then()/.catch() chains", () 
       .map((line) => line.replace(/(?<!https?:)\/\/.*$/, ""))
       .join("\n");
 
-    const sourceWithoutComments = sourceWithoutSingleLineComments.replace(
-      /\/\*[\s\S]*?\*\//g,
-      "",
-    );
+    const sourceWithoutComments = sourceWithoutSingleLineComments.replace(/\/\*[\s\S]*?\*\//g, "");
 
     const catchPattern = /\.catch\s*\(/g;
     const matches = sourceWithoutComments.match(catchPattern);

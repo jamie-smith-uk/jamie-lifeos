@@ -44,13 +44,13 @@ let capturedModelIds: string[] = [];
 let capturedMessageArrays: unknown[][] = [];
 
 /** Number of times the Anthropic create() was called. */
-let anthropicCreateCallCount = 0;
+let _anthropicCreateCallCount = 0;
 
 function resetCaptures() {
   capturedSystemPrompt = "";
   capturedModelIds = [];
   capturedMessageArrays = [];
-  anthropicCreateCallCount = 0;
+  _anthropicCreateCallCount = 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -191,7 +191,7 @@ function buildAnthropicMock(responses: Anthropic.Message[]) {
   const createMock = vi
     .fn()
     .mockImplementation((params: { system: string; model: string; messages: unknown[] }) => {
-      anthropicCreateCallCount++;
+      _anthropicCreateCallCount++;
       capturedSystemPrompt = params.system;
       capturedModelIds.push(params.model);
       capturedMessageArrays.push(params.messages);
@@ -345,8 +345,8 @@ describe("T-10 — runAgent agent core", () => {
       expect(firstCallMessages).toBeDefined();
       const lastMessage = firstCallMessages[firstCallMessages.length - 1];
       expect(lastMessage).toBeDefined();
-      expect(lastMessage!.role).toBe("user");
-      expect(lastMessage!.content).toBe("hello");
+      expect(lastMessage?.role).toBe("user");
+      expect(lastMessage?.content).toBe("hello");
     });
 
     it("calls messages.create() exactly once for a simple message", async () => {
@@ -480,10 +480,10 @@ describe("T-10 — runAgent agent core", () => {
       expect(toolResultUserMsg).toBeDefined();
 
       const toolResultContent = (
-        toolResultUserMsg!.content as Anthropic.ToolResultBlockParam[]
+        toolResultUserMsg?.content as Anthropic.ToolResultBlockParam[]
       ).find((b) => b.type === "tool_result");
       expect(toolResultContent).toBeDefined();
-      expect(toolResultContent!.tool_use_id).toBe(TOOL_ID);
+      expect(toolResultContent?.tool_use_id).toBe(TOOL_ID);
     });
 
     it("continues the tool loop for multiple sequential tool calls", async () => {
@@ -945,8 +945,8 @@ describe("T-10 — runAgent agent core", () => {
       // Read the agent.ts source code and verify the model string "claude-sonnet-4-20250514"
       // does not appear outside of comments — it should only be read from env.ANTHROPIC_MODEL.
       // Comments are stripped before checking, so doc comments explaining the default are allowed.
-      const fs = await import("fs");
-      const path = await import("path");
+      const fs = await import("node:fs");
+      const path = await import("node:path");
       const agentSource = fs.readFileSync(path.resolve(__dirname, "../agent.ts"), "utf8");
 
       // Strip line comments (// ...) and block comments (/* ... */) from the source
@@ -963,8 +963,8 @@ describe("T-10 — runAgent agent core", () => {
 
     it("env.ts (shared) contains the claude-sonnet-4-20250514 default as the canonical definition", async () => {
       // The canonical source of the model ID default should be in shared/src/env.ts
-      const fs = await import("fs");
-      const path = await import("path");
+      const fs = await import("node:fs");
+      const path = await import("node:path");
       const envSource = fs.readFileSync(
         path.resolve(__dirname, "../../../../packages/shared/src/env.ts"),
         "utf8",

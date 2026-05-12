@@ -113,7 +113,7 @@ function handleQuery(text: string, values: unknown[]): { rows: StoredRow[]; rowC
         return diff !== 0 ? diff : b.id - a.id;
       });
     if (forChat.length === 0) return { rows: [], rowCount: 0 };
-    const row = store.find((r) => r.id === forChat[0]!.id)!;
+    const row = store.find((r) => r.id === forChat[0]?.id)!;
     row.active_confirmation = confirmation;
     return { rows: [], rowCount: 1 };
   }
@@ -131,7 +131,7 @@ function handleQuery(text: string, values: unknown[]): { rows: StoredRow[]; rowC
         return diff !== 0 ? diff : b.id - a.id;
       });
     if (forChat.length === 0) return { rows: [], rowCount: 0 };
-    const row = store.find((r) => r.id === forChat[0]!.id)!;
+    const row = store.find((r) => r.id === forChat[0]?.id)!;
     row.active_confirmation = null;
     return { rows: [], rowCount: 1 };
   }
@@ -481,8 +481,8 @@ describe("AC1 — TOOL_DEFINITIONS includes Gmail tools with proper schemas", ()
 
     const tool = getCapturedTools().find((t) => t.name === "get_inbox_summary");
     expect(tool).toBeDefined();
-    expect(tool!.input_schema).toBeDefined();
-    expect(typeof tool!.input_schema).toBe("object");
+    expect(tool?.input_schema).toBeDefined();
+    expect(typeof tool?.input_schema).toBe("object");
   });
 
   it("'get_thread' tool definition has an input_schema object", async () => {
@@ -505,8 +505,8 @@ describe("AC1 — TOOL_DEFINITIONS includes Gmail tools with proper schemas", ()
 
     const tool = getCapturedTools().find((t) => t.name === "get_thread");
     expect(tool).toBeDefined();
-    expect(tool!.input_schema).toBeDefined();
-    expect(typeof tool!.input_schema).toBe("object");
+    expect(tool?.input_schema).toBeDefined();
+    expect(typeof tool?.input_schema).toBe("object");
   });
 
   it("each Gmail tool definition has a non-empty description", async () => {
@@ -564,7 +564,7 @@ describe("AC1 — TOOL_DEFINITIONS includes Gmail tools with proper schemas", ()
     for (const name of gmailNames) {
       const tool = tools.find((t) => t.name === name);
       expect(tool, `${name} should be in TOOL_DEFINITIONS`).toBeDefined();
-      const schema = tool!.input_schema as { type?: string };
+      const schema = tool?.input_schema as { type?: string };
       expect(schema.type, `${name} input_schema.type should be 'object'`).toBe("object");
     }
   });
@@ -920,7 +920,7 @@ describe("AC4 — Tool definitions specify required parameters", () => {
 
     const tool = getCapturedTools().find((t) => t.name === "get_thread");
     expect(tool).toBeDefined();
-    const schema = tool!.input_schema as {
+    const schema = tool?.input_schema as {
       properties?: Record<string, unknown>;
     };
     expect(schema.properties).toBeDefined();
@@ -947,7 +947,7 @@ describe("AC4 — Tool definitions specify required parameters", () => {
 
     const tool = getCapturedTools().find((t) => t.name === "get_thread");
     expect(tool).toBeDefined();
-    const schema = tool!.input_schema as { required?: string[] };
+    const schema = tool?.input_schema as { required?: string[] };
     expect(schema.required).toBeDefined();
     expect(schema.required).toContain("thread_id");
   });
@@ -972,7 +972,7 @@ describe("AC4 — Tool definitions specify required parameters", () => {
 
     const tool = getCapturedTools().find((t) => t.name === "get_inbox_summary");
     expect(tool).toBeDefined();
-    const schema = tool!.input_schema as { required?: string[] };
+    const schema = tool?.input_schema as { required?: string[] };
     // Either no required array, or an empty one — inbox summary takes no required params
     const required = schema.required ?? [];
     expect(required.length).toBe(0);
@@ -998,10 +998,10 @@ describe("AC4 — Tool definitions specify required parameters", () => {
 
     const tool = getCapturedTools().find((t) => t.name === "get_thread");
     expect(tool).toBeDefined();
-    const schema = tool!.input_schema as {
+    const schema = tool?.input_schema as {
       properties?: Record<string, { type?: string }>;
     };
-    expect(schema.properties?.["thread_id"]?.type).toBe("string");
+    expect(schema.properties?.thread_id?.type).toBe("string");
   });
 });
 

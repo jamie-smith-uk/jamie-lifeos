@@ -31,8 +31,8 @@
  *     confirm/cancel handler paths independently.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ConfirmationPayload } from "@lifeos/shared";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // In-memory store shared by pool mock
@@ -61,10 +61,7 @@ function findConfirmation(chatId: number): ConfirmationPayload | null {
   return row?.active_confirmation ?? null;
 }
 
-function handleQuery(
-  text: string,
-  values: unknown[],
-): { rows: StoredRow[]; rowCount: number } {
+function handleQuery(text: string, values: unknown[]): { rows: StoredRow[]; rowCount: number } {
   const normalised = text.replace(/\s+/g, " ").trim().toUpperCase();
 
   if (normalised === "BEGIN" || normalised === "COMMIT" || normalised === "ROLLBACK") {
@@ -123,7 +120,7 @@ function handleQuery(
         return diff !== 0 ? diff : b.id - a.id;
       });
     if (forChat.length === 0) return { rows: [], rowCount: 0 };
-    const row = store.find((r) => r.id === forChat[0]!.id)!;
+    const row = store.find((r) => r.id === forChat[0]?.id)!;
     row.active_confirmation = confirmation;
     return { rows: [], rowCount: 1 };
   }
@@ -142,7 +139,7 @@ function handleQuery(
         return diff !== 0 ? diff : b.id - a.id;
       });
     if (forChat.length === 0) return { rows: [], rowCount: 0 };
-    const row = store.find((r) => r.id === forChat[0]!.id)!;
+    const row = store.find((r) => r.id === forChat[0]?.id)!;
     row.active_confirmation = null;
     return { rows: [], rowCount: 1 };
   }
@@ -201,20 +198,22 @@ function handleQuery(
 // ---------------------------------------------------------------------------
 
 function buildPoolMock() {
-  const clientQueryMock = vi.fn().mockImplementation(
-    (text: string, values?: unknown[]) =>
+  const clientQueryMock = vi
+    .fn()
+    .mockImplementation((text: string, values?: unknown[]) =>
       Promise.resolve(handleQuery(text, values ?? [])),
-  );
+    );
 
   const clientMock = {
     query: clientQueryMock,
     release: vi.fn(),
   };
 
-  const poolQueryMock = vi.fn().mockImplementation(
-    (text: string, values?: unknown[]) =>
+  const poolQueryMock = vi
+    .fn()
+    .mockImplementation((text: string, values?: unknown[]) =>
       Promise.resolve(handleQuery(text, values ?? [])),
-  );
+    );
 
   const connectMock = vi.fn().mockResolvedValue(clientMock);
 
@@ -613,7 +612,7 @@ describe("AC1 — Smoke test 4: meeting proposal triggers confirmation keyboard"
     const confirmation = findConfirmation(105);
     expect(confirmation).not.toBeNull();
 
-    const proposedAt = new Date(confirmation!.proposed_at).getTime();
+    const proposedAt = new Date(confirmation?.proposed_at).getTime();
     expect(proposedAt).toBeGreaterThanOrEqual(before);
     expect(proposedAt).toBeLessThanOrEqual(after);
   });
@@ -647,7 +646,7 @@ describe("AC1 — Smoke test 4: meeting proposal triggers confirmation keyboard"
       message_id: 7,
     });
 
-    const callArgs = createMock.mock.calls[0]![0] as {
+    const callArgs = createMock.mock.calls[0]?.[0] as {
       tools?: Array<{ name: string }>;
     };
     const toolNames = callArgs.tools?.map((t) => t.name) ?? [];
@@ -715,9 +714,9 @@ describe("AC2 — Smoke test 5: Confirm callback executes create_event and retur
   });
 
   it("confirm callback calls executeCalendarTool with create_event action", async () => {
-    const executeCalendarToolMock = vi.fn().mockResolvedValue(
-      JSON.stringify({ htmlLink: "https://cal.google.com/event/123" }),
-    );
+    const executeCalendarToolMock = vi
+      .fn()
+      .mockResolvedValue(JSON.stringify({ htmlLink: "https://cal.google.com/event/123" }));
 
     // Seed confirmation into store (simulate a prior proposal being saved)
     seedConfirmation(200, {
@@ -795,7 +794,7 @@ describe("AC2 — Smoke test 5: Confirm callback executes create_event and retur
     const payload = await loadConfirmation(chatId);
     expect(payload).not.toBeNull();
 
-    await executeCalendarTool(payload!.action, payload!.data as unknown as Record<string, unknown>);
+    await executeCalendarTool(payload?.action, payload?.data as unknown as Record<string, unknown>);
     await clearConfirmation(chatId);
 
     const afterClear = await loadConfirmation(chatId);
@@ -834,7 +833,7 @@ describe("AC2 — Smoke test 5: Confirm callback executes create_event and retur
     expect(payload).not.toBeNull();
 
     // Build expected success message (mirrors index.ts logic)
-    const eventData = payload!.data as { title: string };
+    const eventData = payload?.data as { title: string };
     const successText = `Event "${eventData.title}" has been added to your calendar.`;
     expect(successText).toContain("Product Review");
     expect(successText).toMatch(/has been added to your calendar/i);
@@ -938,7 +937,7 @@ describe("AC2 — Smoke test 5: Confirm callback executes create_event and retur
     }
     expect(hasError).toBe(false);
 
-    const eventData = payload!.data as { title: string };
+    const eventData = payload?.data as { title: string };
     const successText = `Event "${eventData.title}" has been added to your calendar.`;
     expect(successText).not.toMatch(/error/i);
   });
@@ -973,7 +972,7 @@ describe("AC2 — Smoke test 5: Confirm callback executes create_event and retur
     const payload = await loadConfirmation(chatId);
     expect(payload).not.toBeNull();
 
-    const data = payload!.data as { start: string; end: string };
+    const data = payload?.data as { start: string; end: string };
     // start and end should be ISO 8601 datetime strings
     expect(data.start).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
     expect(data.end).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
@@ -1511,7 +1510,7 @@ describe("AC4 — Proposal includes title, date, time, duration, and location (i
     const confirmation = findConfirmation(407);
     expect(confirmation).not.toBeNull();
 
-    const data = confirmation!.data as { title: string; start: string; end: string };
+    const data = confirmation?.data as { title: string; start: string; end: string };
     expect(data.title).toBe("QA Review");
     expect(data.start).toBe("2026-04-24T10:30:00+01:00");
     expect(data.end).toBe("2026-04-24T11:00:00+01:00");

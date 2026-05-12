@@ -115,7 +115,7 @@ function handleQuery(text: string, values: unknown[]): { rows: StoredRow[]; rowC
         return diff !== 0 ? diff : b.id - a.id;
       });
     if (forChat.length === 0) return { rows: [], rowCount: 0 };
-    const row = store.find((r) => r.id === forChat[0]!.id)!;
+    const row = store.find((r) => r.id === forChat[0]?.id)!;
     row.active_confirmation = confirmation;
     return { rows: [], rowCount: 1 };
   }
@@ -133,7 +133,7 @@ function handleQuery(text: string, values: unknown[]): { rows: StoredRow[]; rowC
         return diff !== 0 ? diff : b.id - a.id;
       });
     if (forChat.length === 0) return { rows: [], rowCount: 0 };
-    const row = store.find((r) => r.id === forChat[0]!.id)!;
+    const row = store.find((r) => r.id === forChat[0]?.id)!;
     row.active_confirmation = null;
     return { rows: [], rowCount: 1 };
   }
@@ -546,8 +546,8 @@ describe("AC1 — TOOL_DEFINITIONS includes all 5 Todoist tools with proper para
 
     const tool = getCapturedTools().find((t) => t.name === "get_tasks");
     expect(tool).toBeDefined();
-    expect(tool!.input_schema).toBeDefined();
-    expect(typeof tool!.input_schema).toBe("object");
+    expect(tool?.input_schema).toBeDefined();
+    expect(typeof tool?.input_schema).toBe("object");
   });
 
   it("'create_task' tool definition has an input_schema object", async () => {
@@ -569,7 +569,7 @@ describe("AC1 — TOOL_DEFINITIONS includes all 5 Todoist tools with proper para
 
     const tool = getCapturedTools().find((t) => t.name === "create_task");
     expect(tool).toBeDefined();
-    expect(tool!.input_schema).toBeDefined();
+    expect(tool?.input_schema).toBeDefined();
   });
 
   it("each Todoist tool definition has a non-empty description", async () => {
@@ -1058,7 +1058,7 @@ describe("AC4 — Tool definitions specify required parameters", () => {
 
     const tool = getCapturedTools().find((t) => t.name === "get_tasks");
     expect(tool).toBeDefined();
-    const schema = tool!.input_schema as {
+    const schema = tool?.input_schema as {
       properties?: Record<string, unknown>;
     };
     expect(schema.properties).toBeDefined();
@@ -1083,7 +1083,7 @@ describe("AC4 — Tool definitions specify required parameters", () => {
     await runAgent({ chat_id: 4002, text: "hello", message_id: 2 });
 
     const tool = getCapturedTools().find((t) => t.name === "create_task");
-    const schema = tool!.input_schema as {
+    const schema = tool?.input_schema as {
       properties?: Record<string, unknown>;
     };
     expect("content" in (schema.properties ?? {})).toBe(true);
@@ -1107,7 +1107,7 @@ describe("AC4 — Tool definitions specify required parameters", () => {
     await runAgent({ chat_id: 4003, text: "hello", message_id: 3 });
 
     const tool = getCapturedTools().find((t) => t.name === "create_task");
-    const schema = tool!.input_schema as {
+    const schema = tool?.input_schema as {
       properties?: Record<string, unknown>;
     };
     expect("due_date" in (schema.properties ?? {})).toBe(true);
@@ -1131,7 +1131,7 @@ describe("AC4 — Tool definitions specify required parameters", () => {
     await runAgent({ chat_id: 4004, text: "hello", message_id: 4 });
 
     const tool = getCapturedTools().find((t) => t.name === "create_task");
-    const schema = tool!.input_schema as {
+    const schema = tool?.input_schema as {
       properties?: Record<string, unknown>;
     };
     expect("priority" in (schema.properties ?? {})).toBe(true);
@@ -1155,7 +1155,7 @@ describe("AC4 — Tool definitions specify required parameters", () => {
     await runAgent({ chat_id: 4005, text: "hello", message_id: 5 });
 
     const tool = getCapturedTools().find((t) => t.name === "create_task");
-    const schema = tool!.input_schema as { required?: string[] };
+    const schema = tool?.input_schema as { required?: string[] };
     expect(schema.required).toBeDefined();
     expect(schema.required).toContain("content");
   });
@@ -1178,7 +1178,7 @@ describe("AC4 — Tool definitions specify required parameters", () => {
     await runAgent({ chat_id: 4006, text: "hello", message_id: 6 });
 
     const tool = getCapturedTools().find((t) => t.name === "complete_task");
-    const schema = tool!.input_schema as {
+    const schema = tool?.input_schema as {
       properties?: Record<string, unknown>;
     };
     expect("task_id" in (schema.properties ?? {})).toBe(true);
@@ -1202,7 +1202,7 @@ describe("AC4 — Tool definitions specify required parameters", () => {
     await runAgent({ chat_id: 4007, text: "hello", message_id: 7 });
 
     const tool = getCapturedTools().find((t) => t.name === "complete_task");
-    const schema = tool!.input_schema as { required?: string[] };
+    const schema = tool?.input_schema as { required?: string[] };
     expect(schema.required).toContain("task_id");
   });
 
@@ -1224,7 +1224,7 @@ describe("AC4 — Tool definitions specify required parameters", () => {
     await runAgent({ chat_id: 4008, text: "hello", message_id: 8 });
 
     const tool = getCapturedTools().find((t) => t.name === "delete_task");
-    const schema = tool!.input_schema as {
+    const schema = tool?.input_schema as {
       properties?: Record<string, unknown>;
     };
     expect("task_id" in (schema.properties ?? {})).toBe(true);
@@ -1248,7 +1248,7 @@ describe("AC4 — Tool definitions specify required parameters", () => {
     await runAgent({ chat_id: 4009, text: "hello", message_id: 9 });
 
     const tool = getCapturedTools().find((t) => t.name === "delete_task");
-    const schema = tool!.input_schema as { required?: string[] };
+    const schema = tool?.input_schema as { required?: string[] };
     expect(schema.required).toContain("task_id");
   });
 
@@ -1270,7 +1270,7 @@ describe("AC4 — Tool definitions specify required parameters", () => {
     await runAgent({ chat_id: 4010, text: "hello", message_id: 10 });
 
     const tool = getCapturedTools().find((t) => t.name === "update_task");
-    const schema = tool!.input_schema as {
+    const schema = tool?.input_schema as {
       properties?: Record<string, unknown>;
     };
     expect("task_id" in (schema.properties ?? {})).toBe(true);
@@ -1296,7 +1296,7 @@ describe("AC4 — Tool definitions specify required parameters", () => {
     await runAgent({ chat_id: 4011, text: "hello", message_id: 11 });
 
     const tool = getCapturedTools().find((t) => t.name === "update_task");
-    const schema = tool!.input_schema as { required?: string[] };
+    const schema = tool?.input_schema as { required?: string[] };
     expect(schema.required).toContain("task_id");
   });
 
@@ -1329,7 +1329,7 @@ describe("AC4 — Tool definitions specify required parameters", () => {
     for (const name of todoistNames) {
       const tool = tools.find((t) => t.name === name);
       expect(tool, `${name} should be in TOOL_DEFINITIONS`).toBeDefined();
-      const schema = tool!.input_schema as { type?: string };
+      const schema = tool?.input_schema as { type?: string };
       expect(schema.type, `${name} input_schema.type should be 'object'`).toBe("object");
     }
   });
@@ -1569,7 +1569,7 @@ describe("AC5 — Agent successfully calls Todoist tools in the tool loop", () =
     expect(createMock).toHaveBeenCalledTimes(2);
 
     // The second call's messages array must contain the tool result content
-    const secondCallParams = createMock.mock.calls[1]![0] as {
+    const secondCallParams = createMock.mock.calls[1]?.[0] as {
       messages: Array<{
         role: string;
         content: string | Array<{ type: string; content?: string }>;

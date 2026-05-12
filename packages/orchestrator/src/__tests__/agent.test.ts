@@ -24,7 +24,7 @@
  * assert the final count is exactly 20.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // In-memory store used by the pool mock
@@ -50,10 +50,7 @@ function resetStore(): void {
  * Simulates the behaviour of each SQL statement issued by agent.ts.
  * Returns `{ rows }` shaped like a pg QueryResult.
  */
-function handleQuery(
-  text: string,
-  values: unknown[],
-): { rows: StoredRow[] } {
+function handleQuery(text: string, values: unknown[]): { rows: StoredRow[] } {
   const normalised = text.replace(/\s+/g, " ").trim().toUpperCase();
 
   // BEGIN / COMMIT / ROLLBACK — transaction control; no rows returned.
@@ -124,18 +121,22 @@ function handleQuery(
  * call arguments can create its own instance via vi.doMock.
  */
 function buildPoolMock() {
-  const clientQueryMock = vi.fn().mockImplementation(
-    (text: string, values?: unknown[]) => Promise.resolve(handleQuery(text, values ?? [])),
-  );
+  const clientQueryMock = vi
+    .fn()
+    .mockImplementation((text: string, values?: unknown[]) =>
+      Promise.resolve(handleQuery(text, values ?? [])),
+    );
 
   const clientMock = {
     query: clientQueryMock,
     release: vi.fn(),
   };
 
-  const poolQueryMock = vi.fn().mockImplementation(
-    (text: string, values?: unknown[]) => Promise.resolve(handleQuery(text, values ?? [])),
-  );
+  const poolQueryMock = vi
+    .fn()
+    .mockImplementation((text: string, values?: unknown[]) =>
+      Promise.resolve(handleQuery(text, values ?? [])),
+    );
 
   const connectMock = vi.fn().mockResolvedValue(clientMock);
 

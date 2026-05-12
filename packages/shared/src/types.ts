@@ -33,10 +33,7 @@ export interface ConversationMessage {
  * Discriminated union of all actions that require user confirmation before
  * being executed against the Google Calendar.
  */
-export type ConfirmationAction =
-  | "create_event"
-  | "update_event"
-  | "delete_event";
+export type ConfirmationAction = "create_event" | "update_event" | "delete_event";
 
 /**
  * Payload stored in the active_confirmation JSONB column while waiting for

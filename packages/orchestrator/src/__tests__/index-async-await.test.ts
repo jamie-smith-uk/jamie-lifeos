@@ -22,10 +22,10 @@
  * All three must be eliminated in favour of async/await + try/catch.
  */
 
-import { describe, it, expect } from "vitest";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Resolve the path to the source file under test
@@ -84,9 +84,7 @@ describe("AC1 — index.ts uses async/await, not .then()/.catch() chains", () =>
         .filter(({ line }) => /\.then\s*\(/.test(line))
         .map(({ line, num }) => `  Line ${num}: ${line.trim()}`)
         .join("\n");
-      throw new Error(
-        `index.ts still contains .then( chains:\n${matchingLines}`,
-      );
+      throw new Error(`index.ts still contains .then( chains:\n${matchingLines}`);
     }
 
     expect(matches).toBeNull();
@@ -106,9 +104,7 @@ describe("AC1 — index.ts uses async/await, not .then()/.catch() chains", () =>
         .filter(({ line }) => /\.catch\s*\(/.test(line))
         .map(({ line, num }) => `  Line ${num}: ${line.trim()}`)
         .join("\n");
-      throw new Error(
-        `index.ts still contains .catch( chains:\n${matchingLines}`,
-      );
+      throw new Error(`index.ts still contains .catch( chains:\n${matchingLines}`);
     }
 
     expect(matches).toBeNull();

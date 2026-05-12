@@ -8,7 +8,7 @@
  *   3. Dynamically import env.ts so it re-runs loadEnv()
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /** Minimum set of env vars that satisfies all required checks. */
 const VALID_ENV: Record<string, string> = {
@@ -60,7 +60,7 @@ async function loadEnvModule() {
 describe("env.ts — missing required variables", () => {
   it("throws when TELEGRAM_BOT_TOKEN is missing", async () => {
     const vars = { ...VALID_ENV };
-    delete vars["TELEGRAM_BOT_TOKEN"];
+    delete vars.TELEGRAM_BOT_TOKEN;
     setEnv(vars);
 
     await expect(loadEnvModule()).rejects.toThrow(/TELEGRAM_BOT_TOKEN/);
@@ -68,7 +68,7 @@ describe("env.ts — missing required variables", () => {
 
   it("throws when TELEGRAM_ALLOWED_CHAT_ID is missing", async () => {
     const vars = { ...VALID_ENV };
-    delete vars["TELEGRAM_ALLOWED_CHAT_ID"];
+    delete vars.TELEGRAM_ALLOWED_CHAT_ID;
     setEnv(vars);
 
     await expect(loadEnvModule()).rejects.toThrow(/TELEGRAM_ALLOWED_CHAT_ID/);
@@ -76,7 +76,7 @@ describe("env.ts — missing required variables", () => {
 
   it("throws when ANTHROPIC_API_KEY is missing", async () => {
     const vars = { ...VALID_ENV };
-    delete vars["ANTHROPIC_API_KEY"];
+    delete vars.ANTHROPIC_API_KEY;
     setEnv(vars);
 
     await expect(loadEnvModule()).rejects.toThrow(/ANTHROPIC_API_KEY/);
@@ -84,7 +84,7 @@ describe("env.ts — missing required variables", () => {
 
   it("throws when DATABASE_URL is missing", async () => {
     const vars = { ...VALID_ENV };
-    delete vars["DATABASE_URL"];
+    delete vars.DATABASE_URL;
     setEnv(vars);
 
     await expect(loadEnvModule()).rejects.toThrow(/DATABASE_URL/);
@@ -92,7 +92,7 @@ describe("env.ts — missing required variables", () => {
 
   it("throws when DIGEST_CRON is missing", async () => {
     const vars = { ...VALID_ENV };
-    delete vars["DIGEST_CRON"];
+    delete vars.DIGEST_CRON;
     setEnv(vars);
 
     await expect(loadEnvModule()).rejects.toThrow(/DIGEST_CRON/);
@@ -100,7 +100,7 @@ describe("env.ts — missing required variables", () => {
 
   it("throws when TZ is missing", async () => {
     const vars = { ...VALID_ENV };
-    delete vars["TZ"];
+    delete vars.TZ;
     setEnv(vars);
 
     await expect(loadEnvModule()).rejects.toThrow(/TZ/);
@@ -114,8 +114,8 @@ describe("env.ts — missing required variables", () => {
 
   it("throws when multiple required vars are missing and lists them all", async () => {
     const vars = { ...VALID_ENV };
-    delete vars["TELEGRAM_BOT_TOKEN"];
-    delete vars["ANTHROPIC_API_KEY"];
+    delete vars.TELEGRAM_BOT_TOKEN;
+    delete vars.ANTHROPIC_API_KEY;
     setEnv(vars);
 
     await expect(loadEnvModule()).rejects.toThrow(
@@ -125,7 +125,7 @@ describe("env.ts — missing required variables", () => {
 
   it("error message mentions .env file", async () => {
     const vars = { ...VALID_ENV };
-    delete vars["DATABASE_URL"];
+    delete vars.DATABASE_URL;
     setEnv(vars);
 
     await expect(loadEnvModule()).rejects.toThrow(/\.env/);

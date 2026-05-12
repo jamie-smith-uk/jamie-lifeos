@@ -19,8 +19,8 @@
  * All tests use vi.resetModules() + vi.doMock() for full module isolation.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ConfirmationPayload } from "@lifeos/shared";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // In-memory store used by the pool mock
@@ -49,10 +49,7 @@ function resetStore(): void {
  * as the pre-existing saveMessage / loadContext queries so that the full
  * in-memory store works end-to-end.
  */
-function handleQuery(
-  text: string,
-  values: unknown[],
-): { rows: StoredRow[]; rowCount: number } {
+function handleQuery(text: string, values: unknown[]): { rows: StoredRow[]; rowCount: number } {
   const normalised = text.replace(/\s+/g, " ").trim().toUpperCase();
 
   // Transaction control — no rows
@@ -225,20 +222,22 @@ function handleQuery(
 // ---------------------------------------------------------------------------
 
 function buildPoolMock() {
-  const clientQueryMock = vi.fn().mockImplementation(
-    (text: string, values?: unknown[]) =>
+  const clientQueryMock = vi
+    .fn()
+    .mockImplementation((text: string, values?: unknown[]) =>
       Promise.resolve(handleQuery(text, values ?? [])),
-  );
+    );
 
   const clientMock = {
     query: clientQueryMock,
     release: vi.fn(),
   };
 
-  const poolQueryMock = vi.fn().mockImplementation(
-    (text: string, values?: unknown[]) =>
+  const poolQueryMock = vi
+    .fn()
+    .mockImplementation((text: string, values?: unknown[]) =>
       Promise.resolve(handleQuery(text, values ?? [])),
-  );
+    );
 
   const connectMock = vi.fn().mockResolvedValue(clientMock);
 
@@ -450,9 +449,7 @@ describe("T-16 — agent.ts confirmation record storage", () => {
       });
 
       const { saveConfirmation } = await import("../agent.js");
-      await expect(saveConfirmation(700, makeFreshPayload())).rejects.toThrow(
-        "simulated DB error",
-      );
+      await expect(saveConfirmation(700, makeFreshPayload())).rejects.toThrow("simulated DB error");
 
       const calls = mocks.clientQueryMock.mock.calls.map(([sql]) =>
         (sql as string).trim().toUpperCase(),
@@ -498,8 +495,9 @@ describe("T-16 — agent.ts confirmation record storage", () => {
     });
 
     it("returns null after clearConfirmation has been called", async () => {
-      const { saveMessage, saveConfirmation, clearConfirmation, loadConfirmation } =
-        await import("../agent.js");
+      const { saveMessage, saveConfirmation, clearConfirmation, loadConfirmation } = await import(
+        "../agent.js"
+      );
       await saveMessage(1200, "user", "create event");
       await saveConfirmation(1200, makeFreshPayload());
       await clearConfirmation(1200);
@@ -574,10 +572,7 @@ describe("T-16 — agent.ts confirmation record storage", () => {
       const { saveMessage, saveConfirmation, loadConfirmation } = await import("../agent.js");
       await saveMessage(2002, "user", "old proposal");
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-      await saveConfirmation(
-        2002,
-        makeFreshPayload({ proposed_at: oneHourAgo.toISOString() }),
-      );
+      await saveConfirmation(2002, makeFreshPayload({ proposed_at: oneHourAgo.toISOString() }));
       const result = await loadConfirmation(2002);
       expect(result).toBeNull();
     });
@@ -586,10 +581,7 @@ describe("T-16 — agent.ts confirmation record storage", () => {
       const { saveMessage, saveConfirmation, loadConfirmation } = await import("../agent.js");
       await saveMessage(2003, "user", "yesterday");
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      await saveConfirmation(
-        2003,
-        makeFreshPayload({ proposed_at: yesterday.toISOString() }),
-      );
+      await saveConfirmation(2003, makeFreshPayload({ proposed_at: yesterday.toISOString() }));
       const result = await loadConfirmation(2003);
       expect(result).toBeNull();
     });
@@ -646,8 +638,9 @@ describe("T-16 — agent.ts confirmation record storage", () => {
 
   describe("AC4 — clearConfirmation sets active_confirmation column to null", () => {
     it("clearConfirmation nulls the active_confirmation column after saveConfirmation", async () => {
-      const { saveMessage, saveConfirmation, clearConfirmation, loadConfirmation } =
-        await import("../agent.js");
+      const { saveMessage, saveConfirmation, clearConfirmation, loadConfirmation } = await import(
+        "../agent.js"
+      );
       await saveMessage(3000, "user", "clear me");
       await saveConfirmation(3000, makeFreshPayload());
 
@@ -672,8 +665,7 @@ describe("T-16 — agent.ts confirmation record storage", () => {
     });
 
     it("clearConfirmation is idempotent — calling it twice does not throw", async () => {
-      const { saveMessage, saveConfirmation, clearConfirmation } =
-        await import("../agent.js");
+      const { saveMessage, saveConfirmation, clearConfirmation } = await import("../agent.js");
       await saveMessage(3100, "user", "idempotent");
       await saveConfirmation(3100, makeFreshPayload());
       await clearConfirmation(3100);
@@ -701,8 +693,9 @@ describe("T-16 — agent.ts confirmation record storage", () => {
     });
 
     it("clearConfirmation targets the newest row for the chat_id", async () => {
-      const { saveMessage, saveConfirmation, clearConfirmation, loadConfirmation } =
-        await import("../agent.js");
+      const { saveMessage, saveConfirmation, clearConfirmation, loadConfirmation } = await import(
+        "../agent.js"
+      );
       // Multiple rows — newest has the confirmation
       await saveMessage(3300, "user", "msg 1");
       await saveMessage(3300, "assistant", "msg 2");
@@ -714,8 +707,7 @@ describe("T-16 — agent.ts confirmation record storage", () => {
     });
 
     it("clearConfirmation on expired confirmation also sets to null", async () => {
-      const { saveMessage, saveConfirmation, clearConfirmation } =
-        await import("../agent.js");
+      const { saveMessage, saveConfirmation, clearConfirmation } = await import("../agent.js");
       await saveMessage(3400, "user", "old proposal");
       await saveConfirmation(3400, makeExpiredPayload());
       await expect(clearConfirmation(3400)).resolves.toBeUndefined();
@@ -818,8 +810,9 @@ describe("T-16 — agent.ts confirmation record storage", () => {
     });
 
     it("clearing one chat_id does not affect another chat_id", async () => {
-      const { saveMessage, saveConfirmation, clearConfirmation, loadConfirmation } =
-        await import("../agent.js");
+      const { saveMessage, saveConfirmation, clearConfirmation, loadConfirmation } = await import(
+        "../agent.js"
+      );
       await saveMessage(5100, "user", "keep");
       await saveMessage(5101, "user", "clear");
 

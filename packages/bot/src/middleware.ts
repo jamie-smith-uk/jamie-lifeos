@@ -23,7 +23,7 @@ export function isAllowedChat(chatId: number): boolean {
   const raw = env.TELEGRAM_ALLOWED_CHAT_ID.trim();
   const allowed = parseInt(raw, 10);
 
-  if (isNaN(allowed)) {
+  if (Number.isNaN(allowed)) {
     middlewareLogger.warn(
       { TELEGRAM_ALLOWED_CHAT_ID: raw },
       "TELEGRAM_ALLOWED_CHAT_ID is not a valid integer — all chats will be denied",

@@ -161,6 +161,7 @@ function base64UrlDecode(data: string): string {
   }
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing complexity, tracked for refactor
 function extractPlainText(part: GmailApiMessagePart | undefined): string {
   if (!part) return "";
 
@@ -246,6 +247,7 @@ function classifyEmail(subject: string, snippet: string): EmailCategory {
 // get_inbox_summary
 // ---------------------------------------------------------------------------
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing complexity, tracked for refactor
 async function getInboxSummary(_input: Record<string, unknown>): Promise<string> {
   try {
     const list = (await gmailGet("/messages", {
@@ -303,6 +305,7 @@ async function getInboxSummary(_input: Record<string, unknown>): Promise<string>
 // get_thread
 // ---------------------------------------------------------------------------
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing complexity, tracked for refactor
 async function getThread(input: Record<string, unknown>): Promise<string> {
   const threadId = typeof input.thread_id === "string" ? input.thread_id : "";
 

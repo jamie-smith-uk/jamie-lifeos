@@ -34,8 +34,8 @@
  *     confirm/edit/cancel handler paths independently.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ConfirmationPayload, UpdateEventData } from "@lifeos/shared";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // In-memory store shared by pool mock
@@ -64,10 +64,7 @@ function findConfirmation(chatId: number): ConfirmationPayload | null {
   return row?.active_confirmation ?? null;
 }
 
-function handleQuery(
-  text: string,
-  values: unknown[],
-): { rows: StoredRow[]; rowCount: number } {
+function handleQuery(text: string, values: unknown[]): { rows: StoredRow[]; rowCount: number } {
   const normalised = text.replace(/\s+/g, " ").trim().toUpperCase();
 
   if (normalised === "BEGIN" || normalised === "COMMIT" || normalised === "ROLLBACK") {
@@ -126,7 +123,7 @@ function handleQuery(
         return diff !== 0 ? diff : b.id - a.id;
       });
     if (forChat.length === 0) return { rows: [], rowCount: 0 };
-    const row = store.find((r) => r.id === forChat[0]!.id)!;
+    const row = store.find((r) => r.id === forChat[0]?.id)!;
     row.active_confirmation = confirmation;
     return { rows: [], rowCount: 1 };
   }
@@ -145,7 +142,7 @@ function handleQuery(
         return diff !== 0 ? diff : b.id - a.id;
       });
     if (forChat.length === 0) return { rows: [], rowCount: 0 };
-    const row = store.find((r) => r.id === forChat[0]!.id)!;
+    const row = store.find((r) => r.id === forChat[0]?.id)!;
     row.active_confirmation = null;
     return { rows: [], rowCount: 1 };
   }
@@ -204,20 +201,22 @@ function handleQuery(
 // ---------------------------------------------------------------------------
 
 function buildPoolMock() {
-  const clientQueryMock = vi.fn().mockImplementation(
-    (text: string, values?: unknown[]) =>
+  const clientQueryMock = vi
+    .fn()
+    .mockImplementation((text: string, values?: unknown[]) =>
       Promise.resolve(handleQuery(text, values ?? [])),
-  );
+    );
 
   const clientMock = {
     query: clientQueryMock,
     release: vi.fn(),
   };
 
-  const poolQueryMock = vi.fn().mockImplementation(
-    (text: string, values?: unknown[]) =>
+  const poolQueryMock = vi
+    .fn()
+    .mockImplementation((text: string, values?: unknown[]) =>
       Promise.resolve(handleQuery(text, values ?? [])),
-  );
+    );
 
   const connectMock = vi.fn().mockResolvedValue(clientMock);
 
@@ -298,10 +297,10 @@ function buildAnthropicUpdateEventMock(opts: {
   };
 
   const updateInput: Record<string, unknown> = { eventId: opts.eventId };
-  if (opts.start !== undefined) updateInput["start"] = opts.start;
-  if (opts.end !== undefined) updateInput["end"] = opts.end;
-  if (opts.title !== undefined) updateInput["title"] = opts.title;
-  if (opts.location !== undefined) updateInput["location"] = opts.location;
+  if (opts.start !== undefined) updateInput.start = opts.start;
+  if (opts.end !== undefined) updateInput.end = opts.end;
+  if (opts.title !== undefined) updateInput.title = opts.title;
+  if (opts.location !== undefined) updateInput.location = opts.location;
 
   const updateEventResponse = {
     id: "msg_002",
@@ -373,9 +372,9 @@ function buildAnthropicDirectUpdateMock(opts: {
   title?: string;
 }) {
   const updateInput: Record<string, unknown> = { eventId: opts.eventId };
-  if (opts.start !== undefined) updateInput["start"] = opts.start;
-  if (opts.end !== undefined) updateInput["end"] = opts.end;
-  if (opts.title !== undefined) updateInput["title"] = opts.title;
+  if (opts.start !== undefined) updateInput.start = opts.start;
+  if (opts.end !== undefined) updateInput.end = opts.end;
+  if (opts.title !== undefined) updateInput.title = opts.title;
 
   const updateEventResponse = {
     id: "msg_001",
@@ -514,9 +513,13 @@ describe("AC1 — Smoke test 6: update event proposal triggers confirmation keyb
         },
       ],
       calendarFreeBusyToolDefinitions: [],
-      executeCalendarTool: vi.fn().mockResolvedValue(
-        JSON.stringify([{ id: "abc123", title: "3pm Meeting", start: "2026-04-24T15:00:00+01:00" }])
-      ),
+      executeCalendarTool: vi
+        .fn()
+        .mockResolvedValue(
+          JSON.stringify([
+            { id: "abc123", title: "3pm Meeting", start: "2026-04-24T15:00:00+01:00" },
+          ]),
+        ),
     }));
 
     const { runAgent } = await import("../agent.js");
@@ -829,7 +832,7 @@ describe("AC1 — Smoke test 6: update event proposal triggers confirmation keyb
 
     // executeCalendarTool should NOT have been called with update_event during proposal
     const updateCalls = executeCalendarToolMock.mock.calls.filter(
-      (call) => call[0] === "update_event"
+      (call) => call[0] === "update_event",
     );
     expect(updateCalls.length).toBe(0);
   });
@@ -872,7 +875,7 @@ describe("AC1 — Smoke test 6: update event proposal triggers confirmation keyb
     const after = Date.now();
     const confirmation = findConfirmation(109);
     expect(confirmation).not.toBeNull();
-    const proposedAt = new Date(confirmation!.proposed_at).getTime();
+    const proposedAt = new Date(confirmation?.proposed_at).getTime();
     expect(proposedAt).toBeGreaterThanOrEqual(before);
     expect(proposedAt).toBeLessThanOrEqual(after);
   });
@@ -977,12 +980,14 @@ describe("AC1 — Smoke test 6: update event proposal triggers confirmation keyb
       ],
       calendarFreeBusyToolDefinitions: [],
       executeCalendarTool: vi.fn().mockResolvedValue(
-        JSON.stringify([{
-          id: "evt_from_range",
-          title: "3pm Meeting",
-          start: "2026-04-24T15:00:00+01:00",
-          end: "2026-04-24T16:00:00+01:00",
-        }])
+        JSON.stringify([
+          {
+            id: "evt_from_range",
+            title: "3pm Meeting",
+            start: "2026-04-24T15:00:00+01:00",
+            end: "2026-04-24T16:00:00+01:00",
+          },
+        ]),
       ),
     }));
 
@@ -1096,9 +1101,9 @@ describe("AC2 — Confirm callback executes update_event and returns success", (
   });
 
   it("confirm callback calls executeCalendarTool with 'update_event' action", async () => {
-    const executeCalendarToolMock = vi.fn().mockResolvedValue(
-      JSON.stringify({ updated: true, eventId: "evt_updated" }),
-    );
+    const executeCalendarToolMock = vi
+      .fn()
+      .mockResolvedValue(JSON.stringify({ updated: true, eventId: "evt_updated" }));
 
     seedConfirmation(200, {
       action: "update_event",
@@ -1173,7 +1178,7 @@ describe("AC2 — Confirm callback executes update_event and returns success", (
     const payload = await loadConfirmation(chatId);
     expect(payload).not.toBeNull();
 
-    await executeCalendarTool(payload!.action, payload!.data as unknown as Record<string, unknown>);
+    await executeCalendarTool(payload?.action, payload?.data as unknown as Record<string, unknown>);
     await clearConfirmation(chatId);
 
     const afterClear = await loadConfirmation(chatId);
@@ -1212,7 +1217,7 @@ describe("AC2 — Confirm callback executes update_event and returns success", (
     expect(payload).not.toBeNull();
 
     // Build success message as index.ts does for update_event
-    const updateData = payload!.data as UpdateEventData;
+    const updateData = payload?.data as UpdateEventData;
     const successText = `Event (ID: ${updateData.eventId}) has been updated in your calendar.`;
     expect(successText).toContain("my_event_xyz");
     expect(successText).toMatch(/has been updated in your calendar/i);
@@ -1312,7 +1317,7 @@ describe("AC2 — Confirm callback executes update_event and returns success", (
 
     const payload = await loadConfirmation(chatId);
     expect(payload).not.toBeNull();
-    await executeCalendarTool(payload!.action, payload!.data as unknown as Record<string, unknown>);
+    await executeCalendarTool(payload?.action, payload?.data as unknown as Record<string, unknown>);
     await clearConfirmation(chatId);
 
     expect(executeCalendarToolMock).toHaveBeenCalledWith(
@@ -1350,7 +1355,7 @@ describe("AC2 — Confirm callback executes update_event and returns success", (
     const payload = await loadConfirmation(chatId);
     expect(payload).not.toBeNull();
 
-    const data = payload!.data as UpdateEventData;
+    const data = payload?.data as UpdateEventData;
     expect(data.title).toBe("New Meeting Name");
     expect(data.eventId).toBe("evt_title");
   });
@@ -1455,11 +1460,12 @@ describe("AC3 — Edit callback re-prompts agent with prior context and shows ne
     await clearConfirmation(chatId);
 
     // Build the re-prompt message (mirrors index.ts logic)
-    const rePromptText = existingPayload !== null
-      ? `I'd like to make some changes to the proposed event update. ` +
-        `Here is what was proposed:\n\n<untrusted>${existingPayload.summary}</untrusted>\n\n` +
-        `Please tell me what you would like to change about this proposal.`
-      : "I'd like to make some changes. Please tell me what you would like to adjust.";
+    const rePromptText =
+      existingPayload !== null
+        ? `I'd like to make some changes to the proposed event update. ` +
+          `Here is what was proposed:\n\n<untrusted>${existingPayload.summary}</untrusted>\n\n` +
+          `Please tell me what you would like to change about this proposal.`
+        : "I'd like to make some changes. Please tell me what you would like to adjust.";
 
     const agentResult = await runAgent({
       chat_id: chatId,
@@ -1497,7 +1503,7 @@ describe("AC3 — Edit callback re-prompts agent with prior context and shows ne
     // No prior confirmation seeded
 
     const { AnthropicMockClass } = buildAnthropicPlainTextMock(
-      "Please describe the changes you'd like to make."
+      "Please describe the changes you'd like to make.",
     );
 
     vi.doMock("@anthropic-ai/sdk", () => ({ default: AnthropicMockClass }));
@@ -1520,7 +1526,8 @@ describe("AC3 — Edit callback re-prompts agent with prior context and shows ne
 
     await clearConfirmation(chatId); // No-op
 
-    const rePromptText = "I'd like to make some changes. Please tell me what you would like to adjust.";
+    const rePromptText =
+      "I'd like to make some changes. Please tell me what you would like to adjust.";
 
     const agentResult = await runAgent({
       chat_id: chatId,
@@ -1704,11 +1711,7 @@ describe("Update event summary format (buildUpdateEventSummary)", () => {
 
     expect(summaryWithStart).toMatch(/Start:/);
 
-    const summaryNoStart = [
-      "Event ID: abc",
-      "Changes:",
-      "  Title: New Name",
-    ].join("\n");
+    const summaryNoStart = ["Event ID: abc", "Changes:", "  Title: New Name"].join("\n");
 
     expect(summaryNoStart).not.toMatch(/Start:/);
   });

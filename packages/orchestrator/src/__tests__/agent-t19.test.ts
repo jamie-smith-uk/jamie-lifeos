@@ -33,8 +33,8 @@
  *   - For AC3, we test the agent's behavior when get_events_range returns multiple matches.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ConfirmationPayload, DeleteEventData } from "@lifeos/shared";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // In-memory store shared by pool mock
@@ -63,10 +63,7 @@ function findConfirmation(chatId: number): ConfirmationPayload | null {
   return row?.active_confirmation ?? null;
 }
 
-function handleQuery(
-  text: string,
-  values: unknown[],
-): { rows: StoredRow[]; rowCount: number } {
+function handleQuery(text: string, values: unknown[]): { rows: StoredRow[]; rowCount: number } {
   const normalised = text.replace(/\s+/g, " ").trim().toUpperCase();
 
   if (normalised === "BEGIN" || normalised === "COMMIT" || normalised === "ROLLBACK") {
@@ -125,7 +122,7 @@ function handleQuery(
         return diff !== 0 ? diff : b.id - a.id;
       });
     if (forChat.length === 0) return { rows: [], rowCount: 0 };
-    const row = store.find((r) => r.id === forChat[0]!.id)!;
+    const row = store.find((r) => r.id === forChat[0]?.id)!;
     row.active_confirmation = confirmation;
     return { rows: [], rowCount: 1 };
   }
@@ -144,7 +141,7 @@ function handleQuery(
         return diff !== 0 ? diff : b.id - a.id;
       });
     if (forChat.length === 0) return { rows: [], rowCount: 0 };
-    const row = store.find((r) => r.id === forChat[0]!.id)!;
+    const row = store.find((r) => r.id === forChat[0]?.id)!;
     row.active_confirmation = null;
     return { rows: [], rowCount: 1 };
   }
@@ -203,20 +200,22 @@ function handleQuery(
 // ---------------------------------------------------------------------------
 
 function buildPoolMock() {
-  const clientQueryMock = vi.fn().mockImplementation(
-    (text: string, values?: unknown[]) =>
+  const clientQueryMock = vi
+    .fn()
+    .mockImplementation((text: string, values?: unknown[]) =>
       Promise.resolve(handleQuery(text, values ?? [])),
-  );
+    );
 
   const clientMock = {
     query: clientQueryMock,
     release: vi.fn(),
   };
 
-  const poolQueryMock = vi.fn().mockImplementation(
-    (text: string, values?: unknown[]) =>
+  const poolQueryMock = vi
+    .fn()
+    .mockImplementation((text: string, values?: unknown[]) =>
       Promise.resolve(handleQuery(text, values ?? [])),
-  );
+    );
 
   const connectMock = vi.fn().mockResolvedValue(clientMock);
 
@@ -529,15 +528,18 @@ describe("AC1 — Smoke test 7: delete event proposal triggers confirmation keyb
         },
       ],
       calendarFreeBusyToolDefinitions: [],
-      executeCalendarTool: vi.fn()
-        .mockResolvedValueOnce(JSON.stringify([
-          {
-            id: "evt_friday_3pm",
-            summary: "Team Meeting",
-            start: { dateTime: "2026-04-25T15:00:00+01:00" },
-            end: { dateTime: "2026-04-25T16:00:00+01:00" },
-          },
-        ]))
+      executeCalendarTool: vi
+        .fn()
+        .mockResolvedValueOnce(
+          JSON.stringify([
+            {
+              id: "evt_friday_3pm",
+              summary: "Team Meeting",
+              start: { dateTime: "2026-04-25T15:00:00+01:00" },
+              end: { dateTime: "2026-04-25T16:00:00+01:00" },
+            },
+          ]),
+        )
         .mockResolvedValueOnce("Event deleted successfully."),
     }));
 
@@ -578,15 +580,18 @@ describe("AC1 — Smoke test 7: delete event proposal triggers confirmation keyb
         },
       ],
       calendarFreeBusyToolDefinitions: [],
-      executeCalendarTool: vi.fn()
-        .mockResolvedValueOnce(JSON.stringify([
-          {
-            id: "evt_meeting_delete",
-            summary: "Weekly Standup",
-            start: { dateTime: "2026-04-25T15:00:00+01:00" },
-            end: { dateTime: "2026-04-25T15:30:00+01:00" },
-          },
-        ]))
+      executeCalendarTool: vi
+        .fn()
+        .mockResolvedValueOnce(
+          JSON.stringify([
+            {
+              id: "evt_meeting_delete",
+              summary: "Weekly Standup",
+              start: { dateTime: "2026-04-25T15:00:00+01:00" },
+              end: { dateTime: "2026-04-25T15:30:00+01:00" },
+            },
+          ]),
+        )
         .mockResolvedValueOnce("Event deleted successfully."),
     }));
 
@@ -628,15 +633,18 @@ describe("AC1 — Smoke test 7: delete event proposal triggers confirmation keyb
         },
       ],
       calendarFreeBusyToolDefinitions: [],
-      executeCalendarTool: vi.fn()
-        .mockResolvedValueOnce(JSON.stringify([
-          {
-            id: "evt_to_delete",
-            summary: "Lunch Meeting",
-            start: { dateTime: "2026-04-25T12:00:00+01:00" },
-            end: { dateTime: "2026-04-25T13:00:00+01:00" },
-          },
-        ]))
+      executeCalendarTool: vi
+        .fn()
+        .mockResolvedValueOnce(
+          JSON.stringify([
+            {
+              id: "evt_to_delete",
+              summary: "Lunch Meeting",
+              start: { dateTime: "2026-04-25T12:00:00+01:00" },
+              end: { dateTime: "2026-04-25T13:00:00+01:00" },
+            },
+          ]),
+        )
         .mockResolvedValueOnce("Event deleted successfully."),
     }));
 
@@ -680,15 +688,18 @@ describe("AC1 — Smoke test 7: delete event proposal triggers confirmation keyb
         },
       ],
       calendarFreeBusyToolDefinitions: [],
-      executeCalendarTool: vi.fn()
-        .mockResolvedValueOnce(JSON.stringify([
-          {
-            id: "evt_specific_id",
-            summary: "Design Review",
-            start: { dateTime: "2026-04-25T14:00:00+01:00" },
-            end: { dateTime: "2026-04-25T15:00:00+01:00" },
-          },
-        ]))
+      executeCalendarTool: vi
+        .fn()
+        .mockResolvedValueOnce(
+          JSON.stringify([
+            {
+              id: "evt_specific_id",
+              summary: "Design Review",
+              start: { dateTime: "2026-04-25T14:00:00+01:00" },
+              end: { dateTime: "2026-04-25T15:00:00+01:00" },
+            },
+          ]),
+        )
         .mockResolvedValueOnce("Event deleted successfully."),
     }));
 
@@ -705,7 +716,9 @@ describe("AC1 — Smoke test 7: delete event proposal triggers confirmation keyb
   });
 
   it("showConfirmationKeyboard is false when agent responds without delete_event tool call", async () => {
-    const { AnthropicMockClass } = buildAnthropicPlainTextMock("I couldn't find any events to delete.");
+    const { AnthropicMockClass } = buildAnthropicPlainTextMock(
+      "I couldn't find any events to delete.",
+    );
 
     vi.doMock("@anthropic-ai/sdk", () => ({ default: AnthropicMockClass }));
     vi.doMock("@lifeos/shared", () => ({
@@ -759,15 +772,18 @@ describe("AC1 — Smoke test 7: delete event proposal triggers confirmation keyb
         },
       ],
       calendarFreeBusyToolDefinitions: [],
-      executeCalendarTool: vi.fn()
-        .mockResolvedValueOnce(JSON.stringify([
-          {
-            id: "evt_timestamp_test",
-            summary: "Test Event",
-            start: { dateTime: "2026-04-25T16:00:00+01:00" },
-            end: { dateTime: "2026-04-25T17:00:00+01:00" },
-          },
-        ]))
+      executeCalendarTool: vi
+        .fn()
+        .mockResolvedValueOnce(
+          JSON.stringify([
+            {
+              id: "evt_timestamp_test",
+              summary: "Test Event",
+              start: { dateTime: "2026-04-25T16:00:00+01:00" },
+              end: { dateTime: "2026-04-25T17:00:00+01:00" },
+            },
+          ]),
+        )
         .mockResolvedValueOnce("Event deleted successfully."),
     }));
 
@@ -782,7 +798,7 @@ describe("AC1 — Smoke test 7: delete event proposal triggers confirmation keyb
     const confirmation = findConfirmation(105);
     expect(confirmation).not.toBeNull();
 
-    const proposedAt = new Date(confirmation!.proposed_at).getTime();
+    const proposedAt = new Date(confirmation?.proposed_at).getTime();
     expect(proposedAt).toBeGreaterThanOrEqual(before);
     expect(proposedAt).toBeLessThanOrEqual(after);
   });
@@ -816,7 +832,7 @@ describe("AC1 — Smoke test 7: delete event proposal triggers confirmation keyb
       message_id: 7,
     });
 
-    const callArgs = createMock.mock.calls[0]![0] as {
+    const callArgs = createMock.mock.calls[0]?.[0] as {
       tools?: Array<{ name: string }>;
     };
     const toolNames = callArgs.tools?.map((t) => t.name) ?? [];
@@ -850,15 +866,18 @@ describe("AC1 — Smoke test 7: delete event proposal triggers confirmation keyb
         },
       ],
       calendarFreeBusyToolDefinitions: [],
-      executeCalendarTool: vi.fn()
-        .mockResolvedValueOnce(JSON.stringify([
-          {
-            id: "evt_summary_test",
-            summary: "Summary Test Event",
-            start: { dateTime: "2026-04-25T10:00:00+01:00" },
-            end: { dateTime: "2026-04-25T11:00:00+01:00" },
-          },
-        ]))
+      executeCalendarTool: vi
+        .fn()
+        .mockResolvedValueOnce(
+          JSON.stringify([
+            {
+              id: "evt_summary_test",
+              summary: "Summary Test Event",
+              start: { dateTime: "2026-04-25T10:00:00+01:00" },
+              end: { dateTime: "2026-04-25T11:00:00+01:00" },
+            },
+          ]),
+        )
         .mockResolvedValueOnce("Event deleted successfully."),
     }));
 
@@ -962,7 +981,7 @@ describe("AC2 — Confirm callback executes delete_event and returns success", (
     const payload = await loadConfirmation(chatId);
     expect(payload).not.toBeNull();
 
-    await executeCalendarTool(payload!.action, payload!.data as unknown as Record<string, unknown>);
+    await executeCalendarTool(payload?.action, payload?.data as unknown as Record<string, unknown>);
     await clearConfirmation(chatId);
 
     const afterClear = await loadConfirmation(chatId);
@@ -999,7 +1018,7 @@ describe("AC2 — Confirm callback executes delete_event and returns success", (
     expect(payload).not.toBeNull();
 
     // Build expected success message (mirrors index.ts logic)
-    const deleteData = payload!.data as DeleteEventData;
+    const deleteData = payload?.data as DeleteEventData;
     const successText = `Event (ID: ${deleteData.eventId}) has been deleted from your calendar.`;
     expect(successText).toContain("evt_success_msg");
     expect(successText).toMatch(/has been deleted from your calendar/i);
@@ -1099,7 +1118,7 @@ describe("AC2 — Confirm callback executes delete_event and returns success", (
     }
     expect(hasError).toBe(false);
 
-    const deleteData = payload!.data as DeleteEventData;
+    const deleteData = payload?.data as DeleteEventData;
     const successText = `Event (ID: ${deleteData.eventId}) has been deleted from your calendar.`;
     expect(successText).not.toMatch(/error/i);
   });
@@ -1132,7 +1151,7 @@ describe("AC2 — Confirm callback executes delete_event and returns success", (
     const payload = await loadConfirmation(chatId);
     expect(payload).not.toBeNull();
 
-    const data = payload!.data as DeleteEventData;
+    const data = payload?.data as DeleteEventData;
     expect(typeof data.eventId).toBe("string");
     expect(data.eventId).toBe("evt_data_test");
   });
@@ -1176,22 +1195,24 @@ describe("AC3 — Ambiguous match: agent lists options and asks for clarificatio
         },
       ],
       calendarFreeBusyToolDefinitions: [],
-      executeCalendarTool: vi.fn().mockResolvedValue(JSON.stringify([
-        {
-          id: "evt_meeting_1",
-          summary: "Team Meeting",
-          start: { dateTime: "2026-04-25T15:00:00+01:00" },
-          end: { dateTime: "2026-04-25T16:00:00+01:00" },
-          location: "Conference Room A",
-        },
-        {
-          id: "evt_call_1",
-          summary: "Client Call",
-          start: { dateTime: "2026-04-25T15:30:00+01:00" },
-          end: { dateTime: "2026-04-25T16:30:00+01:00" },
-          location: "Zoom",
-        },
-      ])),
+      executeCalendarTool: vi.fn().mockResolvedValue(
+        JSON.stringify([
+          {
+            id: "evt_meeting_1",
+            summary: "Team Meeting",
+            start: { dateTime: "2026-04-25T15:00:00+01:00" },
+            end: { dateTime: "2026-04-25T16:00:00+01:00" },
+            location: "Conference Room A",
+          },
+          {
+            id: "evt_call_1",
+            summary: "Client Call",
+            start: { dateTime: "2026-04-25T15:30:00+01:00" },
+            end: { dateTime: "2026-04-25T16:30:00+01:00" },
+            location: "Zoom",
+          },
+        ]),
+      ),
     }));
 
     const { runAgent } = await import("../agent.js");
@@ -1230,22 +1251,24 @@ describe("AC3 — Ambiguous match: agent lists options and asks for clarificatio
         },
       ],
       calendarFreeBusyToolDefinitions: [],
-      executeCalendarTool: vi.fn().mockResolvedValue(JSON.stringify([
-        {
-          id: "evt_meeting_2",
-          summary: "Team Meeting",
-          start: { dateTime: "2026-04-25T15:00:00+01:00" },
-          end: { dateTime: "2026-04-25T16:00:00+01:00" },
-          location: "Conference Room A",
-        },
-        {
-          id: "evt_call_2",
-          summary: "Client Call",
-          start: { dateTime: "2026-04-25T15:30:00+01:00" },
-          end: { dateTime: "2026-04-25T16:30:00+01:00" },
-          location: "Zoom",
-        },
-      ])),
+      executeCalendarTool: vi.fn().mockResolvedValue(
+        JSON.stringify([
+          {
+            id: "evt_meeting_2",
+            summary: "Team Meeting",
+            start: { dateTime: "2026-04-25T15:00:00+01:00" },
+            end: { dateTime: "2026-04-25T16:00:00+01:00" },
+            location: "Conference Room A",
+          },
+          {
+            id: "evt_call_2",
+            summary: "Client Call",
+            start: { dateTime: "2026-04-25T15:30:00+01:00" },
+            end: { dateTime: "2026-04-25T16:30:00+01:00" },
+            location: "Zoom",
+          },
+        ]),
+      ),
     }));
 
     const { runAgent } = await import("../agent.js");
@@ -1286,20 +1309,22 @@ describe("AC3 — Ambiguous match: agent lists options and asks for clarificatio
         },
       ],
       calendarFreeBusyToolDefinitions: [],
-      executeCalendarTool: vi.fn().mockResolvedValue(JSON.stringify([
-        {
-          id: "evt_meeting_3",
-          summary: "Team Meeting",
-          start: { dateTime: "2026-04-25T15:00:00+01:00" },
-          end: { dateTime: "2026-04-25T16:00:00+01:00" },
-        },
-        {
-          id: "evt_call_3",
-          summary: "Client Call",
-          start: { dateTime: "2026-04-25T15:30:00+01:00" },
-          end: { dateTime: "2026-04-25T16:30:00+01:00" },
-        },
-      ])),
+      executeCalendarTool: vi.fn().mockResolvedValue(
+        JSON.stringify([
+          {
+            id: "evt_meeting_3",
+            summary: "Team Meeting",
+            start: { dateTime: "2026-04-25T15:00:00+01:00" },
+            end: { dateTime: "2026-04-25T16:00:00+01:00" },
+          },
+          {
+            id: "evt_call_3",
+            summary: "Client Call",
+            start: { dateTime: "2026-04-25T15:30:00+01:00" },
+            end: { dateTime: "2026-04-25T16:30:00+01:00" },
+          },
+        ]),
+      ),
     }));
 
     const { runAgent } = await import("../agent.js");
@@ -1315,15 +1340,18 @@ describe("AC3 — Ambiguous match: agent lists options and asks for clarificatio
   });
 
   it("agent calls get_events_range before attempting delete", async () => {
-    const executeCalendarToolMock = vi.fn()
-      .mockResolvedValueOnce(JSON.stringify([
-        {
-          id: "evt_range_test",
-          summary: "Single Event",
-          start: { dateTime: "2026-04-25T15:00:00+01:00" },
-          end: { dateTime: "2026-04-25T16:00:00+01:00" },
-        },
-      ]))
+    const executeCalendarToolMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        JSON.stringify([
+          {
+            id: "evt_range_test",
+            summary: "Single Event",
+            start: { dateTime: "2026-04-25T15:00:00+01:00" },
+            end: { dateTime: "2026-04-25T16:00:00+01:00" },
+          },
+        ]),
+      )
       .mockResolvedValueOnce("Event deleted successfully.");
 
     const { AnthropicMockClass } = buildAnthropicDeleteEventMock({
@@ -1398,22 +1426,24 @@ describe("AC3 — Ambiguous match: agent lists options and asks for clarificatio
         },
       ],
       calendarFreeBusyToolDefinitions: [],
-      executeCalendarTool: vi.fn().mockResolvedValue(JSON.stringify([
-        {
-          id: "evt_specify_1",
-          summary: "Team Meeting",
-          start: { dateTime: "2026-04-25T15:00:00+01:00" },
-          end: { dateTime: "2026-04-25T16:00:00+01:00" },
-          location: "Conference Room A",
-        },
-        {
-          id: "evt_specify_2",
-          summary: "Client Call",
-          start: { dateTime: "2026-04-25T15:30:00+01:00" },
-          end: { dateTime: "2026-04-25T16:30:00+01:00" },
-          location: "Zoom",
-        },
-      ])),
+      executeCalendarTool: vi.fn().mockResolvedValue(
+        JSON.stringify([
+          {
+            id: "evt_specify_1",
+            summary: "Team Meeting",
+            start: { dateTime: "2026-04-25T15:00:00+01:00" },
+            end: { dateTime: "2026-04-25T16:00:00+01:00" },
+            location: "Conference Room A",
+          },
+          {
+            id: "evt_specify_2",
+            summary: "Client Call",
+            start: { dateTime: "2026-04-25T15:30:00+01:00" },
+            end: { dateTime: "2026-04-25T16:30:00+01:00" },
+            location: "Zoom",
+          },
+        ]),
+      ),
     }));
 
     const { runAgent } = await import("../agent.js");
@@ -1453,20 +1483,22 @@ describe("AC3 — Ambiguous match: agent lists options and asks for clarificatio
         },
       ],
       calendarFreeBusyToolDefinitions: [],
-      executeCalendarTool: vi.fn().mockResolvedValue(JSON.stringify([
-        {
-          id: "evt_list_1",
-          summary: "Event One",
-          start: { dateTime: "2026-04-25T10:00:00+01:00" },
-          end: { dateTime: "2026-04-25T11:00:00+01:00" },
-        },
-        {
-          id: "evt_list_2",
-          summary: "Event Two",
-          start: { dateTime: "2026-04-25T14:00:00+01:00" },
-          end: { dateTime: "2026-04-25T15:00:00+01:00" },
-        },
-      ])),
+      executeCalendarTool: vi.fn().mockResolvedValue(
+        JSON.stringify([
+          {
+            id: "evt_list_1",
+            summary: "Event One",
+            start: { dateTime: "2026-04-25T10:00:00+01:00" },
+            end: { dateTime: "2026-04-25T11:00:00+01:00" },
+          },
+          {
+            id: "evt_list_2",
+            summary: "Event Two",
+            start: { dateTime: "2026-04-25T14:00:00+01:00" },
+            end: { dateTime: "2026-04-25T15:00:00+01:00" },
+          },
+        ]),
+      ),
     }));
 
     const { runAgent } = await import("../agent.js");

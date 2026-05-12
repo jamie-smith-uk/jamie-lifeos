@@ -22,9 +22,9 @@
  *     conditions on concurrent startup.
  */
 
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { pool } from "./db.js";
 import { logger } from "./logger.js";
 
@@ -87,9 +87,7 @@ async function ensureMigrationsTable(): Promise<void> {
  * Fetch the set of already-applied migration names from the DB.
  */
 async function getAppliedMigrations(): Promise<Set<string>> {
-  const result = await pool.query<{ name: string }>(
-    "SELECT name FROM migrations ORDER BY name",
-  );
+  const result = await pool.query<{ name: string }>("SELECT name FROM migrations ORDER BY name");
   return new Set(result.rows.map((r) => r.name));
 }
 
@@ -114,10 +112,7 @@ function readMigrationFiles(migrationsDir: string): string[] {
   const files = entries.filter((f) => {
     if (!MIGRATION_FILENAME_RE.test(f)) {
       if (f.endsWith(".sql")) {
-        logger.warn(
-          { file: f },
-          "Migration file has non-standard name and will be skipped",
-        );
+        logger.warn({ file: f }, "Migration file has non-standard name and will be skipped");
       }
       return false;
     }
@@ -136,19 +131,13 @@ function readMigrationFiles(migrationsDir: string): string[] {
  * Records the migration name in the `migrations` table on success.
  * On failure, rolls back and rethrows so the caller can handle exit.
  */
-async function applyMigration(
-  filename: string,
-  sql: string,
-): Promise<void> {
+async function applyMigration(filename: string, sql: string): Promise<void> {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
     await client.query(sql);
     // Parameterised insert — migration name is never interpolated.
-    await client.query(
-      "INSERT INTO migrations (name) VALUES ($1)",
-      [filename],
-    );
+    await client.query("INSERT INTO migrations (name) VALUES ($1)", [filename]);
     await client.query("COMMIT");
   } catch (err) {
     await client.query("ROLLBACK");
@@ -164,9 +153,7 @@ async function applyMigration(
  * Safe to call multiple times — already-applied migrations are skipped.
  * Exits with code 1 if any migration fails (suitable for startup gate).
  */
-export async function runMigrations(
-  migrationsDir?: string,
-): Promise<void> {
+export async function runMigrations(migrationsDir?: string): Promise<void> {
   const dir = migrationsDir ?? getMigrationsDir();
   const log = logger.child({ component: "migrate" });
 
@@ -222,8 +209,7 @@ export async function runMigrations(
 // Detect if this module is the entry point (node:url trick for ESM).
 const isMain =
   process.argv[1] !== undefined &&
-  path.resolve(process.argv[1]) ===
-    path.resolve(fileURLToPath(import.meta.url));
+  path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
 
 if (isMain) {
   (async () => {

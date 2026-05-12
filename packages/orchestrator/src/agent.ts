@@ -714,6 +714,7 @@ export async function runAgent(msg: IncomingMessage): Promise<AgentResult> {
     // Execute each tool and collect results.
     // T-17: confirmation-gated tools are intercepted here.
     const toolResults: Anthropic.ToolResultBlockParam[] = await Promise.all(
+      // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing complexity, tracked for refactor
       toolUseBlocks.map(async (toolUse) => {
         log.info({ toolName: toolUse.name, toolId: toolUse.id }, "Executing tool");
 

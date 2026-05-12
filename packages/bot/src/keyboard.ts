@@ -42,8 +42,6 @@ export function buildConfirmKeyboard(): InlineKeyboardMarkup {
  */
 export function buildDismissKeyboard(nudgeId: number): InlineKeyboardMarkup {
   return {
-    inline_keyboard: [
-      [{ text: "Dismiss", callback_data: `dismiss:${nudgeId}` }],
-    ],
+    inline_keyboard: [[{ text: "Dismiss", callback_data: `dismiss:${nudgeId}` }]],
   };
 }

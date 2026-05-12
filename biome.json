@@ -40,5 +40,23 @@
   },
   "files": {
     "includes": ["**", "!**/dist", "!**/node_modules", "!**/pipeline", "!**/*.js.map"]
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/__tests__/**", "**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noNonNullAssertion": "off"
+          },
+          "complexity": {
+            "noExcessiveCognitiveComplexity": "off"
+          },
+          "suspicious": {
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    }
+  ]
 }

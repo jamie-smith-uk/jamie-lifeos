@@ -42,7 +42,7 @@
  *     to ensure check_free_busy is wired end-to-end.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // In-memory store shared by pool mock (mirrors pattern from agent-t19.test.ts)
@@ -65,10 +65,7 @@ function resetStore(): void {
   nextId = 1;
 }
 
-function handleQuery(
-  text: string,
-  values: unknown[],
-): { rows: StoredRow[]; rowCount: number } {
+function handleQuery(text: string, values: unknown[]): { rows: StoredRow[]; rowCount: number } {
   const normalised = text.replace(/\s+/g, " ").trim().toUpperCase();
 
   if (normalised === "BEGIN" || normalised === "COMMIT" || normalised === "ROLLBACK") {
@@ -82,8 +79,7 @@ function handleQuery(
   ) {
     const chatId = values[0] as number;
     const confirmationRaw = values[1] as string | null;
-    const confirmation =
-      confirmationRaw !== null ? (JSON.parse(confirmationRaw) as unknown) : null;
+    const confirmation = confirmationRaw !== null ? (JSON.parse(confirmationRaw) as unknown) : null;
     store.push({
       id: nextId++,
       chat_id: chatId,
@@ -127,7 +123,7 @@ function handleQuery(
         return diff !== 0 ? diff : b.id - a.id;
       });
     if (forChat.length === 0) return { rows: [], rowCount: 0 };
-    const row = store.find((r) => r.id === forChat[0]!.id)!;
+    const row = store.find((r) => r.id === forChat[0]?.id)!;
     row.active_confirmation = confirmation;
     return { rows: [], rowCount: 1 };
   }
@@ -146,7 +142,7 @@ function handleQuery(
         return diff !== 0 ? diff : b.id - a.id;
       });
     if (forChat.length === 0) return { rows: [], rowCount: 0 };
-    const row = store.find((r) => r.id === forChat[0]!.id)!;
+    const row = store.find((r) => r.id === forChat[0]?.id)!;
     row.active_confirmation = null;
     return { rows: [], rowCount: 1 };
   }
@@ -205,20 +201,22 @@ function handleQuery(
 // ---------------------------------------------------------------------------
 
 function buildPoolMock() {
-  const clientQueryMock = vi.fn().mockImplementation(
-    (text: string, values?: unknown[]) =>
+  const clientQueryMock = vi
+    .fn()
+    .mockImplementation((text: string, values?: unknown[]) =>
       Promise.resolve(handleQuery(text, values ?? [])),
-  );
+    );
 
   const clientMock = {
     query: clientQueryMock,
     release: vi.fn(),
   };
 
-  const poolQueryMock = vi.fn().mockImplementation(
-    (text: string, values?: unknown[]) =>
+  const poolQueryMock = vi
+    .fn()
+    .mockImplementation((text: string, values?: unknown[]) =>
       Promise.resolve(handleQuery(text, values ?? [])),
-  );
+    );
 
   const connectMock = vi.fn().mockResolvedValue(clientMock);
 
@@ -332,8 +330,9 @@ function buildAnthropicFreeBusyMock(replyText: string) {
 function buildAnthropicCapturingToolsMock(replyText: string) {
   let capturedTools: Array<{ name: string }> = [];
 
-  const createMock = vi.fn().mockImplementation(
-    (params: { tools?: Array<{ name: string }>; model?: string }) => {
+  const createMock = vi
+    .fn()
+    .mockImplementation((params: { tools?: Array<{ name: string }>; model?: string }) => {
       if (capturedTools.length === 0 && params.tools) {
         capturedTools = params.tools;
       }
@@ -352,8 +351,7 @@ function buildAnthropicCapturingToolsMock(replyText: string) {
           cache_read_input_tokens: null,
         },
       });
-    },
-  );
+    });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function AnthropicMockClass(this: any, _opts: unknown) {
@@ -381,9 +379,7 @@ describe("AC1 — Smoke test 8: 'am I free Thursday afternoon?' returns clear fr
   });
 
   it("runAgent returns a non-empty text reply for free/busy query", async () => {
-    const { AnthropicMockClass } = buildAnthropicFreeBusyMock(
-      "You're free Thursday afternoon.",
-    );
+    const { AnthropicMockClass } = buildAnthropicFreeBusyMock("You're free Thursday afternoon.");
 
     vi.doMock("@anthropic-ai/sdk", () => ({ default: AnthropicMockClass }));
     vi.doMock("@lifeos/shared", () => ({
@@ -405,9 +401,7 @@ describe("AC1 — Smoke test 8: 'am I free Thursday afternoon?' returns clear fr
           },
         },
       ],
-      executeCalendarTool: vi.fn().mockResolvedValue(
-        "You are free during this period.",
-      ),
+      executeCalendarTool: vi.fn().mockResolvedValue("You are free during this period."),
     }));
 
     const { runAgent } = await import("../agent.js");
@@ -422,9 +416,7 @@ describe("AC1 — Smoke test 8: 'am I free Thursday afternoon?' returns clear fr
   });
 
   it("agent response mentions 'free' when check_free_busy returns no conflicts", async () => {
-    const { AnthropicMockClass } = buildAnthropicFreeBusyMock(
-      "You're free Thursday afternoon.",
-    );
+    const { AnthropicMockClass } = buildAnthropicFreeBusyMock("You're free Thursday afternoon.");
 
     vi.doMock("@anthropic-ai/sdk", () => ({ default: AnthropicMockClass }));
     vi.doMock("@lifeos/shared", () => ({
@@ -446,9 +438,7 @@ describe("AC1 — Smoke test 8: 'am I free Thursday afternoon?' returns clear fr
           },
         },
       ],
-      executeCalendarTool: vi.fn().mockResolvedValue(
-        "You are free during this period.",
-      ),
+      executeCalendarTool: vi.fn().mockResolvedValue("You are free during this period."),
     }));
 
     const { runAgent } = await import("../agent.js");
@@ -462,13 +452,9 @@ describe("AC1 — Smoke test 8: 'am I free Thursday afternoon?' returns clear fr
   });
 
   it("agent calls check_free_busy tool when user asks about availability", async () => {
-    const executeCalendarToolMock = vi.fn().mockResolvedValue(
-      "You are free during this period.",
-    );
+    const executeCalendarToolMock = vi.fn().mockResolvedValue("You are free during this period.");
 
-    const { AnthropicMockClass } = buildAnthropicFreeBusyMock(
-      "You're free Thursday afternoon.",
-    );
+    const { AnthropicMockClass } = buildAnthropicFreeBusyMock("You're free Thursday afternoon.");
 
     vi.doMock("@anthropic-ai/sdk", () => ({ default: AnthropicMockClass }));
     vi.doMock("@lifeos/shared", () => ({
@@ -510,13 +496,9 @@ describe("AC1 — Smoke test 8: 'am I free Thursday afternoon?' returns clear fr
   });
 
   it("agent resolves 'Thursday afternoon' to ISO 8601 start/end parameters", async () => {
-    const executeCalendarToolMock = vi.fn().mockResolvedValue(
-      "You are free during this period.",
-    );
+    const executeCalendarToolMock = vi.fn().mockResolvedValue("You are free during this period.");
 
-    const { AnthropicMockClass } = buildAnthropicFreeBusyMock(
-      "You're free Thursday afternoon.",
-    );
+    const { AnthropicMockClass } = buildAnthropicFreeBusyMock("You're free Thursday afternoon.");
 
     vi.doMock("@anthropic-ai/sdk", () => ({ default: AnthropicMockClass }));
     vi.doMock("@lifeos/shared", () => ({
@@ -555,18 +537,12 @@ describe("AC1 — Smoke test 8: 'am I free Thursday afternoon?' returns clear fr
     const { start, end } = callArgs[1];
 
     // start and end must be ISO 8601 datetime strings
-    expect(start).toMatch(
-      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?([.,]\d+)?(Z|[+-]\d{2}:\d{2})?$/,
-    );
-    expect(end).toMatch(
-      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?([.,]\d+)?(Z|[+-]\d{2}:\d{2})?$/,
-    );
+    expect(start).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?([.,]\d+)?(Z|[+-]\d{2}:\d{2})?$/);
+    expect(end).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?([.,]\d+)?(Z|[+-]\d{2}:\d{2})?$/);
   });
 
   it("agent response mentions 'Thursday' or 'afternoon' in free response", async () => {
-    const { AnthropicMockClass } = buildAnthropicFreeBusyMock(
-      "You're free Thursday afternoon.",
-    );
+    const { AnthropicMockClass } = buildAnthropicFreeBusyMock("You're free Thursday afternoon.");
 
     vi.doMock("@anthropic-ai/sdk", () => ({ default: AnthropicMockClass }));
     vi.doMock("@lifeos/shared", () => ({
@@ -588,9 +564,7 @@ describe("AC1 — Smoke test 8: 'am I free Thursday afternoon?' returns clear fr
           },
         },
       ],
-      executeCalendarTool: vi.fn().mockResolvedValue(
-        "You are free during this period.",
-      ),
+      executeCalendarTool: vi.fn().mockResolvedValue("You are free during this period."),
     }));
 
     const { runAgent } = await import("../agent.js");
@@ -604,9 +578,7 @@ describe("AC1 — Smoke test 8: 'am I free Thursday afternoon?' returns clear fr
   });
 
   it("check_free_busy tool is included in TOOL_DEFINITIONS passed to Anthropic API", async () => {
-    const { AnthropicMockClass, createMock } = buildAnthropicCapturingToolsMock(
-      "Sure!",
-    );
+    const { AnthropicMockClass, createMock } = buildAnthropicCapturingToolsMock("Sure!");
 
     vi.doMock("@anthropic-ai/sdk", () => ({ default: AnthropicMockClass }));
     vi.doMock("@lifeos/shared", () => ({
@@ -638,7 +610,7 @@ describe("AC1 — Smoke test 8: 'am I free Thursday afternoon?' returns clear fr
       message_id: 6,
     });
 
-    const callArgs = createMock.mock.calls[0]![0] as {
+    const callArgs = createMock.mock.calls[0]?.[0] as {
       tools?: Array<{ name: string }>;
     };
     const toolNames = callArgs.tools?.map((t) => t.name) ?? [];
@@ -684,9 +656,7 @@ describe("AC2 — Busy response names the conflicting event", () => {
           },
         },
       ],
-      executeCalendarTool: vi.fn().mockResolvedValue(
-        "BUSY: Team Standup (14:00–15:00)",
-      ),
+      executeCalendarTool: vi.fn().mockResolvedValue("BUSY: Team Standup (14:00–15:00)"),
     }));
 
     const { runAgent } = await import("../agent.js");
@@ -725,9 +695,7 @@ describe("AC2 — Busy response names the conflicting event", () => {
           },
         },
       ],
-      executeCalendarTool: vi.fn().mockResolvedValue(
-        "BUSY: Design Review (15:00–16:00)",
-      ),
+      executeCalendarTool: vi.fn().mockResolvedValue("BUSY: Design Review (15:00–16:00)"),
     }));
 
     const { runAgent } = await import("../agent.js");
@@ -765,9 +733,7 @@ describe("AC2 — Busy response names the conflicting event", () => {
           },
         },
       ],
-      executeCalendarTool: vi.fn().mockResolvedValue(
-        "BUSY: Product Demo (14:30–15:30)",
-      ),
+      executeCalendarTool: vi.fn().mockResolvedValue("BUSY: Product Demo (14:30–15:30)"),
     }));
 
     const { runAgent } = await import("../agent.js");
@@ -805,9 +771,9 @@ describe("AC2 — Busy response names the conflicting event", () => {
           },
         },
       ],
-      executeCalendarTool: vi.fn().mockResolvedValue(
-        "BUSY: Team Standup (12:00–13:00), Design Review (15:00–16:00)",
-      ),
+      executeCalendarTool: vi
+        .fn()
+        .mockResolvedValue("BUSY: Team Standup (12:00–13:00), Design Review (15:00–16:00)"),
     }));
 
     const { runAgent } = await import("../agent.js");
@@ -847,9 +813,7 @@ describe("AC2 — Busy response names the conflicting event", () => {
           },
         },
       ],
-      executeCalendarTool: vi.fn().mockResolvedValue(
-        "BUSY: Client Call (13:00–14:00)",
-      ),
+      executeCalendarTool: vi.fn().mockResolvedValue("BUSY: Client Call (13:00–14:00)"),
     }));
 
     const { runAgent } = await import("../agent.js");
@@ -878,9 +842,7 @@ describe("AC3 — No Confirm/Edit/Cancel keyboard shown for free/busy queries", 
   });
 
   it("showConfirmationKeyboard is false when agent calls check_free_busy and user is free", async () => {
-    const { AnthropicMockClass } = buildAnthropicFreeBusyMock(
-      "You're free Thursday afternoon.",
-    );
+    const { AnthropicMockClass } = buildAnthropicFreeBusyMock("You're free Thursday afternoon.");
 
     vi.doMock("@anthropic-ai/sdk", () => ({ default: AnthropicMockClass }));
     vi.doMock("@lifeos/shared", () => ({
@@ -902,9 +864,7 @@ describe("AC3 — No Confirm/Edit/Cancel keyboard shown for free/busy queries", 
           },
         },
       ],
-      executeCalendarTool: vi.fn().mockResolvedValue(
-        "You are free during this period.",
-      ),
+      executeCalendarTool: vi.fn().mockResolvedValue("You are free during this period."),
     }));
 
     const { runAgent } = await import("../agent.js");
@@ -942,9 +902,7 @@ describe("AC3 — No Confirm/Edit/Cancel keyboard shown for free/busy queries", 
           },
         },
       ],
-      executeCalendarTool: vi.fn().mockResolvedValue(
-        "BUSY: Team Standup (14:00–15:00)",
-      ),
+      executeCalendarTool: vi.fn().mockResolvedValue("BUSY: Team Standup (14:00–15:00)"),
     }));
 
     const { runAgent } = await import("../agent.js");
@@ -982,9 +940,9 @@ describe("AC3 — No Confirm/Edit/Cancel keyboard shown for free/busy queries", 
           },
         },
       ],
-      executeCalendarTool: vi.fn().mockResolvedValue(
-        "BUSY: Meeting A (12:00–13:00), Meeting B (14:00–15:00)",
-      ),
+      executeCalendarTool: vi
+        .fn()
+        .mockResolvedValue("BUSY: Meeting A (12:00–13:00), Meeting B (14:00–15:00)"),
     }));
 
     const { runAgent } = await import("../agent.js");
@@ -998,13 +956,9 @@ describe("AC3 — No Confirm/Edit/Cancel keyboard shown for free/busy queries", 
   });
 
   it("check_free_busy tool is NOT in CONFIRMATION_GATED_TOOLS — it is executed directly", async () => {
-    const executeCalendarToolMock = vi.fn().mockResolvedValue(
-      "You are free during this period.",
-    );
+    const executeCalendarToolMock = vi.fn().mockResolvedValue("You are free during this period.");
 
-    const { AnthropicMockClass } = buildAnthropicFreeBusyMock(
-      "You're free Thursday afternoon.",
-    );
+    const { AnthropicMockClass } = buildAnthropicFreeBusyMock("You're free Thursday afternoon.");
 
     vi.doMock("@anthropic-ai/sdk", () => ({ default: AnthropicMockClass }));
     vi.doMock("@lifeos/shared", () => ({
@@ -1037,16 +991,11 @@ describe("AC3 — No Confirm/Edit/Cancel keyboard shown for free/busy queries", 
     });
 
     // The tool must have been called (i.e., executed directly, not intercepted)
-    expect(executeCalendarToolMock).toHaveBeenCalledWith(
-      "check_free_busy",
-      expect.any(Object),
-    );
+    expect(executeCalendarToolMock).toHaveBeenCalledWith("check_free_busy", expect.any(Object));
   });
 
   it("no confirmation is saved in DB after a free/busy query", async () => {
-    const { AnthropicMockClass } = buildAnthropicFreeBusyMock(
-      "You're free Thursday afternoon.",
-    );
+    const { AnthropicMockClass } = buildAnthropicFreeBusyMock("You're free Thursday afternoon.");
 
     vi.doMock("@anthropic-ai/sdk", () => ({ default: AnthropicMockClass }));
     vi.doMock("@lifeos/shared", () => ({
@@ -1068,9 +1017,7 @@ describe("AC3 — No Confirm/Edit/Cancel keyboard shown for free/busy queries", 
           },
         },
       ],
-      executeCalendarTool: vi.fn().mockResolvedValue(
-        "You are free during this period.",
-      ),
+      executeCalendarTool: vi.fn().mockResolvedValue("You are free during this period."),
     }));
 
     const { runAgent } = await import("../agent.js");

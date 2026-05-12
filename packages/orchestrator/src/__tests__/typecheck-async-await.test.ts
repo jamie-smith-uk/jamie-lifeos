@@ -13,10 +13,10 @@
  * TypeScript type errors introduced by the transformation.
  */
 
-import { describe, it, expect } from "vitest";
-import { spawnSync } from "child_process";
-import path from "path";
-import { fileURLToPath } from "url";
+import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
 
 const _thisDir = path.dirname(fileURLToPath(import.meta.url));
 // _thisDir = packages/orchestrator/src/__tests__ — go up 4 levels to repo root

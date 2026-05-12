@@ -14,10 +14,10 @@
  * sends the orchestrator reply as a new message to the chat.
  */
 
-import TelegramBot from "node-telegram-bot-api";
 import { env, logger } from "@lifeos/shared";
-import { isAllowedChat } from "./middleware.js";
+import TelegramBot from "node-telegram-bot-api";
 import { buildConfirmKeyboard } from "./keyboard.js";
+import { isAllowedChat } from "./middleware.js";
 
 // ---------------------------------------------------------------------------
 // Initialise bot
@@ -29,12 +29,8 @@ const isPolling = env.BOT_MODE === "polling";
 const port = parseInt(env.PORT, 10);
 
 const bot = new TelegramBot(env.TELEGRAM_BOT_TOKEN, {
-  polling: isPolling
-    ? { autoStart: true, params: { timeout: 10 } }
-    : false,
-  webHook: isPolling
-    ? false
-    : { host: "0.0.0.0", port },
+  polling: isPolling ? { autoStart: true, params: { timeout: 10 } } : false,
+  webHook: isPolling ? false : { host: "0.0.0.0", port },
 });
 
 if (isPolling) {
@@ -70,9 +66,7 @@ async function postToOrchestrator(
 
   if (!response.ok) {
     const text = await response.text().catch(() => "(unreadable)");
-    throw new Error(
-      `Orchestrator responded with HTTP ${response.status}: ${text}`,
-    );
+    throw new Error(`Orchestrator responded with HTTP ${response.status}: ${text}`);
   }
 
   return (await response.json()) as Record<string, unknown>;
@@ -86,10 +80,7 @@ async function sendErrorReply(chatId: number): Promise<void> {
   try {
     await bot.sendMessage(chatId, "Something went wrong. Please try again.");
   } catch (replyErr) {
-    botLogger.error(
-      { err: replyErr, chat_id: chatId },
-      "Failed to send error reply to user",
-    );
+    botLogger.error({ err: replyErr, chat_id: chatId }, "Failed to send error reply to user");
   }
 }
 
@@ -120,18 +111,18 @@ bot.onText(/.*/, (msg) => {
     message_id: messageId,
   };
   if (fromUsername !== undefined) {
-    body["from_username"] = fromUsername;
+    body.from_username = fromUsername;
   }
 
   postToOrchestrator("/message", body)
     .then((orchestratorReply) => {
       // Extract the reply text from the orchestrator response.
       const replyText =
-        typeof orchestratorReply["text"] === "string"
-          ? orchestratorReply["text"]
+        typeof orchestratorReply.text === "string"
+          ? orchestratorReply.text
           : "Something went wrong. Please try again.";
 
-      const showKeyboard = orchestratorReply["show_confirmation_keyboard"] === true;
+      const showKeyboard = orchestratorReply.show_confirmation_keyboard === true;
 
       if (showKeyboard) {
         // T-17: Render the proposal with Confirm / Edit / Cancel inline keyboard.
@@ -148,10 +139,7 @@ bot.onText(/.*/, (msg) => {
       } else {
         // Plain text reply.
         bot.sendMessage(chatId, replyText).catch((sendErr: unknown) => {
-          botLogger.error(
-            { err: sendErr, chat_id: chatId },
-            "Failed to send reply message",
-          );
+          botLogger.error({ err: sendErr, chat_id: chatId }, "Failed to send reply message");
         });
       }
     })
@@ -208,19 +196,14 @@ bot.on("callback_query", (query) => {
     .then((orchestratorReply) => {
       // T-17: Answer the callback query to dismiss the loading spinner on
       // the button, then send the orchestrator's reply as a new message.
-      bot
-        .answerCallbackQuery(callbackQueryId, { text: "" })
-        .catch((answerErr: unknown) => {
-          botLogger.warn(
-            { err: answerErr, callback_query_id: callbackQueryId },
-            "Failed to answer callback query",
-          );
-        });
+      bot.answerCallbackQuery(callbackQueryId, { text: "" }).catch((answerErr: unknown) => {
+        botLogger.warn(
+          { err: answerErr, callback_query_id: callbackQueryId },
+          "Failed to answer callback query",
+        );
+      });
 
-      const replyText =
-        typeof orchestratorReply["text"] === "string"
-          ? orchestratorReply["text"]
-          : "";
+      const replyText = typeof orchestratorReply.text === "string" ? orchestratorReply.text : "";
 
       if (replyText) {
         bot.sendMessage(chatId, replyText).catch((sendErr: unknown) => {

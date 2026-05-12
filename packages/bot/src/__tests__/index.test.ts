@@ -21,7 +21,7 @@
  *   - Use vi.resetModules() + dynamic import to re-run module-level side effects
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -34,7 +34,7 @@ interface TelegramMessage {
   from?: { username?: string };
 }
 
-interface CallbackQuery {
+interface _CallbackQuery {
   id: string;
   data?: string;
   message?: { chat: { id: number }; message_id: number };
@@ -76,7 +76,7 @@ class FakeTelegramBot {
     if (!this._eventHandlers.has(event)) {
       this._eventHandlers.set(event, []);
     }
-    this._eventHandlers.get(event)!.push(handler);
+    this._eventHandlers.get(event)?.push(handler);
   }
 
   async sendMessage(chatId: number, text: string, _options?: unknown): Promise<void> {
@@ -115,8 +115,7 @@ const FAKE_ENV = {
   TELEGRAM_ALLOWED_CHAT_ID: "99999",
   ANTHROPIC_API_KEY: "sk-ant-test",
   ANTHROPIC_MODEL: "claude-sonnet-4-20250514",
-  DATABASE_URL:
-    "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
+  DATABASE_URL: "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
   ORCHESTRATOR_URL: "http://localhost:3001",
   DIGEST_CRON: "0 7 * * *",
   TZ: "Europe/London",
@@ -187,13 +186,13 @@ describe("AC-1: Bot starts without error when TELEGRAM_BOT_TOKEN is set", () => 
   it("constructs TelegramBot with the configured token", async () => {
     await loadBotModule();
     expect(holder.bot).not.toBeNull();
-    expect(holder.bot!.token).toBe("bot:test_token_12345");
+    expect(holder.bot?.token).toBe("bot:test_token_12345");
   });
 
   it("starts in polling mode when BOT_MODE=polling", async () => {
     await loadBotModule();
-    const opts = holder.bot!.options;
-    expect(opts["polling"]).toBeTruthy();
+    const opts = holder.bot?.options;
+    expect(opts.polling).toBeTruthy();
   });
 
   it.skip("starts in webhook mode when BOT_MODE=webhook", async () => {
@@ -205,19 +204,19 @@ describe("AC-1: Bot starts without error when TELEGRAM_BOT_TOKEN is set", () => 
     }));
 
     await loadBotModule();
-    const opts = holder.bot!.options;
+    const opts = holder.bot?.options;
     // In webhook mode the polling option should be false
-    expect(opts["polling"]).toBe(false);
+    expect(opts.polling).toBe(false);
   });
 
   it("registers at least one onText handler for all messages", async () => {
     await loadBotModule();
-    expect(holder.bot!._textHandlers.length).toBeGreaterThan(0);
+    expect(holder.bot?._textHandlers.length).toBeGreaterThan(0);
   });
 
   it("registers a callback_query event handler", async () => {
     await loadBotModule();
-    expect(holder.bot!._eventHandlers.has("callback_query")).toBe(true);
+    expect(holder.bot?._eventHandlers.has("callback_query")).toBe(true);
   });
 });
 
@@ -228,16 +227,13 @@ describe("AC-1: Bot starts without error when TELEGRAM_BOT_TOKEN is set", () => 
 describe("AC-2: Incoming messages are forwarded via POST /message", () => {
   it("calls fetch with the /message path", async () => {
     const calls: CapturedCall[] = [];
-    vi.stubGlobal(
-      "fetch",
-      async (url: string, init: RequestInit) => {
-        calls.push({ url, init });
-        return new Response("{}", { status: 200 });
-      },
-    );
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200 });
+    });
 
     await loadBotModule();
-    holder.bot!.triggerText({
+    holder.bot?.triggerText({
       chat: { id: 99999 },
       text: "Hello bot",
       message_id: 1,
@@ -245,56 +241,47 @@ describe("AC-2: Incoming messages are forwarded via POST /message", () => {
     await flushPromises();
 
     expect(calls).toHaveLength(1);
-    expect(calls[0]!.url).toBe("http://localhost:3001/message");
+    expect(calls[0]?.url).toBe("http://localhost:3001/message");
   });
 
   it("uses the POST method", async () => {
     const calls: CapturedCall[] = [];
-    vi.stubGlobal(
-      "fetch",
-      async (url: string, init: RequestInit) => {
-        calls.push({ url, init });
-        return new Response("{}", { status: 200 });
-      },
-    );
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200 });
+    });
 
     await loadBotModule();
-    holder.bot!.triggerText({ chat: { id: 99999 }, text: "hi", message_id: 2 });
+    holder.bot?.triggerText({ chat: { id: 99999 }, text: "hi", message_id: 2 });
     await flushPromises();
 
-    expect(calls[0]!.init.method).toBe("POST");
+    expect(calls[0]?.init.method).toBe("POST");
   });
 
   it("sends application/json content-type", async () => {
     const calls: CapturedCall[] = [];
-    vi.stubGlobal(
-      "fetch",
-      async (url: string, init: RequestInit) => {
-        calls.push({ url, init });
-        return new Response("{}", { status: 200 });
-      },
-    );
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200 });
+    });
 
     await loadBotModule();
-    holder.bot!.triggerText({ chat: { id: 99999 }, text: "hi", message_id: 2 });
+    holder.bot?.triggerText({ chat: { id: 99999 }, text: "hi", message_id: 2 });
     await flushPromises();
 
-    const headers = calls[0]!.init.headers as Record<string, string>;
+    const headers = calls[0]?.init.headers as Record<string, string>;
     expect(headers["Content-Type"]).toBe("application/json");
   });
 
   it("includes chat_id, text, message_id and from_username in the body", async () => {
     const calls: CapturedCall[] = [];
-    vi.stubGlobal(
-      "fetch",
-      async (url: string, init: RequestInit) => {
-        calls.push({ url, init });
-        return new Response("{}", { status: 200 });
-      },
-    );
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200 });
+    });
 
     await loadBotModule();
-    holder.bot!.triggerText({
+    holder.bot?.triggerText({
       chat: { id: 99999 },
       text: "Hello world",
       message_id: 99,
@@ -302,7 +289,7 @@ describe("AC-2: Incoming messages are forwarded via POST /message", () => {
     });
     await flushPromises();
 
-    const body = JSON.parse(calls[0]!.init.body as string);
+    const body = JSON.parse(calls[0]?.init.body as string);
     expect(body.chat_id).toBe(99999);
     expect(body.text).toBe("Hello world");
     expect(body.message_id).toBe(99);
@@ -311,26 +298,21 @@ describe("AC-2: Incoming messages are forwarded via POST /message", () => {
 
   it("omits from_username when message has no from field", async () => {
     const calls: CapturedCall[] = [];
-    vi.stubGlobal(
-      "fetch",
-      async (url: string, init: RequestInit) => {
-        calls.push({ url, init });
-        return new Response("{}", { status: 200 });
-      },
-    );
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200 });
+    });
 
     await loadBotModule();
-    holder.bot!.triggerText({
+    holder.bot?.triggerText({
       chat: { id: 99999 },
       text: "no from",
       message_id: 5,
     });
     await flushPromises();
 
-    const body = JSON.parse(calls[0]!.init.body as string);
-    expect(Object.prototype.hasOwnProperty.call(body, "from_username")).toBe(
-      false,
-    );
+    const body = JSON.parse(calls[0]?.init.body as string);
+    expect(Object.hasOwn(body, "from_username")).toBe(false);
   });
 });
 
@@ -341,16 +323,13 @@ describe("AC-2: Incoming messages are forwarded via POST /message", () => {
 describe("AC-3: Callback queries are forwarded via POST /callback", () => {
   it("calls fetch with the /callback path", async () => {
     const calls: CapturedCall[] = [];
-    vi.stubGlobal(
-      "fetch",
-      async (url: string, init: RequestInit) => {
-        calls.push({ url, init });
-        return new Response("{}", { status: 200 });
-      },
-    );
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200 });
+    });
 
     await loadBotModule();
-    holder.bot!.triggerEvent("callback_query", {
+    holder.bot?.triggerEvent("callback_query", {
       id: "cbq-001",
       data: "action:confirm",
       message: { chat: { id: 99999 }, message_id: 10 },
@@ -358,49 +337,43 @@ describe("AC-3: Callback queries are forwarded via POST /callback", () => {
     await flushPromises();
 
     expect(calls).toHaveLength(1);
-    expect(calls[0]!.url).toBe("http://localhost:3001/callback");
+    expect(calls[0]?.url).toBe("http://localhost:3001/callback");
   });
 
   it("uses the POST method for /callback", async () => {
     const calls: CapturedCall[] = [];
-    vi.stubGlobal(
-      "fetch",
-      async (url: string, init: RequestInit) => {
-        calls.push({ url, init });
-        return new Response("{}", { status: 200 });
-      },
-    );
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200 });
+    });
 
     await loadBotModule();
-    holder.bot!.triggerEvent("callback_query", {
+    holder.bot?.triggerEvent("callback_query", {
       id: "cbq-002",
       data: "btn",
       message: { chat: { id: 99999 }, message_id: 1 },
     });
     await flushPromises();
 
-    expect(calls[0]!.init.method).toBe("POST");
+    expect(calls[0]?.init.method).toBe("POST");
   });
 
   it("includes chat_id, callback_query_id, callback_data, message_id in body", async () => {
     const calls: CapturedCall[] = [];
-    vi.stubGlobal(
-      "fetch",
-      async (url: string, init: RequestInit) => {
-        calls.push({ url, init });
-        return new Response("{}", { status: 200 });
-      },
-    );
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200 });
+    });
 
     await loadBotModule();
-    holder.bot!.triggerEvent("callback_query", {
+    holder.bot?.triggerEvent("callback_query", {
       id: "cbq-xyz",
       data: "confirm_delete",
       message: { chat: { id: 99999 }, message_id: 33 },
     });
     await flushPromises();
 
-    const body = JSON.parse(calls[0]!.init.body as string);
+    const body = JSON.parse(calls[0]?.init.body as string);
     expect(body.chat_id).toBe(99999);
     expect(body.callback_query_id).toBe("cbq-xyz");
     expect(body.callback_data).toBe("confirm_delete");
@@ -409,17 +382,14 @@ describe("AC-3: Callback queries are forwarded via POST /callback", () => {
 
   it("ignores callback_query with no associated message/chat (no fetch call)", async () => {
     const calls: CapturedCall[] = [];
-    vi.stubGlobal(
-      "fetch",
-      async (url: string, init: RequestInit) => {
-        calls.push({ url, init });
-        return new Response("{}", { status: 200 });
-      },
-    );
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200 });
+    });
 
     await loadBotModule();
     // No message field — should be ignored, not forwarded
-    holder.bot!.triggerEvent("callback_query", {
+    holder.bot?.triggerEvent("callback_query", {
       id: "cbq-noChat",
       data: "action",
     });
@@ -440,15 +410,15 @@ describe("AC-4: Network errors caught; user receives error reply", () => {
     });
 
     await loadBotModule();
-    holder.bot!.triggerText({
+    holder.bot?.triggerText({
       chat: { id: 99999 },
       text: "hello",
       message_id: 1,
     });
     await flushPromises();
 
-    expect(holder.bot!.sendMessageCalls).toHaveLength(1);
-    expect(holder.bot!.sendMessageCalls[0]!.chatId).toBe(99999);
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.chatId).toBe(99999);
   });
 
   it("error reply text contains 'Something went wrong' for /message", async () => {
@@ -457,33 +427,30 @@ describe("AC-4: Network errors caught; user receives error reply", () => {
     });
 
     await loadBotModule();
-    holder.bot!.triggerText({
+    holder.bot?.triggerText({
       chat: { id: 99999 },
       text: "test",
       message_id: 2,
     });
     await flushPromises();
 
-    expect(holder.bot!.sendMessageCalls[0]!.text).toMatch(/something went wrong/i);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/something went wrong/i);
   });
 
   it("sends error reply when orchestrator returns HTTP 500 on /message", async () => {
-    vi.stubGlobal(
-      "fetch",
-      async () => new Response("Internal Server Error", { status: 500 }),
-    );
+    vi.stubGlobal("fetch", async () => new Response("Internal Server Error", { status: 500 }));
 
     await loadBotModule();
-    holder.bot!.triggerText({
+    holder.bot?.triggerText({
       chat: { id: 99999 },
       text: "test",
       message_id: 3,
     });
     await flushPromises();
 
-    expect(holder.bot!.sendMessageCalls).toHaveLength(1);
-    expect(holder.bot!.sendMessageCalls[0]!.chatId).toBe(99999);
-    expect(holder.bot!.sendMessageCalls[0]!.text).toMatch(/something went wrong/i);
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.chatId).toBe(99999);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/something went wrong/i);
   });
 
   it("sends error reply when fetch throws on /callback", async () => {
@@ -492,15 +459,15 @@ describe("AC-4: Network errors caught; user receives error reply", () => {
     });
 
     await loadBotModule();
-    holder.bot!.triggerEvent("callback_query", {
+    holder.bot?.triggerEvent("callback_query", {
       id: "cbq-err",
       data: "click",
       message: { chat: { id: 99999 }, message_id: 10 },
     });
     await flushPromises();
 
-    expect(holder.bot!.sendMessageCalls).toHaveLength(1);
-    expect(holder.bot!.sendMessageCalls[0]!.chatId).toBe(99999);
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.chatId).toBe(99999);
   });
 
   it("error reply text contains 'Something went wrong' for /callback", async () => {
@@ -509,33 +476,30 @@ describe("AC-4: Network errors caught; user receives error reply", () => {
     });
 
     await loadBotModule();
-    holder.bot!.triggerEvent("callback_query", {
+    holder.bot?.triggerEvent("callback_query", {
       id: "cbq-dns",
       data: "btn",
       message: { chat: { id: 99999 }, message_id: 20 },
     });
     await flushPromises();
 
-    expect(holder.bot!.sendMessageCalls[0]!.text).toMatch(/something went wrong/i);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/something went wrong/i);
   });
 
   it("sends error reply when orchestrator returns HTTP 502 on /callback", async () => {
-    vi.stubGlobal(
-      "fetch",
-      async () => new Response("Bad Gateway", { status: 502 }),
-    );
+    vi.stubGlobal("fetch", async () => new Response("Bad Gateway", { status: 502 }));
 
     await loadBotModule();
-    holder.bot!.triggerEvent("callback_query", {
+    holder.bot?.triggerEvent("callback_query", {
       id: "cbq-502",
       data: "confirm",
       message: { chat: { id: 99999 }, message_id: 5 },
     });
     await flushPromises();
 
-    expect(holder.bot!.sendMessageCalls).toHaveLength(1);
-    expect(holder.bot!.sendMessageCalls[0]!.chatId).toBe(99999);
-    expect(holder.bot!.sendMessageCalls[0]!.text).toMatch(/something went wrong/i);
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.chatId).toBe(99999);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/something went wrong/i);
   });
 
   it("does not crash if sendMessage itself throws during error reply", async () => {
@@ -552,7 +516,7 @@ describe("AC-4: Network errors caught; user receives error reply", () => {
 
     await expect(
       (async () => {
-        holder.bot!.triggerText({
+        holder.bot?.triggerText({
           chat: { id: 99999 },
           text: "crash test",
           message_id: 99,
@@ -568,7 +532,7 @@ describe("AC-4: Network errors caught; user receives error reply", () => {
     });
 
     await loadBotModule();
-    holder.bot!.triggerText({
+    holder.bot?.triggerText({
       chat: { id: 99999 },
       text: "log test",
       message_id: 7,
@@ -584,7 +548,7 @@ describe("AC-4: Network errors caught; user receives error reply", () => {
     });
 
     await loadBotModule();
-    holder.bot!.triggerEvent("callback_query", {
+    holder.bot?.triggerEvent("callback_query", {
       id: "cbq-log",
       data: "btn",
       message: { chat: { id: 99999 }, message_id: 8 },
@@ -648,16 +612,13 @@ describe("T-06 AC-4: isAllowedChat unit tests", () => {
 describe("T-06 AC-1: Message from TELEGRAM_ALLOWED_CHAT_ID is forwarded", () => {
   it("forwards text message from allowed chat_id to orchestrator", async () => {
     const calls: CapturedCall[] = [];
-    vi.stubGlobal(
-      "fetch",
-      async (url: string, init: RequestInit) => {
-        calls.push({ url, init });
-        return new Response("{}", { status: 200 });
-      },
-    );
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200 });
+    });
 
     await loadBotModule();
-    holder.bot!.triggerText({
+    holder.bot?.triggerText({
       chat: { id: 99999 },
       text: "allowed message",
       message_id: 1,
@@ -665,21 +626,18 @@ describe("T-06 AC-1: Message from TELEGRAM_ALLOWED_CHAT_ID is forwarded", () => 
     await flushPromises();
 
     expect(calls).toHaveLength(1);
-    expect(calls[0]!.url).toContain("/message");
+    expect(calls[0]?.url).toContain("/message");
   });
 
   it("forwards callback_query from allowed chat_id to orchestrator", async () => {
     const calls: CapturedCall[] = [];
-    vi.stubGlobal(
-      "fetch",
-      async (url: string, init: RequestInit) => {
-        calls.push({ url, init });
-        return new Response("{}", { status: 200 });
-      },
-    );
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200 });
+    });
 
     await loadBotModule();
-    holder.bot!.triggerEvent("callback_query", {
+    holder.bot?.triggerEvent("callback_query", {
       id: "cbq-allowed",
       data: "confirm",
       message: { chat: { id: 99999 }, message_id: 1 },
@@ -687,23 +645,20 @@ describe("T-06 AC-1: Message from TELEGRAM_ALLOWED_CHAT_ID is forwarded", () => 
     await flushPromises();
 
     expect(calls).toHaveLength(1);
-    expect(calls[0]!.url).toContain("/callback");
+    expect(calls[0]?.url).toContain("/callback");
   });
 });
 
 describe("T-06 AC-2: Message from unauthorised chat_id is dropped with no reply", () => {
   it("does not call fetch for a text message from an unknown chat_id", async () => {
     const calls: CapturedCall[] = [];
-    vi.stubGlobal(
-      "fetch",
-      async (url: string, init: RequestInit) => {
-        calls.push({ url, init });
-        return new Response("{}", { status: 200 });
-      },
-    );
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200 });
+    });
 
     await loadBotModule();
-    holder.bot!.triggerText({
+    holder.bot?.triggerText({
       chat: { id: 11111 },
       text: "unauthorised",
       message_id: 1,
@@ -714,34 +669,28 @@ describe("T-06 AC-2: Message from unauthorised chat_id is dropped with no reply"
   });
 
   it("does not send a reply to an unauthorised text sender", async () => {
-    vi.stubGlobal(
-      "fetch",
-      async () => new Response("{}", { status: 200 }),
-    );
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
 
     await loadBotModule();
-    holder.bot!.triggerText({
+    holder.bot?.triggerText({
       chat: { id: 11111 },
       text: "unauthorised",
       message_id: 1,
     });
     await flushPromises();
 
-    expect(holder.bot!.sendMessageCalls).toHaveLength(0);
+    expect(holder.bot?.sendMessageCalls).toHaveLength(0);
   });
 
   it("does not call fetch for a callback_query from an unknown chat_id", async () => {
     const calls: CapturedCall[] = [];
-    vi.stubGlobal(
-      "fetch",
-      async (url: string, init: RequestInit) => {
-        calls.push({ url, init });
-        return new Response("{}", { status: 200 });
-      },
-    );
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200 });
+    });
 
     await loadBotModule();
-    holder.bot!.triggerEvent("callback_query", {
+    holder.bot?.triggerEvent("callback_query", {
       id: "cbq-unauth",
       data: "btn",
       message: { chat: { id: 11111 }, message_id: 1 },
@@ -752,32 +701,26 @@ describe("T-06 AC-2: Message from unauthorised chat_id is dropped with no reply"
   });
 
   it("does not send a reply to an unauthorised callback_query sender", async () => {
-    vi.stubGlobal(
-      "fetch",
-      async () => new Response("{}", { status: 200 }),
-    );
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
 
     await loadBotModule();
-    holder.bot!.triggerEvent("callback_query", {
+    holder.bot?.triggerEvent("callback_query", {
       id: "cbq-unauth-reply",
       data: "btn",
       message: { chat: { id: 11111 }, message_id: 1 },
     });
     await flushPromises();
 
-    expect(holder.bot!.sendMessageCalls).toHaveLength(0);
+    expect(holder.bot?.sendMessageCalls).toHaveLength(0);
   });
 });
 
 describe("T-06 AC-3: WARN log entry written with unauthorised chat_id", () => {
   it("emits a WARN log with the offending chat_id for a text message", async () => {
-    vi.stubGlobal(
-      "fetch",
-      async () => new Response("{}", { status: 200 }),
-    );
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
 
     await loadBotModule();
-    holder.bot!.triggerText({
+    holder.bot?.triggerText({
       chat: { id: 77777 },
       text: "intruder",
       message_id: 1,
@@ -791,19 +734,16 @@ describe("T-06 AC-3: WARN log entry written with unauthorised chat_id", () => {
         typeof args[0] === "object" &&
         args[0] !== null &&
         "chat_id" in (args[0] as Record<string, unknown>) &&
-        (args[0] as Record<string, unknown>)["chat_id"] === 77777,
+        (args[0] as Record<string, unknown>).chat_id === 77777,
     );
     expect(matchingCall).toBeDefined();
   });
 
   it("emits a WARN log with the offending chat_id for a callback_query", async () => {
-    vi.stubGlobal(
-      "fetch",
-      async () => new Response("{}", { status: 200 }),
-    );
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
 
     await loadBotModule();
-    holder.bot!.triggerEvent("callback_query", {
+    holder.bot?.triggerEvent("callback_query", {
       id: "cbq-warn",
       data: "btn",
       message: { chat: { id: 88888 }, message_id: 1 },
@@ -817,7 +757,7 @@ describe("T-06 AC-3: WARN log entry written with unauthorised chat_id", () => {
         typeof args[0] === "object" &&
         args[0] !== null &&
         "chat_id" in (args[0] as Record<string, unknown>) &&
-        (args[0] as Record<string, unknown>)["chat_id"] === 88888,
+        (args[0] as Record<string, unknown>).chat_id === 88888,
     );
     expect(matchingCall).toBeDefined();
   });

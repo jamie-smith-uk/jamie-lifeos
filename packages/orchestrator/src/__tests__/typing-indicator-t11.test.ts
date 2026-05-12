@@ -25,29 +25,21 @@
  *   recording timestamps / sequence numbers inside each mock.
  */
 
-import {
-  describe,
-  it,
-  expect,
-  vi,
-  beforeAll,
-  afterAll,
-  beforeEach,
-} from "vitest";
-import http from "http";
-import { AddressInfo } from "net";
+import http from "node:http";
+import type { AddressInfo } from "node:net";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Environment — set required process.env vars before any module reads them
 // ---------------------------------------------------------------------------
 
-process.env["TELEGRAM_BOT_TOKEN"] = "bot:t11_test_token";
-process.env["TELEGRAM_ALLOWED_CHAT_ID"] = "123456";
-process.env["ANTHROPIC_API_KEY"] = "sk-ant-t11-test";
-process.env["DATABASE_URL"] =
+process.env.TELEGRAM_BOT_TOKEN = "bot:t11_test_token";
+process.env.TELEGRAM_ALLOWED_CHAT_ID = "123456";
+process.env.ANTHROPIC_API_KEY = "sk-ant-t11-test";
+process.env.DATABASE_URL =
   "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos";
-process.env["DIGEST_CRON"] = "0 7 * * *";
-process.env["TZ"] = "Europe/London";
+process.env.DIGEST_CRON = "0 7 * * *";
+process.env.TZ = "Europe/London";
 
 // ---------------------------------------------------------------------------
 // HTTP helper — POST JSON and return { statusCode, body }
@@ -58,11 +50,7 @@ interface HttpResponse {
   body: string;
 }
 
-function httpPost(
-  port: number,
-  path: string,
-  payload: unknown,
-): Promise<HttpResponse> {
+function httpPost(port: number, path: string, payload: unknown): Promise<HttpResponse> {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify(payload);
     const options: http.RequestOptions = {
@@ -79,9 +67,7 @@ function httpPost(
       let data = "";
       res.setEncoding("utf8");
       res.on("data", (chunk) => (data += chunk));
-      res.on("end", () =>
-        resolve({ statusCode: res.statusCode ?? 0, body: data }),
-      );
+      res.on("end", () => resolve({ statusCode: res.statusCode ?? 0, body: data }));
     });
     req.on("error", reject);
     req.write(body);
@@ -98,7 +84,7 @@ function waitForPort(port: number, timeoutMs = 5000): Promise<void> {
     const start = Date.now();
     function attempt() {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const socket = new (require("net").Socket)();
+      const socket = new (require("node:net").Socket)();
       socket.setTimeout(200);
       socket
         .once("connect", () => {
@@ -149,9 +135,7 @@ function getServerOnPort(port: number): Promise<http.Server> {
           }
         }
         reject(
-          new Error(
-            `Could not find http.Server listening on port ${port} via _getActiveHandles`,
-          ),
+          new Error(`Could not find http.Server listening on port ${port} via _getActiveHandles`),
         );
       } catch (e) {
         reject(e);
@@ -190,8 +174,7 @@ function buildEnvMock(port: number) {
     TELEGRAM_BOT_TOKEN: "bot:t11_test_token",
     TELEGRAM_ALLOWED_CHAT_ID: "123456",
     ANTHROPIC_API_KEY: "sk-ant-t11-test",
-    DATABASE_URL:
-      "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
+    DATABASE_URL: "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
     DIGEST_CRON: "0 7 * * *",
     TZ: "Europe/London",
     ANTHROPIC_MODEL: "claude-sonnet-4-20250514",
@@ -223,15 +206,14 @@ describe("AC1 — typing indicator is sent to Telegram before agent response arr
   let handle: ServerHandle;
 
   // Track all fetch calls made during the test
-  const fetchCalls: Array<{ url: string; body: unknown; timestamp: number }> =
-    [];
-  let agentResolveTimestamp = 0;
+  const fetchCalls: Array<{ url: string; body: unknown; timestamp: number }> = [];
+  let _agentResolveTimestamp = 0;
   let originalFetch: typeof global.fetch;
 
   beforeAll(async () => {
     vi.resetModules();
     fetchCalls.length = 0;
-    agentResolveTimestamp = 0;
+    _agentResolveTimestamp = 0;
 
     const PORT = 14101;
 
@@ -269,7 +251,7 @@ describe("AC1 — typing indicator is sent to Telegram before agent response arr
       runAgent: vi.fn().mockImplementation(async () => {
         // Simulate a tiny async delay to make ordering observable
         await new Promise((r) => setTimeout(r, 10));
-        agentResolveTimestamp = Date.now();
+        _agentResolveTimestamp = Date.now();
         return { text: "Agent reply for typing test.", showConfirmationKeyboard: false };
       }),
     }));
@@ -282,9 +264,7 @@ describe("AC1 — typing indicator is sent to Telegram before agent response arr
       server: await getServerOnPort(PORT),
       close: () =>
         new Promise((resolve, reject) =>
-          (handle.server as http.Server).close((err) =>
-            err ? reject(err) : resolve(),
-          ),
+          (handle.server as http.Server).close((err) => (err ? reject(err) : resolve())),
         ),
     };
   }, 15000);
@@ -304,9 +284,7 @@ describe("AC1 — typing indicator is sent to Telegram before agent response arr
       message_id: 1,
     });
 
-    const telegramCalls = fetchCalls.filter((c) =>
-      c.url.includes("sendChatAction"),
-    );
+    const telegramCalls = fetchCalls.filter((c) => c.url.includes("sendChatAction"));
     expect(telegramCalls.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -319,13 +297,11 @@ describe("AC1 — typing indicator is sent to Telegram before agent response arr
       message_id: 2,
     });
 
-    const telegramCalls = fetchCalls.filter((c) =>
-      c.url.includes("sendChatAction"),
-    );
+    const telegramCalls = fetchCalls.filter((c) => c.url.includes("sendChatAction"));
     expect(telegramCalls.length).toBeGreaterThanOrEqual(1);
 
     const typingCall = telegramCalls.find(
-      (c) => (c.body as Record<string, unknown>)["action"] === "typing",
+      (c) => (c.body as Record<string, unknown>).action === "typing",
     );
     expect(typingCall).toBeDefined();
   });
@@ -342,13 +318,12 @@ describe("AC1 — typing indicator is sent to Telegram before agent response arr
 
     const typingCalls = fetchCalls.filter(
       (c) =>
-        c.url.includes("sendChatAction") &&
-        (c.body as Record<string, unknown>)["action"] === "typing",
+        c.url.includes("sendChatAction") && (c.body as Record<string, unknown>).action === "typing",
     );
     expect(typingCalls.length).toBeGreaterThanOrEqual(1);
 
     const callWithCorrectChatId = typingCalls.find(
-      (c) => (c.body as Record<string, unknown>)["chat_id"] === CHAT_ID,
+      (c) => (c.body as Record<string, unknown>).chat_id === CHAT_ID,
     );
     expect(callWithCorrectChatId).toBeDefined();
   });
@@ -362,15 +337,11 @@ describe("AC1 — typing indicator is sent to Telegram before agent response arr
       message_id: 4,
     });
 
-    const telegramCalls = fetchCalls.filter((c) =>
-      c.url.includes("sendChatAction"),
-    );
+    const telegramCalls = fetchCalls.filter((c) => c.url.includes("sendChatAction"));
     expect(telegramCalls.length).toBeGreaterThanOrEqual(1);
 
     // The URL should include the bot token
-    const callWithToken = telegramCalls.find((c) =>
-      c.url.includes("t11_test_token"),
-    );
+    const callWithToken = telegramCalls.find((c) => c.url.includes("t11_test_token"));
     expect(callWithToken).toBeDefined();
   });
 
@@ -416,9 +387,7 @@ describe("AC1 — typing indicator is sent to Telegram before agent response arr
       message_id: 5,
     });
 
-    const sendChatActionCalls = postMethodCalls.filter((c) =>
-      c.url.includes("sendChatAction"),
-    );
+    const sendChatActionCalls = postMethodCalls.filter((c) => c.url.includes("sendChatAction"));
     expect(sendChatActionCalls.length).toBeGreaterThanOrEqual(1);
     for (const call of sendChatActionCalls) {
       expect(call.method).toBe("POST");
@@ -451,7 +420,7 @@ describe("AC2 — typing action is sent before the Anthropic API call is initiat
     const savedFetch = global.fetch;
 
     // Intercept fetch: note when sendChatAction is dispatched
-    global.fetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+    global.fetch = vi.fn().mockImplementation((url: string, _init?: RequestInit) => {
       if (typeof url === "string" && url.includes("sendChatAction")) {
         callOrder.push("sendChatAction");
       }
@@ -622,9 +591,7 @@ describe("AC2 — typing action is sent before the Anthropic API call is initiat
       message_id: 5,
     });
 
-    const sendChatActionUrls = telegramCallUrls.filter((u) =>
-      u.includes("sendChatAction"),
-    );
+    const sendChatActionUrls = telegramCallUrls.filter((u) => u.includes("sendChatAction"));
     expect(sendChatActionUrls).toHaveLength(0);
 
     const server = await getServerOnPort(PORT);
@@ -668,7 +635,9 @@ describe("AC2 — typing action is sent before the Anthropic API call is initiat
     }));
 
     vi.doMock("../agent.js", () => ({
-      runAgent: vi.fn().mockResolvedValue({ text: "One typing call expected.", showConfirmationKeyboard: false }),
+      runAgent: vi
+        .fn()
+        .mockResolvedValue({ text: "One typing call expected.", showConfirmationKeyboard: false }),
     }));
 
     await import("../index.js");
@@ -718,9 +687,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
       originalFetch = global.fetch;
 
       // Reject every fetch call to simulate a network failure
-      global.fetch = vi.fn().mockRejectedValue(
-        new Error("ECONNREFUSED: Telegram unreachable"),
-      );
+      global.fetch = vi.fn().mockRejectedValue(new Error("ECONNREFUSED: Telegram unreachable"));
 
       vi.doMock("@lifeos/shared", () => ({
         env: buildEnvMock(PORT),
@@ -736,7 +703,10 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
       }));
 
       vi.doMock("../agent.js", () => ({
-        runAgent: vi.fn().mockResolvedValue({ text: "Reply despite typing failure.", showConfirmationKeyboard: false }),
+        runAgent: vi.fn().mockResolvedValue({
+          text: "Reply despite typing failure.",
+          showConfirmationKeyboard: false,
+        }),
       }));
 
       await import("../index.js");
@@ -747,9 +717,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
         server: await getServerOnPort(PORT),
         close: () =>
           new Promise((resolve, reject) =>
-            (handle.server as http.Server).close((err) =>
-              err ? reject(err) : resolve(),
-            ),
+            (handle.server as http.Server).close((err) => (err ? reject(err) : resolve())),
           ),
       };
     }, 15000);
@@ -776,8 +744,8 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
         message_id: 2,
       });
       const parsed = JSON.parse(res.body) as Record<string, unknown>;
-      expect(typeof parsed["text"]).toBe("string");
-      expect((parsed["text"] as string).length).toBeGreaterThan(0);
+      expect(typeof parsed.text).toBe("string");
+      expect((parsed.text as string).length).toBeGreaterThan(0);
     });
 
     it("the agent reply text is returned correctly when Telegram fetch fails", async () => {
@@ -787,7 +755,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
         message_id: 3,
       });
       const parsed = JSON.parse(res.body) as Record<string, unknown>;
-      expect(parsed["text"]).toBe("Reply despite typing failure.");
+      expect(parsed.text).toBe("Reply despite typing failure.");
     });
   });
 
@@ -822,7 +790,9 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
       }));
 
       vi.doMock("../agent.js", () => ({
-        runAgent: vi.fn().mockResolvedValue({ text: "Reply despite 403.", showConfirmationKeyboard: false }),
+        runAgent: vi
+          .fn()
+          .mockResolvedValue({ text: "Reply despite 403.", showConfirmationKeyboard: false }),
       }));
 
       await import("../index.js");
@@ -833,9 +803,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
         server: await getServerOnPort(PORT),
         close: () =>
           new Promise((resolve, reject) =>
-            (handle.server as http.Server).close((err) =>
-              err ? reject(err) : resolve(),
-            ),
+            (handle.server as http.Server).close((err) => (err ? reject(err) : resolve())),
           ),
       };
     }, 15000);
@@ -862,8 +830,8 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
         message_id: 2,
       });
       const parsed = JSON.parse(res.body) as Record<string, unknown>;
-      expect(typeof parsed["text"]).toBe("string");
-      expect((parsed["text"] as string).length).toBeGreaterThan(0);
+      expect(typeof parsed.text).toBe("string");
+      expect((parsed.text as string).length).toBeGreaterThan(0);
     });
   });
 
@@ -897,7 +865,10 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
       }));
 
       vi.doMock("../agent.js", () => ({
-        runAgent: vi.fn().mockResolvedValue({ text: "Reply despite Telegram 500.", showConfirmationKeyboard: false }),
+        runAgent: vi.fn().mockResolvedValue({
+          text: "Reply despite Telegram 500.",
+          showConfirmationKeyboard: false,
+        }),
       }));
 
       await import("../index.js");
@@ -908,9 +879,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
         server: await getServerOnPort(PORT),
         close: () =>
           new Promise((resolve, reject) =>
-            (handle.server as http.Server).close((err) =>
-              err ? reject(err) : resolve(),
-            ),
+            (handle.server as http.Server).close((err) => (err ? reject(err) : resolve())),
           ),
       };
     }, 15000);
@@ -937,7 +906,7 @@ describe("AC3 — typing indicator failure does not prevent agent response", () 
         message_id: 2,
       });
       const parsed = JSON.parse(res.body) as Record<string, unknown>;
-      expect(parsed["text"]).toBe("Reply despite Telegram 500.");
+      expect(parsed.text).toBe("Reply despite Telegram 500.");
     });
   });
 
