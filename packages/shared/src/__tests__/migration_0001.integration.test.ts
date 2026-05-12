@@ -27,7 +27,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 // Database connection
 // Use DATABASE_URL directly — do NOT read .env
 // ---------------------------------------------------------------------------
-const DATABASE_URL = "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos";
+const DATABASE_URL = process.env.DATABASE_URL ?? "postgresql://lifeos:lifeos@localhost:5432/lifeos";
 
 const pool = new pg.Pool({ connectionString: DATABASE_URL });
 
