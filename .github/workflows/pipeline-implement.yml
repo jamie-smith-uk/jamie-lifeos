@@ -158,5 +158,7 @@ jobs:
             echo "Nothing to commit"
           else
             git commit -m "chore(pipeline): phase ${PHASE} implementation [skip ci]"
+            git fetch origin main
+            git rebase origin/main
             git push
           fi
