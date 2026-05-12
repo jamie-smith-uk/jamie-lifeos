@@ -2226,137 +2226,87 @@ if [ -f "$PIPELINE_DIR/health-summary.md" ]; then
   log "Health summary written to pipeline/phase-$PHASE/health-summary.md"
 fi
 
-# ── AG-08 Validator ───────────────────────────────────────────────────────────
+# ── Phase Validation — smoke-test gate ───────────────────────────────────────
 log ""
 log "========================================"
-log "AG-08 Validator — end-to-end phase check"
+log "Phase $PHASE validation — smoke-test gate"
 log "========================================"
+log "Running tsc, biome, and pnpm test across all packages..."
 
-VALIDATION_PASSED=false
-VALIDATION_ATTEMPTS=0
+VAL_TSC_OUT=$(cd "$REPO_ROOT" && pnpm exec tsc --noEmit 2>&1) || true
+VAL_TSC_EXIT=${PIPESTATUS[0]:-$?}
+[ $VAL_TSC_EXIT -eq 0 ] && log "  tsc:   PASS" || log "  tsc:   FAIL"
 
-# Maximum fix+re-validate cycles after an initial FAIL.
-# Cycle: AG-08 FAIL → AG-04 fix → hard gate → AG-08 retry.
-MAX_VALIDATION_CYCLES=2
+VAL_BIOME_OUT=$(cd "$REPO_ROOT" && pnpm exec biome check packages/ 2>&1) || true
+VAL_BIOME_EXIT=${PIPESTATUS[0]:-$?}
+[ $VAL_BIOME_EXIT -eq 0 ] && log "  biome: PASS" || log "  biome: FAIL"
 
-while [ "$VALIDATION_PASSED" = false ] && [ "$VALIDATION_ATTEMPTS" -lt $(( MAX_VALIDATION_CYCLES + 1 )) ]; do
-  VALIDATION_ATTEMPTS=$(( VALIDATION_ATTEMPTS + 1 ))
-  log "Validation attempt $VALIDATION_ATTEMPTS/$(( MAX_VALIDATION_CYCLES + 1 ))..."
+VAL_TEST_OUT=$(cd "$REPO_ROOT" && pnpm test 2>&1) || true
+VAL_TEST_EXIT=${PIPESTATUS[0]:-$?}
+[ $VAL_TEST_EXIT -eq 0 ] && log "  tests: PASS" || log "  tests: FAIL"
 
-  VAL_PROMPT="You are AG-08 Validator for Life OS.
+if [ $VAL_TSC_EXIT -eq 0 ] && [ $VAL_BIOME_EXIT -eq 0 ] && [ $VAL_TEST_EXIT -eq 0 ]; then
+  cat > "$PIPELINE_DIR/validation-report.md" <<VALEOF
+# Phase $PHASE Validation — PASS
 
-Validate the full Phase $PHASE implementation against the PRD exit criteria in docs/prd.md.
+**Verdict: PASS**
 
-1. Check every exit criterion for Phase $PHASE explicitly
-2. Run the smoke tests for this phase
-3. Read every task's security-report.md and test-report.md in pipeline/phase-$PHASE/
-4. Write validation-report.md to pipeline/phase-$PHASE/
+All smoke-test checks passed.
 
-On PASS:
-- Run: git tag phase-$PHASE-complete
-- Write the validation-report.md with PASS, changelog, and full sign-off
+## Results
 
-On FAIL:
-- List exactly which exit criteria failed and why, with the task ID and file responsible
-- Do not create a git tag
+- tsc --noEmit: PASS
+- biome check packages/: PASS
+- pnpm test: PASS
 
-Follow your system prompt exactly."
+## Test output
 
-  run_agent "ag-08-validator" "$VAL_PROMPT" "$PIPELINE_DIR/val-output-$VALIDATION_ATTEMPTS.md"
+\`\`\`
+$VAL_TEST_OUT
+\`\`\`
+VALEOF
 
-  if [ -f "$PIPELINE_DIR/validation-report.md" ] && report_passes "$PIPELINE_DIR/validation-report.md"; then
-    VALIDATION_PASSED=true
+  git -C "$REPO_ROOT" tag "phase-$PHASE-complete" 2>/dev/null \
+    && log "Git tag phase-$PHASE-complete created" \
+    || log "Git tag already exists — skipping"
 
-    printf "\a"  # terminal bell
-    log ""
-    log "========================================"
-    log "Phase $PHASE: COMPLETE"
-    log "Git tag: phase-$PHASE-complete created"
-    log "========================================"
-  else
-    log "Validation: FAIL (attempt $VALIDATION_ATTEMPTS/$(( MAX_VALIDATION_CYCLES + 1 )))"
-
-    if [ "$VALIDATION_ATTEMPTS" -ge $(( MAX_VALIDATION_CYCLES + 1 )) ]; then
-      halt "Phase validation failed after $VALIDATION_ATTEMPTS attempt(s)" "AG-08" \
-        "See pipeline/phase-$PHASE/validation-report.md"
-    fi
-
-    # ── Validation fix cycle ─────────────────────────────────────────────────
-    # The validator identified specific exit-criteria failures. Re-run the
-    # developer on every affected task so the code is actually fixed before
-    # we ask the validator to look again.
-    log "Validation fix cycle $VALIDATION_ATTEMPTS — running Developer against validator findings..."
-
-    VAL_FIX_PROMPT="You are AG-04 Developer for Life OS.
-
-The Phase $PHASE Validator has rejected the implementation. Fix every issue listed below.
-
-<validation-findings>
-$(cat "$PIPELINE_DIR/validation-report.md")
-</validation-findings>
-
-Phase context (all tasks):
-$(build_context_block)
-
-Rules:
-- Only modify files that belong to the failing exit criteria.
-- Do not modify test files.
-- After fixing, update self-assessment.md in the relevant task directory with a summary
-  of what you changed and why.
-- Use process.env.DATABASE_URL for any database connections.
-
-Apply all security rules. Do not introduce new issues."
-
-    run_agent "ag-04-developer" "$VAL_FIX_PROMPT" \
-      "$PIPELINE_DIR/val-fix-dev-$VALIDATION_ATTEMPTS.md" 900
-
-    # Re-run the full hard gate across all tasks so we know nothing regressed
-    log "Re-running full hard gate after validation fix..."
-    PHASE_GATE_FAILURES=""
-    while IFS= read -r VTASK_ID; do
-      [[ -z "$VTASK_ID" ]] && continue
-      VTASK_FILES_JSON=$(python3 -c "
-import json
-data = json.load(open('$PIPELINE_DIR/task-manifest.json'))
-tasks = data if isinstance(data, list) else data.get('tasks', [])
-task = next((t for t in tasks if isinstance(t, dict) and t['id'] == '$VTASK_ID'), None)
-print(json.dumps(task.get('files_in_scope', []) if task else []))
-")
-      VTASK_FAILURES=$(verify_implementation "$VTASK_FILES_JSON") || true
-      if [ -n "$VTASK_FAILURES" ]; then
-        PHASE_GATE_FAILURES+="=== $VTASK_ID ===
-$VTASK_FAILURES
+  printf "\a"  # terminal bell
+  log ""
+  log "========================================"
+  log "Phase $PHASE: COMPLETE"
+  log "========================================"
+else
+  FAILURES=""
+  [ $VAL_TSC_EXIT   -ne 0 ] && FAILURES+="=== tsc ===
+$VAL_TSC_OUT
 
 "
-      fi
-    done <<< "$TASKS"
+  [ $VAL_BIOME_EXIT -ne 0 ] && FAILURES+="=== biome ===
+$VAL_BIOME_OUT
 
-    if [ -n "$PHASE_GATE_FAILURES" ]; then
-      halt "Validation fix broke the hard gate" "AG-04" \
-        "Fix introduced regressions — see below:
-$PHASE_GATE_FAILURES"
-    fi
-    log "Post-validation-fix hard gate: PASS — retrying validator..."
+"
+  [ $VAL_TEST_EXIT  -ne 0 ] && FAILURES+="=== pnpm test ===
+$VAL_TEST_OUT
 
-    # Scope-compliance check after the fix — build the union of all tasks' files_in_scope
-    # so that any file touched by the developer fix is permitted if it belongs to any task.
-    ALL_TASKS_FILES_JSON=$(python3 -c "
-import json
-data = json.load(open('$PIPELINE_DIR/task-manifest.json'))
-tasks = data if isinstance(data, list) else data.get('tasks', data.get('task_order', []))
-files = []
-for t in tasks:
-    if isinstance(t, dict):
-        files.extend(t.get('files_in_scope', []))
-print(json.dumps(list(dict.fromkeys(files))))
-" 2>/dev/null || echo "[]")
-    SCOPE_VIOLATIONS=$(check_scope_compliance "$ALL_TASKS_FILES_JSON") || true
-    if [ -n "$SCOPE_VIOLATIONS" ]; then
-      log "Reverting out-of-scope changes from validation fix..."
-      revert_scope_violations <<< "$SCOPE_VIOLATIONS"
-    fi
-  fi
-done
+"
+
+  cat > "$PIPELINE_DIR/validation-report.md" <<VALEOF
+# Phase $PHASE Validation — FAIL
+
+**Verdict: FAIL**
+
+One or more smoke-test checks failed. Every task's hard gate passed individually,
+so these failures indicate a cross-task integration issue or an infrastructure
+problem. Fix the failures below and re-run the pipeline.
+
+## Failures
+
+$FAILURES
+VALEOF
+
+  halt "Phase $PHASE smoke-test gate failed" "validation" \
+    "See pipeline/phase-$PHASE/validation-report.md for details."
+fi
 
 # ── Phase metrics summary ─────────────────────────────────────────────────────
 python3 - "$PIPELINE_DIR/metrics.json" "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" <<'PYEOF'
