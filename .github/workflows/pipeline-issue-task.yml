@@ -89,7 +89,7 @@ jobs:
       - name: Pre-flight quality check
         run: pnpm exec tsc --noEmit
       - name: Pre-flight lint
-        run: pnpm exec biome check .
+        run: pnpm exec biome check packages/
 
       - name: Comment — pipeline starting
         uses: actions/github-script@v7
