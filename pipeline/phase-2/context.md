@@ -31,3 +31,10 @@
 - **Error handling**: All parsing functions return empty arrays or null values on errors rather than throwing exceptions, ensuring the tool always returns valid JSON to the agent.
 
 ---
+## task-5b — Integrate email implied actions with agent confirmation flows
+
+**Files:** packages/orchestrator/src/agent.ts
+
+⚠ task-5b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---

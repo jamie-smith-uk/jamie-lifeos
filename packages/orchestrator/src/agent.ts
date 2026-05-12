@@ -685,6 +685,14 @@ export async function runAgent(msg: IncomingMessage): Promise<AgentResult> {
   const systemPrompt = buildSystemPrompt();
 
   // Step 3: Build messages array — history + new user message.
+  const MAX_MESSAGE_LENGTH = 50000;
+  if (!msg.text || msg.text.length === 0) {
+    throw new Error("Message text cannot be empty");
+  }
+  if (msg.text.length > MAX_MESSAGE_LENGTH) {
+    throw new Error(`Message text exceeds maximum length of ${MAX_MESSAGE_LENGTH} characters`);
+  }
+
   const messages: Anthropic.MessageParam[] = [
     // Convert stored history to Anthropic message format.
     ...history.map(
@@ -917,6 +925,16 @@ export async function runAgent(msg: IncomingMessage): Promise<AgentResult> {
         } catch (err) {
           log.error({ err, toolName: toolUse.name }, "Tool execution error");
           resultContent = JSON.stringify({ error: String(err) });
+        }
+
+        // Security: Wrap external tool results in <untrusted> tags
+        // Gmail, Todoist, and Calendar tools return external API data
+        if (
+          GMAIL_TOOL_NAMES.has(toolUse.name) ||
+          TODOIST_TOOL_NAMES.has(toolUse.name) ||
+          CALENDAR_TOOL_NAMES.has(toolUse.name)
+        ) {
+          resultContent = `<untrusted>\n${resultContent}\n</untrusted>`;
         }
 
         return {
