@@ -10,16 +10,16 @@
  * The pg Pool constructor itself is well-tested by node-postgres; we are only
  * validating the singleton wiring and export contract.
  */
-import { describe, it, expect, vi } from "vitest";
 import { Pool } from "pg";
+import { describe, expect, it, vi } from "vitest";
 // Set up required env vars before importing db.ts
 // (env.ts is imported by db.ts at module load time)
-process.env["TELEGRAM_BOT_TOKEN"] = "bot:test_token";
-process.env["TELEGRAM_ALLOWED_CHAT_ID"] = "123456";
-process.env["ANTHROPIC_API_KEY"] = "sk-ant-test";
-process.env["DATABASE_URL"] = "postgresql://localhost:5432/testdb";
-process.env["DIGEST_CRON"] = "0 7 * * *";
-process.env["TZ"] = "Europe/London";
+process.env.TELEGRAM_BOT_TOKEN = "bot:test_token";
+process.env.TELEGRAM_ALLOWED_CHAT_ID = "123456";
+process.env.ANTHROPIC_API_KEY = "sk-ant-test";
+process.env.DATABASE_URL = "postgresql://localhost:5432/testdb";
+process.env.DIGEST_CRON = "0 7 * * *";
+process.env.TZ = "Europe/London";
 // ---------------------------------------------------------------------------
 // AC: db.ts exports a Pool instance; Pool is created once and reused
 // ---------------------------------------------------------------------------

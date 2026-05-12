@@ -16,11 +16,11 @@
  *     requirement.
  *   - No Telegram, Anthropic, Google Calendar, or Gmail calls are made.
  */
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 // ---------------------------------------------------------------------------
 // Database connection
 // Use DATABASE_URL directly — do NOT read .env

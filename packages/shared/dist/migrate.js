@@ -21,9 +21,9 @@
  *   - The migrations table is created inside a transaction to prevent race
  *     conditions on concurrent startup.
  */
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { pool } from "./db.js";
 import { logger } from "./logger.js";
 // ---------------------------------------------------------------------------
@@ -193,8 +193,7 @@ export async function runMigrations(migrationsDir) {
 // ---------------------------------------------------------------------------
 // Detect if this module is the entry point (node:url trick for ESM).
 const isMain = process.argv[1] !== undefined &&
-    path.resolve(process.argv[1]) ===
-        path.resolve(fileURLToPath(import.meta.url));
+    path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
 if (isMain) {
     (async () => {
         await runMigrations();

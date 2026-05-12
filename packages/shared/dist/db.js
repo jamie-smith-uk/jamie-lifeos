@@ -16,8 +16,7 @@
 import { Pool } from "pg";
 import { env } from "./env.js";
 function createPool() {
-    const isLocal = env.DATABASE_URL.includes("localhost") ||
-        env.DATABASE_URL.includes("127.0.0.1");
+    const isLocal = env.DATABASE_URL.includes("localhost") || env.DATABASE_URL.includes("127.0.0.1");
     return new Pool({
         connectionString: env.DATABASE_URL,
         max: 10,

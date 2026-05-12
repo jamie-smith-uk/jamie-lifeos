@@ -15,10 +15,10 @@
  * We also verify that the module still exports runMigrations as an async
  * function after the refactor — i.e. behaviour is preserved.
  */
-import { describe, it, expect } from "vitest";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
 // ---------------------------------------------------------------------------
 // Resolve the path to the source file under test
 // ---------------------------------------------------------------------------

@@ -91,6 +91,7 @@ import {
   executeCalendarTool,
 } from "./tools/calendar.js";
 import { executeGmailTool } from "./tools/gmail.js";
+import { executePeopleTool } from "./tools/people.js";
 import { executeToDoistTool } from "./tools/todoist.js";
 
 // ---------------------------------------------------------------------------
@@ -128,11 +129,14 @@ function getAnthropicClient(): Anthropic {
  * Assemble the system prompt with exactly five blocks in order:
  *   1. Identity
  *   2. Live context (current datetime + TZ)
- *   3. People index (empty in Phase 1)
+ *   3. People index (loaded from database)
  *   4. Pending nudges (empty in Phase 1)
  *   5. Active automations (empty in Phase 1)
+ *
+ * Task-2 (Phase 2): People index now loads from database and shows names
+ * and relationship types for all known people.
  */
-function buildSystemPrompt(): string {
+async function buildSystemPrompt(): Promise<string> {
   const now = new Date();
   const tz = env.TZ;
 
@@ -150,6 +154,30 @@ function buildSystemPrompt(): string {
   });
 
   const isoDatetime = now.toISOString();
+
+  // Load people index from database
+  let peopleIndexBlock = "## People Index\n(No people records found.)";
+  try {
+    const result = await pool.query(
+      `SELECT name, relationship_type 
+       FROM people 
+       ORDER BY name ASC`,
+    );
+
+    if (result.rows.length > 0) {
+      const peopleList = result.rows
+        .map((row) => {
+          const name = row.name;
+          const relationship = row.relationship_type ? ` (${row.relationship_type})` : "";
+          return `- ${name}${relationship}`;
+        })
+        .join("\n");
+
+      peopleIndexBlock = `## People Index\n${peopleList}`;
+    }
+  } catch (err) {
+    logger.child({ service: "agent" }).warn({ err: String(err) }, "Failed to load people index");
+  }
 
   return [
     // Block 1: Identity
@@ -192,9 +220,8 @@ Current datetime: ${localDatetime}
 ISO 8601: ${isoDatetime}
 Timezone: ${tz}`,
 
-    // Block 3: People index (empty in Phase 1)
-    `## People Index
-(No people records in Phase 1.)`,
+    // Block 3: People index (loaded from database)
+    peopleIndexBlock,
 
     // Block 4: Pending nudges (empty in Phase 1)
     `## Pending Nudges
@@ -366,12 +393,107 @@ const gmailToolDefinitions: Anthropic.Tool[] = [
   },
 ];
 
+/**
+ * People graph tool definitions.
+ * Task-1 (Phase 2): People tools added — create_person, get_person,
+ * update_person, log_interaction, get_lapsed_contacts.
+ */
+const peopleToolDefinitions: Anthropic.Tool[] = [
+  {
+    name: "create_person",
+    description:
+      "Create a new person record in the people graph with name, relationship type, and notes.",
+    input_schema: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          description: "The person's full name.",
+        },
+        relationship_type: {
+          type: "string",
+          description: "The relationship type (e.g. 'colleague', 'friend', 'family', 'manager').",
+        },
+        how_known: {
+          type: "string",
+          description: "How you know this person or where you met them.",
+        },
+        notes: {
+          type: "string",
+          description: "Additional notes about the person.",
+        },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "get_person",
+    description:
+      "Retrieve a person record by name using fuzzy matching. Returns full person details if found.",
+    input_schema: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          description: "The person's name to search for (supports partial matching).",
+        },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "update_person",
+    description:
+      "Update an existing person record by merging new notes and updating relationship information.",
+    input_schema: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          description: "The person's name to update (uses fuzzy matching).",
+        },
+        relationship_type: {
+          type: "string",
+          description: "Updated relationship type.",
+        },
+        how_known: {
+          type: "string",
+          description: "Updated information about how you know this person.",
+        },
+        notes: {
+          type: "string",
+          description: "Additional notes to merge with existing notes.",
+        },
+      },
+      required: ["name"],
+    },
+  },
+
+  {
+    name: "get_lapsed_contacts",
+    description:
+      "Get people sorted by last interaction date, filtered by a threshold to find contacts you haven't interacted with recently.",
+    input_schema: {
+      type: "object",
+      properties: {
+        days_threshold: {
+          type: "number",
+          description:
+            "Number of days since last interaction to consider 'lapsed'. Defaults to 30.",
+        },
+      },
+      required: [],
+    },
+  },
+];
+
 const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   ...calendarReadToolDefinitions,
   ...calendarWriteToolDefinitions,
   ...calendarFreeBusyToolDefinitions,
   ...todoistToolDefinitions,
   ...gmailToolDefinitions,
+  ...peopleToolDefinitions,
 ];
 
 // ---------------------------------------------------------------------------
@@ -421,6 +543,20 @@ const GMAIL_TOOL_NAMES = new Set<string>([
   "get_inbox_summary",
   "get_thread",
   "extract_implied_actions",
+  "log_interaction",
+]);
+
+/**
+ * The set of people tool names handled by executePeopleTool.
+ * Task-1 (Phase 2): All people operations are registered here so the
+ * tool loop routes them to the people module rather than the unknown-tool
+ * handler.
+ */
+const PEOPLE_TOOL_NAMES = new Set<string>([
+  "create_person",
+  "get_person",
+  "update_person",
+  "get_lapsed_contacts",
 ]);
 
 /**
@@ -460,6 +596,11 @@ async function executeTool(toolName: string, toolInput: Record<string, unknown>)
   // Delegate Gmail tools to the Gmail module (Task-4, Phase 2).
   if (GMAIL_TOOL_NAMES.has(toolName)) {
     return executeGmailTool(toolName, toolInput);
+  }
+
+  // Delegate people tools to the people module (Task-1, Phase 2).
+  if (PEOPLE_TOOL_NAMES.has(toolName)) {
+    return executePeopleTool(toolName, JSON.stringify(toolInput));
   }
 
   // Unknown tool — return a graceful error so the model can handle it.
@@ -682,7 +823,7 @@ export async function runAgent(msg: IncomingMessage): Promise<AgentResult> {
   const history = await loadContext(msg.chat_id);
 
   // Step 2: Assemble system prompt.
-  const systemPrompt = buildSystemPrompt();
+  const systemPrompt = await buildSystemPrompt();
 
   // Step 3: Build messages array — history + new user message.
   const MAX_MESSAGE_LENGTH = 50000;

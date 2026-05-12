@@ -19,20 +19,20 @@
  * - Each test that needs fresh module state calls vi.resetModules() so that
  *   migrate.ts re-imports with the freshly configured mock.
  */
-import { describe, it, expect, vi, beforeEach, afterEach, } from "vitest";
-import fs from "fs";
-import os from "os";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // ---------------------------------------------------------------------------
 // Environment setup (must happen before any imports that touch env.ts)
 // ---------------------------------------------------------------------------
-process.env["TELEGRAM_BOT_TOKEN"] = "bot:test_token";
-process.env["TELEGRAM_ALLOWED_CHAT_ID"] = "123456";
-process.env["ANTHROPIC_API_KEY"] = "sk-ant-test";
-process.env["DATABASE_URL"] = "postgresql://localhost:5432/testdb";
-process.env["DIGEST_CRON"] = "0 7 * * *";
-process.env["TZ"] = "Europe/London";
+process.env.TELEGRAM_BOT_TOKEN = "bot:test_token";
+process.env.TELEGRAM_ALLOWED_CHAT_ID = "123456";
+process.env.ANTHROPIC_API_KEY = "sk-ant-test";
+process.env.DATABASE_URL = "postgresql://localhost:5432/testdb";
+process.env.DIGEST_CRON = "0 7 * * *";
+process.env.TZ = "Europe/London";
 // ---------------------------------------------------------------------------
 // Helpers — fake DB client / pool factory
 // ---------------------------------------------------------------------------
@@ -249,11 +249,7 @@ describe("migrate.ts", () => {
             }));
             const { runMigrations } = await import("../migrate.js");
             await runMigrations(tmpDir);
-            expect(order).toEqual([
-                "0001_first.sql",
-                "0002_second.sql",
-                "0003_third.sql",
-            ]);
+            expect(order).toEqual(["0001_first.sql", "0002_second.sql", "0003_third.sql"]);
         });
         it("creates the migrations tracking table on startup", async () => {
             tmpDir = makeTempMigrationsDir({});
@@ -301,7 +297,7 @@ describe("migrate.ts", () => {
             expect(insertCalls).toHaveLength(1);
             const firstInsertCall = insertCalls[0];
             expect(firstInsertCall).toBeDefined();
-            expect(firstInsertCall[1]).toEqual(["0001_init.sql"]);
+            expect(firstInsertCall?.[1]).toEqual(["0001_init.sql"]);
         });
     });
     // -------------------------------------------------------------------------
@@ -361,7 +357,7 @@ describe("migrate.ts", () => {
             expect(matches.length).toBeGreaterThanOrEqual(2);
         });
         it("the migration runner executes 0001_init.sql SQL content against the DB", async () => {
-            const initSql = fs.readFileSync(INIT_SQL_PATH, "utf8");
+            const _initSql = fs.readFileSync(INIT_SQL_PATH, "utf8");
             const migrationsDir = path.dirname(INIT_SQL_PATH);
             fakePoolData = makeFakePool({ appliedMigrations: new Set() });
             vi.doMock("../db.js", () => ({ pool: fakePoolData.pool }));
@@ -402,7 +398,7 @@ describe("migrate.ts", () => {
             // connections succeed (for ensureMigrationsTable) and then throw.
             let connectCount = 0;
             const goodClient = {
-                query: vi.fn(async (sql, params) => {
+                query: vi.fn(async (sql, _params) => {
                     if (/SELECT name FROM migrations/i.test(sql)) {
                         return { rows: [] };
                     }

@@ -15,7 +15,7 @@
  *   const child = logger.child({ service: "bot" });
  */
 import pino from "pino";
-const LOG_LEVEL = process.env["LOG_LEVEL"] ?? "info";
+const LOG_LEVEL = process.env.LOG_LEVEL ?? "info";
 export const logger = pino({
     level: LOG_LEVEL,
     // Always emit structured JSON — Railway and most log platforms expect it.

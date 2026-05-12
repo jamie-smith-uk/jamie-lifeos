@@ -9,7 +9,7 @@
  * These tests serve as both runtime checks and living documentation of the
  * interface contracts.
  */
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 // ---------------------------------------------------------------------------
 // AC: types.ts exports ConversationMessage and ConfirmationPayload interfaces
 // ---------------------------------------------------------------------------
@@ -119,11 +119,7 @@ describe("types.ts — ConfirmationPayload interface", () => {
 });
 describe("types.ts — ConfirmationAction type", () => {
     it("accepts all three valid action values", () => {
-        const actions = [
-            "create_event",
-            "update_event",
-            "delete_event",
-        ];
+        const actions = ["create_event", "update_event", "delete_event"];
         expect(actions).toHaveLength(3);
         expect(actions).toContain("create_event");
         expect(actions).toContain("update_event");

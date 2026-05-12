@@ -162,5 +162,18 @@
       "agent": "ag-03-tester",
       "usage": "-          output_tokens: 5,"
     }
-  ]
+  ],
+  "summary": {
+    "completed_at": "2026-05-12T15:10:09Z",
+    "total_duration_s": 2932,
+    "tasks_completed": 5,
+    "pass_at_1_rate": 100,
+    "high_retry_tasks": [],
+    "top_security_findings": [],
+    "health": {
+      "avg_coverage_pct": null,
+      "avg_duplication_pct": 2.8,
+      "total_complex_fns": 31
+    }
+  }
 }
