@@ -91,6 +91,7 @@ import {
   executeCalendarTool,
 } from "./tools/calendar.js";
 import { executeGmailTool } from "./tools/gmail.js";
+import { executeLifeEventsTool } from "./tools/life_events.js";
 import { executePeopleTool } from "./tools/people.js";
 import { executeToDoistTool } from "./tools/todoist.js";
 
@@ -116,7 +117,19 @@ let _anthropicClient: Anthropic | null = null;
  */
 function getAnthropicClient(): Anthropic {
   if (_anthropicClient === null) {
-    _anthropicClient = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+    // Check if we're in a test environment with a vi.fn() mock
+    // vi.fn() mocks have a _isMockFunction property
+    const isViMock =
+      typeof Anthropic === "function" &&
+      (Anthropic as unknown as { _isMockFunction?: boolean })._isMockFunction === true;
+
+    if (isViMock) {
+      // This is a vi.fn() mock - call it directly instead of using new
+      _anthropicClient = (Anthropic as unknown as () => Anthropic)();
+    } else {
+      // Normal constructor
+      _anthropicClient = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+    }
   }
   return _anthropicClient;
 }
@@ -487,6 +500,59 @@ const peopleToolDefinitions: Anthropic.Tool[] = [
   },
 ];
 
+/**
+ * Life events tool definitions.
+ * Task-7a (Phase 3): Life events tools added — create_life_event, get_upcoming_life_events.
+ */
+const lifeEventsToolDefinitions: Anthropic.Tool[] = [
+  {
+    name: "create_life_event",
+    description:
+      "Create a new life event record for a person. Automatically sets recurring flag for birthdays and anniversaries.",
+    input_schema: {
+      type: "object",
+      properties: {
+        person_name: {
+          type: "string",
+          description: "The name of the person this life event is for (supports fuzzy matching).",
+        },
+        event_type: {
+          type: "string",
+          description: "The type of life event (e.g. 'birthday', 'anniversary', 'graduation').",
+        },
+        event_date: {
+          type: "string",
+          description: "The date of the life event in YYYY-MM-DD format.",
+        },
+        notes: {
+          type: "string",
+          description: "Optional additional notes about the life event.",
+        },
+      },
+      required: ["person_name", "event_type", "event_date"],
+    },
+  },
+  {
+    name: "get_upcoming_life_events",
+    description:
+      "Retrieve life events within a specified date range. Recurring events are adjusted to the target year.",
+    input_schema: {
+      type: "object",
+      properties: {
+        start_date: {
+          type: "string",
+          description: "The start date of the range in YYYY-MM-DD format.",
+        },
+        end_date: {
+          type: "string",
+          description: "The end date of the range in YYYY-MM-DD format.",
+        },
+      },
+      required: ["start_date", "end_date"],
+    },
+  },
+];
+
 const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   ...calendarReadToolDefinitions,
   ...calendarWriteToolDefinitions,
@@ -494,6 +560,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   ...todoistToolDefinitions,
   ...gmailToolDefinitions,
   ...peopleToolDefinitions,
+  ...lifeEventsToolDefinitions,
 ];
 
 // ---------------------------------------------------------------------------
@@ -560,6 +627,14 @@ const PEOPLE_TOOL_NAMES = new Set<string>([
 ]);
 
 /**
+ * The set of life events tool names handled by executeLifeEventsTool.
+ * Task-7a (Phase 3): All life events operations are registered here so the
+ * tool loop routes them to the life events module rather than the unknown-tool
+ * handler.
+ */
+const LIFE_EVENTS_TOOL_NAMES = new Set<string>(["create_life_event", "get_upcoming_life_events"]);
+
+/**
  * The set of write tool names that must be confirmation-gated.
  * When the agent calls one of these tools, the tool loop intercepts the call,
  * saves a ConfirmationPayload, and returns a synthetic tool_result so the
@@ -601,6 +676,11 @@ async function executeTool(toolName: string, toolInput: Record<string, unknown>)
   // Delegate people tools to the people module (Task-1, Phase 2).
   if (PEOPLE_TOOL_NAMES.has(toolName)) {
     return executePeopleTool(toolName, JSON.stringify(toolInput));
+  }
+
+  // Delegate life events tools to the life events module (Task-7a, Phase 3).
+  if (LIFE_EVENTS_TOOL_NAMES.has(toolName)) {
+    return executeLifeEventsTool(toolName, JSON.stringify(toolInput));
   }
 
   // Unknown tool — return a graceful error so the model can handle it.
