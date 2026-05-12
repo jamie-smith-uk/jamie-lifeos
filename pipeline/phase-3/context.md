@@ -135,3 +135,10 @@
 - **Agent tool definitions structure**: Tool definitions are organized by module (calendar, todoist, gmail, people, life events) and combined into the main `TOOL_DEFINITIONS` array. Each module maintains its own tool definitions and executor function.
 
 ---
+## task-7b — Add nudges tool definitions and routing to agent
+
+**Files:** packages/orchestrator/src/agent.ts, packages/orchestrator/vitest.config.ts, packages/orchestrator/tsconfig.json
+
+⚠ task-7b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---

@@ -1,0 +1,96 @@
+=== pnpm test ===
+
+> @lifeos/orchestrator@0.0.1 test /home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator
+> vitest run --config vitest.config.ts
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator[39m
+
+ [31m❯[39m src/__tests__/agent-task7b.test.ts [2m([22m[2m9 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 187[2mms[22m[39m
+       [32m✓[39m should include create_nudge tool definition[32m 110[2mms[22m[39m
+       [32m✓[39m should include dismiss_nudge tool definition[32m 19[2mms[22m[39m
+       [32m✓[39m should have both nudge tools in TOOL_DEFINITIONS[32m 8[2mms[22m[39m
+       [32m✓[39m should route create_nudge to executeNudgesTool[32m 8[2mms[22m[39m
+       [32m✓[39m should route dismiss_nudge to executeNudgesTool[32m 7[2mms[22m[39m
+[31m       [31m×[31m should execute create_nudge tool and return result[39m[32m 14[2mms[22m[39m
+[31m       [31m×[31m should execute dismiss_nudge tool and return result[39m[32m 8[2mms[22m[39m
+[31m       [31m×[31m should not route nudge tools to unknown-tool handler[39m[32m 6[2mms[22m[39m
+       [32m✓[39m should include nudge tools in security labeling for untrusted content[32m 4[2mms[22m[39m
+ [32m✓[39m src/__tests__/typing-indicator-t11.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 1426[2mms[22m[39m
+ [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m25 tests[22m[2m)[22m[33m 1027[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-t16.test.ts [2m([22m[2m35 tests[22m[2m)[22m[33m 342[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-task3.test.ts [2m([22m[2m42 tests[22m[2m)[22m[33m 439[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-t17.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 284[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-t18.test.ts [2m([22m[2m38 tests[22m[2m)[22m[32m 276[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-task4.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 187[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 252[2mms[22m[39m
+ [32m✓[39m src/__tests__/todoist-task1.test.ts [2m([22m[2m71 tests[22m[2m)[22m[32m 255[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-t19.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 229[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-implied-actions.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 165[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-t10.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 278[2mms[22m[39m
+ [32m✓[39m src/tools/__tests__/life_events.test.ts [2m([22m[2m52 tests[22m[2m)[22m[32m 157[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-t20.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 169[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-task7a.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 151[2mms[22m[39m
+ [32m✓[39m src/tools/__tests__/nudges.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 115[2mms[22m[39m
+ [32m✓[39m src/tools/__tests__/people.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 79[2mms[22m[39m
+ [32m✓[39m src/__tests__/gmail-email-interactions.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 106[2mms[22m[39m
+ [32m✓[39m src/__tests__/index-async-await.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/__tests__/typecheck-async-await.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 5944[2mms[22m[39m
+     [33m[2m✓[22m[39m @lifeos/shared typechecks without errors (tsc --noEmit) [33m 1247[2mms[22m[39m
+     [33m[2m✓[22m[39m @lifeos/orchestrator typechecks without errors (tsc --noEmit) [33m 1583[2mms[22m[39m
+     [33m[2m✓[22m[39m @lifeos/shared typecheck output contains no 'error TS' messages [33m 1642[2mms[22m[39m
+     [33m[2m✓[22m[39m @lifeos/orchestrator typecheck output contains no 'error TS' messages [33m 1469[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/agent-task7b.test.ts[2m > [22mTask-7b: Nudges tool definitions and routing[2m > [22mAC3: Agent can successfully call all nudge tools through the tool loop[2m > [22mshould execute create_nudge tool and return result
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called at least once[39m
+[36m [2m❯[22m src/__tests__/agent-task7b.test.ts:[2m687:42[22m[39m
+    [90m685|[39m
+    [90m686|[39m       [34mexpect[39m(result[33m.[39mtext)[33m.[39m[34mtoContain[39m([32m"nudge"[39m)[33m;[39m
+    [90m687|[39m       [34mexpect[39m(freshExecuteNudgesToolMock)[33m.[39m[34mtoHaveBeenCalled[39m()[33m;[39m
+    [90m   |[39m                                          [31m^[39m
+    [90m688|[39m     })[33m;[39m
+    [90m689|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/agent-task7b.test.ts[2m > [22mTask-7b: Nudges tool definitions and routing[2m > [22mAC3: Agent can successfully call all nudge tools through the tool loop[2m > [22mshould execute dismiss_nudge tool and return result
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called at least once[39m
+[36m [2m❯[22m src/__tests__/agent-task7b.test.ts:[2m803:43[22m[39m
+    [90m801|[39m
+    [90m802|[39m       [34mexpect[39m(result[33m.[39mtext)[33m.[39m[34mtoContain[39m([32m"dismiss"[39m)[33m;[39m
+    [90m803|[39m       [34mexpect[39m(freshExecuteNudgesToolMock2)[33m.[39m[34mtoHaveBeenCalled[39m()[33m;[39m
+    [90m   |[39m                                           [31m^[39m
+    [90m804|[39m     })[33m;[39m
+    [90m805|[39m   })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/agent-task7b.test.ts[2m > [22mTask-7b: Nudges tool definitions and routing[2m > [22mAC4: Tests verify tool routing works correctly[2m > [22mshould not route nudge tools to unknown-tool handler
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called at least once[39m
+[36m [2m❯[22m src/__tests__/agent-task7b.test.ts:[2m927:43[22m[39m
+    [90m925|[39m
+    [90m926|[39m       [90m// Verify executeNudgesTool was called (not unknown-tool handler)[39m
+    [90m927|[39m       [34mexpect[39m(freshExecuteNudgesToolMock3)[33m.[39m[34mtoHaveBeenCalled[39m()[33m;[39m
+    [90m   |[39m                                           [31m^[39m
+    [90m928|[39m     })[33m;[39m
+    [90m929|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m20 passed[39m[22m[90m (21)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m545 passed[39m[22m[90m (548)[39m
+[2m   Start at [22m 19:16:03
+[2m   Duration [22m 6.35s[2m (transform 1.54s, setup 0ms, import 1.93s, tests 12.08s, environment 3ms)[22m
+
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/__tests__/agent-task7b.test.ts,title=src/__tests__/agent-task7b.test.ts > Task-7b%3A Nudges tool definitions and routing > AC3%3A Agent can successfully call all nudge tools through the tool loop > should execute create_nudge tool and return result,line=687,column=42::AssertionError: expected "vi.fn()" to be called at least once%0A ❯ src/__tests__/agent-task7b.test.ts:687:42%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/__tests__/agent-task7b.test.ts,title=src/__tests__/agent-task7b.test.ts > Task-7b%3A Nudges tool definitions and routing > AC3%3A Agent can successfully call all nudge tools through the tool loop > should execute dismiss_nudge tool and return result,line=803,column=43::AssertionError: expected "vi.fn()" to be called at least once%0A ❯ src/__tests__/agent-task7b.test.ts:803:43%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/__tests__/agent-task7b.test.ts,title=src/__tests__/agent-task7b.test.ts > Task-7b%3A Nudges tool definitions and routing > AC4%3A Tests verify tool routing works correctly > should not route nudge tools to unknown-tool handler,line=927,column=43::AssertionError: expected "vi.fn()" to be called at least once%0A ❯ src/__tests__/agent-task7b.test.ts:927:43%0A%0A
+/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/orchestrator@0.0.1 test: `vitest run --config vitest.config.ts`
+Exit status 1
