@@ -208,6 +208,30 @@ interface PersonInfo {
   relationship_type: string | null;
 }
 
+/**
+ * Converts a database row to a PersonInfo object.
+ */
+function rowToPersonInfo(row: {
+  id: number;
+  name: string;
+  relationship_type: string | null;
+}): PersonInfo {
+  return {
+    id: row.id,
+    name: row.name,
+    relationship_type: row.relationship_type,
+  };
+}
+
+/**
+ * Adds a person to a list if not already present (by ID).
+ */
+function addPersonIfUnique(people: PersonInfo[], person: PersonInfo | null): void {
+  if (person && !people.some((p) => p.id === person.id)) {
+    people.push(person);
+  }
+}
+
 // Email validation pattern
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -271,11 +295,7 @@ async function findPersonByEmail(email: string): Promise<PersonInfo | null> {
     );
 
     if (result.rows.length > 0) {
-      return {
-        id: result.rows[0].id,
-        name: result.rows[0].name,
-        relationship_type: result.rows[0].relationship_type,
-      };
+      return rowToPersonInfo(result.rows[0]);
     }
 
     return null;
@@ -378,13 +398,9 @@ async function getInboxSummary(_input: Record<string, unknown>): Promise<string>
 
       // Collect all people for this email (sender + mentions, avoiding duplicates)
       const allPeople: PersonInfo[] = [];
-      if (senderPerson) {
-        allPeople.push(senderPerson);
-      }
+      addPersonIfUnique(allPeople, senderPerson);
       for (const mentioned of mentionedPeople) {
-        if (!allPeople.some((p) => p.id === mentioned.id)) {
-          allPeople.push(mentioned);
-        }
+        addPersonIfUnique(allPeople, mentioned);
       }
 
       lines.push(`<untrusted>`);
@@ -451,15 +467,11 @@ async function getThread(input: Record<string, unknown>): Promise<string> {
       const mentionedPeople = await findMentionedPeople(`${subject} ${body}`);
 
       // Add sender to thread people if known
-      if (senderPerson && !allThreadPeople.some((p) => p.id === senderPerson.id)) {
-        allThreadPeople.push(senderPerson);
-      }
+      addPersonIfUnique(allThreadPeople, senderPerson);
 
       // Add mentioned people to thread people
       for (const mentioned of mentionedPeople) {
-        if (!allThreadPeople.some((p) => p.id === mentioned.id)) {
-          allThreadPeople.push(mentioned);
-        }
+        addPersonIfUnique(allThreadPeople, mentioned);
       }
 
       lines.push(`--- Message ---`);
@@ -1211,11 +1223,7 @@ async function findPersonByName(name: string): Promise<PersonInfo | null> {
     );
 
     if (result.rows.length > 0) {
-      return {
-        id: result.rows[0].id,
-        name: result.rows[0].name,
-        relationship_type: result.rows[0].relationship_type,
-      };
+      return rowToPersonInfo(result.rows[0]);
     }
 
     return null;
@@ -1234,12 +1242,7 @@ async function findMentionedPeople(content: string): Promise<PersonInfo[]> {
 
   for (const mention of mentions) {
     const person = await findPersonByName(mention);
-    if (person) {
-      // Avoid duplicates
-      if (!people.some((p) => p.id === person.id)) {
-        people.push(person);
-      }
-    }
+    addPersonIfUnique(people, person);
   }
 
   return people;
@@ -1291,11 +1294,7 @@ async function resolvePersonReference(personRef: string): Promise<PersonInfo | n
         [parseInt(personRef, 10)],
       );
       if (result.rows.length > 0) {
-        return {
-          id: result.rows[0].id,
-          name: result.rows[0].name,
-          relationship_type: result.rows[0].relationship_type,
-        };
+        return rowToPersonInfo(result.rows[0]);
       }
     } catch (err) {
       log.error({ err: String(err), personRef }, "Failed to query person by ID");
@@ -1373,9 +1372,7 @@ async function logInteraction(input: Record<string, unknown>): Promise<string> {
     const resolvedPeople: PersonInfo[] = [];
     for (const personRef of people) {
       const person = await resolvePersonReference(personRef);
-      if (person && !resolvedPeople.some((p) => p.id === person.id)) {
-        resolvedPeople.push(person);
-      }
+      addPersonIfUnique(resolvedPeople, person);
     }
 
     if (resolvedPeople.length === 0) {

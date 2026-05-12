@@ -45,3 +45,18 @@
 ⚠ task-6a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-6b — Integrate email interactions with people logging
+
+**Files:** packages/orchestrator/src/tools/gmail.ts
+
+- **People mention detection**: The `extractPeopleMentions` function uses regex patterns to find people names in email content. Patterns include "talked with [Name]", "met with [Name]", "discussed with [Name]", and "email from [Name]". Names are validated to be 2-50 characters and not common words.
+
+- **Database people queries**: All people database queries use the existing `people` table with `id`, `name`, and `relationship_type` columns. Use `findPersonByEmail` for sender matching and `findPersonByName` for content-based mentions. Both functions return `PersonInfo` objects with optional `id` field.
+
+- **log_interaction tool**: The tool accepts `thread_id` (Gmail thread ID), `people` (array of person IDs or names), optional `interaction_type` (defaults to "email"), and optional `notes`. It creates records in the `interactions` table and updates `last_interaction_at` on people records. All operations are wrapped in database transactions.
+
+- **Enhanced email functions**: Both `get_inbox_summary` and `get_thread` now detect people from senders and content, including "Known people" and "People IDs" lines in their output. This allows the agent to offer the `log_interaction` tool when appropriate.
+
+- **Security patterns**: All email content processing maintains the existing `<untrusted>` tag wrapping for external data. People detection functions handle malformed input gracefully and log errors without crashing.
+
+---
