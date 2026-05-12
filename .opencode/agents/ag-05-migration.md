@@ -42,12 +42,25 @@ FAIL format:
 - Confirm the resulting schema matches the relevant tables in docs/architecture.md
 - Flag any column type, constraint, or index that diverges from the architecture doc
 
+### Running the migration
+This project uses plain SQL files — not node-pg-migrate or any ORM migration tool.
+Run each migration file directly with psql:
+```bash
+psql "$DATABASE_URL" -f <migration_file>
+```
+Capture the verbatim output and include it in Section 4 of your report.
+
+If psql exits non-zero, write a FAIL report with the full error output.
+
 ### Reversibility
-- Every migration must have a corresponding down migration (rollback)
-- Run the migration: `DATABASE_URL=$DATABASE_URL pnpm exec node-pg-migrate up`
-- Run the rollback: `DATABASE_URL=$DATABASE_URL pnpm exec node-pg-migrate down`
-- Both commands must succeed. Capture and include the verbatim output of both.
-- If the project uses a different migration tool, adapt the commands accordingly
+Plain SQL migrations in this project do not have separate down files.
+Do NOT fail the report solely because a down migration is absent.
+Instead, document in Section 2:
+- Whether the migration is reversible in principle (e.g. DROP TABLE reverses a CREATE TABLE)
+- Any data-loss risk if the migration were ever manually rolled back
+- "No down migration file provided — rollback would require manual SQL"
+
+Do NOT try to run a rollback. Do NOT call node-pg-migrate, knex, or any other migration tool.
 
 ### Safety
 - Flag any `DROP TABLE` or `DROP COLUMN` without a clear justification in the task spec
