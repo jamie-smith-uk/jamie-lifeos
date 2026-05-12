@@ -621,14 +621,30 @@ for f in files:
 
   lint_pid=""
   if [ ${#existing_files[@]} -gt 0 ]; then
-    lint_out=$(mktemp)
-    lint_rc_file=$(mktemp)
+    # biome only processes JS/TS/JSON files — filter out SQL, .md, etc. to avoid
+    # "No files were processed" exit-1 when migrations or docs are in scope
+    local biome_files=()
     if [ "$linter" = "biome" ]; then
-      { cd "$REPO_ROOT" && pnpm exec biome check "${existing_files[@]}" 2>&1; echo $? > "$lint_rc_file"; } > "$lint_out" &
-    else
-      { cd "$REPO_ROOT" && pnpm exec eslint "${existing_files[@]}" 2>&1; echo $? > "$lint_rc_file"; } > "$lint_out" &
+      for f in "${existing_files[@]}"; do
+        case "$f" in
+          *.ts|*.tsx|*.js|*.jsx|*.json|*.jsonc) biome_files+=("$f") ;;
+        esac
+      done
     fi
-    lint_pid=$!
+    if [ "$linter" = "biome" ]; then
+      if [ ${#biome_files[@]} -gt 0 ]; then
+        lint_out=$(mktemp)
+        lint_rc_file=$(mktemp)
+        { cd "$REPO_ROOT" && pnpm exec biome check "${biome_files[@]}" 2>&1; echo $? > "$lint_rc_file"; } > "$lint_out" &
+        lint_pid=$!
+      fi
+      # else: no biome-processable files in scope — skip lint (counts as pass)
+    else
+      lint_out=$(mktemp)
+      lint_rc_file=$(mktemp)
+      { cd "$REPO_ROOT" && pnpm exec eslint "${existing_files[@]}" 2>&1; echo $? > "$lint_rc_file"; } > "$lint_out" &
+      lint_pid=$!
+    fi
   fi
 
   # Collect tsc result
