@@ -27,7 +27,9 @@
     "files_in_scope": [
       "packages/orchestrator/src/agent.ts"
     ],
-    "dependencies": ["task-1"],
+    "dependencies": [
+      "task-1"
+    ],
     "acceptance_criteria": [
       "People tool definitions added to TOOL_DEFINITIONS array",
       "PEOPLE_TOOL_NAMES set created with all people tool names",
@@ -65,11 +67,13 @@
     "files_in_scope": [
       "packages/orchestrator/src/index.ts"
     ],
-    "dependencies": ["task-3"],
+    "dependencies": [
+      "task-3"
+    ],
     "acceptance_criteria": [
       "executeConfirmation function handles task confirmation actions",
       "create_task confirmations call executeToDoistTool with create_task operation",
-      "complete_task confirmations call executeToDoistTool with complete_task operation", 
+      "complete_task confirmations call executeToDoistTool with complete_task operation",
       "delete_task confirmations call executeToDoistTool with delete_task operation",
       "update_task confirmations call executeToDoistTool with update_task operation",
       "All task confirmations return success/error messages to user",
@@ -79,39 +83,73 @@
     "estimated_complexity": "medium"
   },
   {
-    "id": "task-5",
-    "title": "Implement email implied action detection",
-    "description": "Add logic to detect calendar events and tasks implied in email content and propose adding them to calendar or Todoist with user confirmation.",
+    "id": "task-5a",
+    "title": "Implement email content parsing for implied actions",
+    "description": "Add logic to parse email content and extract implied calendar events and tasks with structured data.",
     "files_in_scope": [
       "packages/orchestrator/src/tools/gmail.ts",
-      "packages/orchestrator/src/agent.ts",
       "packages/shared/vitest.config.ts"
     ],
-    "dependencies": ["task-2", "task-3"],
+    "dependencies": [
+      "task-2",
+      "task-3"
+    ],
     "acceptance_criteria": [
       "extract_implied_actions function analyzes email content for flight confirmations, meeting invites, deadlines",
       "Function returns structured data with proposed calendar events and tasks",
-      "Agent can propose calendar events from email content using existing create_event confirmation flow",
-      "Agent can propose tasks from email content using task confirmation flow",
-      "Each implied action requires separate user confirmation",
       "Email content parsing handles common patterns for dates, times, locations, and action items"
     ],
     "security_sensitive": false,
-    "estimated_complexity": "high"
+    "estimated_complexity": "medium"
   },
   {
-    "id": "task-6",
-    "title": "Implement email-to-people linking",
-    "description": "Add logic to link emails from known people to the people graph and offer to log interactions when emails are from or about known people.",
+    "id": "task-5b",
+    "title": "Integrate email implied actions with agent confirmation flows",
+    "description": "Connect extracted implied actions to agent confirmation system for calendar events and tasks.",
+    "files_in_scope": [
+      "packages/orchestrator/src/agent.ts"
+    ],
+    "dependencies": [
+      "task-5a"
+    ],
+    "acceptance_criteria": [
+      "Agent can propose calendar events from email content using existing create_event confirmation flow",
+      "Agent can propose tasks from email content using task confirmation flow",
+      "Each implied action requires separate user confirmation"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "medium"
+  },
+  {
+    "id": "task-6a",
+    "title": "Implement email sender matching against people graph",
+    "description": "Add logic to match email senders against people records and enrich email responses with person information.",
     "files_in_scope": [
       "packages/orchestrator/src/tools/gmail.ts"
     ],
-    "dependencies": ["task-2"],
+    "dependencies": [
+      "task-2"
+    ],
     "acceptance_criteria": [
       "get_inbox_summary and get_thread functions check sender email addresses against people records",
       "When email is from a known person, response includes person name and relationship",
+      "Email sender matching handles common email address formats and display names"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "medium"
+  },
+  {
+    "id": "task-6b",
+    "title": "Integrate email interactions with people logging",
+    "description": "Enable agent to offer logging email interactions for known people and content-based people mentions.",
+    "files_in_scope": [
+      "packages/orchestrator/src/tools/gmail.ts"
+    ],
+    "dependencies": [
+      "task-6a"
+    ],
+    "acceptance_criteria": [
       "Agent can offer to log email interactions using log_interaction tool",
-      "Email sender matching handles common email address formats and display names",
       "People linking works for both direct emails and emails mentioning known people in content"
     ],
     "security_sensitive": false,
