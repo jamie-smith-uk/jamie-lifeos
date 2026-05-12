@@ -804,13 +804,8 @@ log "========================================"
 log "Life OS Pipeline — Phase $PHASE"
 log "========================================"
 
-if [[ "${SKIP_ARCHITECT:-}" != "1" ]]; then
-
-# ── AG-01 Architect ───────────────────────────────────────────────────────────
-log ""
-log "AG-01 Architect — producing task manifest..."
-
-# Tiered context: extract only the relevant phase section and its epics from the PRD
+# Tiered context: extract only the relevant phase section and its epics from the PRD.
+# Computed unconditionally so DEV_PROMPT can reference it even when SKIP_ARCHITECT=1.
 PHASE_PRD_CONTENT=$(python3 - "$REPO_ROOT/docs/prd.md" "$PHASE" <<'PYEOF'
 import re, sys
 try:
@@ -883,6 +878,12 @@ if len(result) < len(content):
 print(result)
 PYEOF
 )
+
+if [[ "${SKIP_ARCHITECT:-}" != "1" ]]; then
+
+# ── AG-01 Architect ───────────────────────────────────────────────────────────
+log ""
+log "AG-01 Architect — producing task manifest..."
 
 # Produce a compact repo file tree for the Architect so it can name real files
 # in files_in_scope. Excludes noise directories. Capped at 300 lines to stay
