@@ -610,7 +610,6 @@ const GMAIL_TOOL_NAMES = new Set<string>([
   "get_inbox_summary",
   "get_thread",
   "extract_implied_actions",
-  "log_interaction",
 ]);
 
 /**
@@ -623,6 +622,7 @@ const PEOPLE_TOOL_NAMES = new Set<string>([
   "create_person",
   "get_person",
   "update_person",
+  "log_interaction",
   "get_lapsed_contacts",
 ]);
 
@@ -1145,15 +1145,16 @@ export async function runAgent(msg: IncomingMessage): Promise<AgentResult> {
           resultContent = await executeTool(toolUse.name, toolInput);
         } catch (err) {
           log.error({ err, toolName: toolUse.name }, "Tool execution error");
-          resultContent = JSON.stringify({ error: String(err) });
+          resultContent = JSON.stringify({ error: "Tool execution failed. Please try again." });
         }
 
         // Security: Wrap external tool results in <untrusted> tags
-        // Gmail, Todoist, and Calendar tools return external API data
+        // Gmail, Todoist, Calendar, and Life Events tools return external API data
         if (
           GMAIL_TOOL_NAMES.has(toolUse.name) ||
           TODOIST_TOOL_NAMES.has(toolUse.name) ||
-          CALENDAR_TOOL_NAMES.has(toolUse.name)
+          CALENDAR_TOOL_NAMES.has(toolUse.name) ||
+          LIFE_EVENTS_TOOL_NAMES.has(toolUse.name)
         ) {
           resultContent = `<untrusted>\n${resultContent}\n</untrusted>`;
         }

@@ -1,0 +1,235 @@
+=== pnpm test ===
+
+> @lifeos/orchestrator@0.0.1 test /home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator
+> vitest run --config vitest.config.ts
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator[39m
+
+[90mstderr[2m | src/__tests__/agent-task7a.test.ts[2m > [22m[2magent.ts — Task-7a: Life events tool definitions[2m > [22m[2mAC1: Life events tool definitions added to TOOL_DEFINITIONS[2m > [22m[2mshould include create_life_event tool definition
+[22m[39m[vitest] The vi.fn() mock did not use 'function' or 'class' in its implementation, see https://vitest.dev/api/vi#vi-spyon for examples.
+
+[90mstderr[2m | src/__tests__/agent-task7a.test.ts[2m > [22m[2magent.ts — Task-7a: Life events tool definitions[2m > [22m[2mAC1: Life events tool definitions added to TOOL_DEFINITIONS[2m > [22m[2mshould include get_upcoming_life_events tool definition
+[22m[39m[vitest] The vi.fn() mock did not use 'function' or 'class' in its implementation, see https://vitest.dev/api/vi#vi-spyon for examples.
+
+[90mstderr[2m | src/__tests__/agent-task7a.test.ts[2m > [22m[2magent.ts — Task-7a: Life events tool definitions[2m > [22m[2mAC1: Life events tool definitions added to TOOL_DEFINITIONS[2m > [22m[2mshould have both life events tools in TOOL_DEFINITIONS
+[22m[39m[vitest] The vi.fn() mock did not use 'function' or 'class' in its implementation, see https://vitest.dev/api/vi#vi-spyon for examples.
+
+[90mstderr[2m | src/__tests__/agent-task7a.test.ts[2m > [22m[2magent.ts — Task-7a: Life events tool definitions[2m > [22m[2mAC2: Tool definitions include proper parameter descriptions[2m > [22m[2mcreate_life_event should have input_schema with parameter descriptions
+[22m[39m[vitest] The vi.fn() mock did not use 'function' or 'class' in its implementation, see https://vitest.dev/api/vi#vi-spyon for examples.
+
+[90mstderr[2m | src/__tests__/agent-task7a.test.ts[2m > [22m[2magent.ts — Task-7a: Life events tool definitions[2m > [22m[2mAC2: Tool definitions include proper parameter descriptions[2m > [22m[2mget_upcoming_life_events should have input_schema with parameter descriptions
+[22m[39m[vitest] The vi.fn() mock did not use 'function' or 'class' in its implementation, see https://vitest.dev/api/vi#vi-spyon for examples.
+
+[90mstderr[2m | src/__tests__/agent-task7a.test.ts[2m > [22m[2magent.ts — Task-7a: Life events tool definitions[2m > [22m[2mAC2: Tool definitions include proper parameter descriptions[2m > [22m[2mcreate_life_event should have description field
+[22m[39m[vitest] The vi.fn() mock did not use 'function' or 'class' in its implementation, see https://vitest.dev/api/vi#vi-spyon for examples.
+
+[90mstderr[2m | src/__tests__/agent-task7a.test.ts[2m > [22m[2magent.ts — Task-7a: Life events tool definitions[2m > [22m[2mAC2: Tool definitions include proper parameter descriptions[2m > [22m[2mget_upcoming_life_events should have description field
+[22m[39m[vitest] The vi.fn() mock did not use 'function' or 'class' in its implementation, see https://vitest.dev/api/vi#vi-spyon for examples.
+
+[90mstderr[2m | src/__tests__/agent-task7a.test.ts[2m > [22m[2magent.ts — Task-7a: Life events tool definitions[2m > [22m[2mAC3: Tool name sets updated to include new tools[2m > [22m[2mshould route create_life_event to executeLifeEventsTool
+[22m[39m[vitest] The vi.fn() mock did not use 'function' or 'class' in its implementation, see https://vitest.dev/api/vi#vi-spyon for examples.
+
+[90mstderr[2m | src/__tests__/agent-task7a.test.ts[2m > [22m[2magent.ts — Task-7a: Life events tool definitions[2m > [22m[2mAC3: Tool name sets updated to include new tools[2m > [22m[2mshould route get_upcoming_life_events to executeLifeEventsTool
+[22m[39m[vitest] The vi.fn() mock did not use 'function' or 'class' in its implementation, see https://vitest.dev/api/vi#vi-spyon for examples.
+
+ [31m❯[39m src/__tests__/agent-task7a.test.ts [2m([22m[2m9 tests[22m[2m | [22m[31m9 failed[39m[2m)[22m[32m 200[2mms[22m[39m
+[31m       [31m×[31m should include create_life_event tool definition[39m[32m 129[2mms[22m[39m
+[31m       [31m×[31m should include get_upcoming_life_events tool definition[39m[32m 26[2mms[22m[39m
+[31m       [31m×[31m should have both life events tools in TOOL_DEFINITIONS[39m[32m 5[2mms[22m[39m
+[31m       [31m×[31m create_life_event should have input_schema with parameter descriptions[39m[32m 4[2mms[22m[39m
+[31m       [31m×[31m get_upcoming_life_events should have input_schema with parameter descriptions[39m[32m 4[2mms[22m[39m
+[31m       [31m×[31m create_life_event should have description field[39m[32m 5[2mms[22m[39m
+[31m       [31m×[31m get_upcoming_life_events should have description field[39m[32m 5[2mms[22m[39m
+[31m       [31m×[31m should route create_life_event to executeLifeEventsTool[39m[32m 11[2mms[22m[39m
+[31m       [31m×[31m should route get_upcoming_life_events to executeLifeEventsTool[39m[32m 9[2mms[22m[39m
+ [32m✓[39m src/__tests__/typing-indicator-t11.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 1368[2mms[22m[39m
+ [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m25 tests[22m[2m)[22m[33m 1051[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-t16.test.ts [2m([22m[2m35 tests[22m[2m)[22m[33m 323[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-task3.test.ts [2m([22m[2m42 tests[22m[2m)[22m[33m 401[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-t18.test.ts [2m([22m[2m38 tests[22m[2m)[22m[33m 333[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-t10.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 274[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-t19.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 186[2mms[22m[39m
+ [32m✓[39m src/__tests__/todoist-task1.test.ts [2m([22m[2m71 tests[22m[2m)[22m[32m 235[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 262[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-t17.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 275[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-task4.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 240[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-implied-actions.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 185[2mms[22m[39m
+ [32m✓[39m src/tools/__tests__/life_events.test.ts [2m([22m[2m52 tests[22m[2m)[22m[32m 163[2mms[22m[39m
+ [32m✓[39m src/__tests__/gmail-email-interactions.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 109[2mms[22m[39m
+ [32m✓[39m src/tools/__tests__/nudges.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 91[2mms[22m[39m
+ [32m✓[39m src/__tests__/agent-t20.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 181[2mms[22m[39m
+ [32m✓[39m src/tools/__tests__/people.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 74[2mms[22m[39m
+ [32m✓[39m src/__tests__/index-async-await.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/__tests__/typecheck-async-await.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 5880[2mms[22m[39m
+     [33m[2m✓[22m[39m @lifeos/shared typechecks without errors (tsc --noEmit) [33m 1236[2mms[22m[39m
+     [33m[2m✓[22m[39m @lifeos/orchestrator typechecks without errors (tsc --noEmit) [33m 1574[2mms[22m[39m
+     [33m[2m✓[22m[39m @lifeos/shared typecheck output contains no 'error TS' messages [33m 1607[2mms[22m[39m
+     [33m[2m✓[22m[39m @lifeos/orchestrator typecheck output contains no 'error TS' messages [33m 1458[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 9 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/agent-task7a.test.ts[2m > [22magent.ts — Task-7a: Life events tool definitions[2m > [22mAC1: Life events tool definitions added to TOOL_DEFINITIONS[2m > [22mshould include create_life_event tool definition
+[31m[1mTypeError[22m: () => ({ messages: { create: vi.fn(async (params) => {
+				capturedTools = params.tools ?...<omitted>...}) is not a constructor[39m
+[36m [2m❯[22m getAnthropicClient src/agent.ts:[2m120:24[22m[39m
+    [90m118|[39m [35mfunction[39m [34mgetAnthropicClient[39m()[33m:[39m [33mAnthropic[39m {
+    [90m119|[39m   [35mif[39m (_anthropicClient [33m===[39m [35mnull[39m) {
+    [90m120|[39m     _anthropicClient = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }…
+    [90m   |[39m                        [31m^[39m
+    [90m121|[39m   }
+    [90m122|[39m   [35mreturn[39m _anthropicClient[33m;[39m
+[90m [2m❯[22m Module.runAgent src/agent.ts:[2m917:18[22m[39m
+[90m [2m❯[22m src/__tests__/agent-task7a.test.ts:[2m286:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/agent-task7a.test.ts[2m > [22magent.ts — Task-7a: Life events tool definitions[2m > [22mAC1: Life events tool definitions added to TOOL_DEFINITIONS[2m > [22mshould include get_upcoming_life_events tool definition
+[31m[1mTypeError[22m: () => ({ messages: { create: vi.fn(async (params) => {
+				capturedTools = params.tools ?...<omitted>...}) is not a constructor[39m
+[36m [2m❯[22m getAnthropicClient src/agent.ts:[2m120:24[22m[39m
+    [90m118|[39m [35mfunction[39m [34mgetAnthropicClient[39m()[33m:[39m [33mAnthropic[39m {
+    [90m119|[39m   [35mif[39m (_anthropicClient [33m===[39m [35mnull[39m) {
+    [90m120|[39m     _anthropicClient = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }…
+    [90m   |[39m                        [31m^[39m
+    [90m121|[39m   }
+    [90m122|[39m   [35mreturn[39m _anthropicClient[33m;[39m
+[90m [2m❯[22m Module.runAgent src/agent.ts:[2m917:18[22m[39m
+[90m [2m❯[22m src/__tests__/agent-task7a.test.ts:[2m303:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/agent-task7a.test.ts[2m > [22magent.ts — Task-7a: Life events tool definitions[2m > [22mAC1: Life events tool definitions added to TOOL_DEFINITIONS[2m > [22mshould have both life events tools in TOOL_DEFINITIONS
+[31m[1mTypeError[22m: () => ({ messages: { create: vi.fn(async (params) => {
+				capturedTools = params.tools ?...<omitted>...}) is not a constructor[39m
+[36m [2m❯[22m getAnthropicClient src/agent.ts:[2m120:24[22m[39m
+    [90m118|[39m [35mfunction[39m [34mgetAnthropicClient[39m()[33m:[39m [33mAnthropic[39m {
+    [90m119|[39m   [35mif[39m (_anthropicClient [33m===[39m [35mnull[39m) {
+    [90m120|[39m     _anthropicClient = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }…
+    [90m   |[39m                        [31m^[39m
+    [90m121|[39m   }
+    [90m122|[39m   [35mreturn[39m _anthropicClient[33m;[39m
+[90m [2m❯[22m Module.runAgent src/agent.ts:[2m917:18[22m[39m
+[90m [2m❯[22m src/__tests__/agent-task7a.test.ts:[2m320:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/agent-task7a.test.ts[2m > [22magent.ts — Task-7a: Life events tool definitions[2m > [22mAC2: Tool definitions include proper parameter descriptions[2m > [22mcreate_life_event should have input_schema with parameter descriptions
+[31m[1mTypeError[22m: () => ({ messages: { create: vi.fn(async (params) => {
+				capturedTools = params.tools ?...<omitted>...}) is not a constructor[39m
+[36m [2m❯[22m getAnthropicClient src/agent.ts:[2m120:24[22m[39m
+    [90m118|[39m [35mfunction[39m [34mgetAnthropicClient[39m()[33m:[39m [33mAnthropic[39m {
+    [90m119|[39m   [35mif[39m (_anthropicClient [33m===[39m [35mnull[39m) {
+    [90m120|[39m     _anthropicClient = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }…
+    [90m   |[39m                        [31m^[39m
+    [90m121|[39m   }
+    [90m122|[39m   [35mreturn[39m _anthropicClient[33m;[39m
+[90m [2m❯[22m Module.runAgent src/agent.ts:[2m917:18[22m[39m
+[90m [2m❯[22m src/__tests__/agent-task7a.test.ts:[2m340:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/agent-task7a.test.ts[2m > [22magent.ts — Task-7a: Life events tool definitions[2m > [22mAC2: Tool definitions include proper parameter descriptions[2m > [22mget_upcoming_life_events should have input_schema with parameter descriptions
+[31m[1mTypeError[22m: () => ({ messages: { create: vi.fn(async (params) => {
+				capturedTools = params.tools ?...<omitted>...}) is not a constructor[39m
+[36m [2m❯[22m getAnthropicClient src/agent.ts:[2m120:24[22m[39m
+    [90m118|[39m [35mfunction[39m [34mgetAnthropicClient[39m()[33m:[39m [33mAnthropic[39m {
+    [90m119|[39m   [35mif[39m (_anthropicClient [33m===[39m [35mnull[39m) {
+    [90m120|[39m     _anthropicClient = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }…
+    [90m   |[39m                        [31m^[39m
+    [90m121|[39m   }
+    [90m122|[39m   [35mreturn[39m _anthropicClient[33m;[39m
+[90m [2m❯[22m Module.runAgent src/agent.ts:[2m917:18[22m[39m
+[90m [2m❯[22m src/__tests__/agent-task7a.test.ts:[2m380:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/agent-task7a.test.ts[2m > [22magent.ts — Task-7a: Life events tool definitions[2m > [22mAC2: Tool definitions include proper parameter descriptions[2m > [22mcreate_life_event should have description field
+[31m[1mTypeError[22m: () => ({ messages: { create: vi.fn(async (params) => {
+				capturedTools = params.tools ?...<omitted>...}) is not a constructor[39m
+[36m [2m❯[22m getAnthropicClient src/agent.ts:[2m120:24[22m[39m
+    [90m118|[39m [35mfunction[39m [34mgetAnthropicClient[39m()[33m:[39m [33mAnthropic[39m {
+    [90m119|[39m   [35mif[39m (_anthropicClient [33m===[39m [35mnull[39m) {
+    [90m120|[39m     _anthropicClient = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }…
+    [90m   |[39m                        [31m^[39m
+    [90m121|[39m   }
+    [90m122|[39m   [35mreturn[39m _anthropicClient[33m;[39m
+[90m [2m❯[22m Module.runAgent src/agent.ts:[2m917:18[22m[39m
+[90m [2m❯[22m src/__tests__/agent-task7a.test.ts:[2m415:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/agent-task7a.test.ts[2m > [22magent.ts — Task-7a: Life events tool definitions[2m > [22mAC2: Tool definitions include proper parameter descriptions[2m > [22mget_upcoming_life_events should have description field
+[31m[1mTypeError[22m: () => ({ messages: { create: vi.fn(async (params) => {
+				capturedTools = params.tools ?...<omitted>...}) is not a constructor[39m
+[36m [2m❯[22m getAnthropicClient src/agent.ts:[2m120:24[22m[39m
+    [90m118|[39m [35mfunction[39m [34mgetAnthropicClient[39m()[33m:[39m [33mAnthropic[39m {
+    [90m119|[39m   [35mif[39m (_anthropicClient [33m===[39m [35mnull[39m) {
+    [90m120|[39m     _anthropicClient = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }…
+    [90m   |[39m                        [31m^[39m
+    [90m121|[39m   }
+    [90m122|[39m   [35mreturn[39m _anthropicClient[33m;[39m
+[90m [2m❯[22m Module.runAgent src/agent.ts:[2m917:18[22m[39m
+[90m [2m❯[22m src/__tests__/agent-task7a.test.ts:[2m434:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/agent-task7a.test.ts[2m > [22magent.ts — Task-7a: Life events tool definitions[2m > [22mAC3: Tool name sets updated to include new tools[2m > [22mshould route create_life_event to executeLifeEventsTool
+[31m[1mTypeError[22m: () => ({ messages: { create: vi.fn(async (_params) => {
+					return {
+						stop_reason: ...<omitted>...}) is not a constructor[39m
+[36m [2m❯[22m getAnthropicClient src/agent.ts:[2m120:24[22m[39m
+    [90m118|[39m [35mfunction[39m [34mgetAnthropicClient[39m()[33m:[39m [33mAnthropic[39m {
+    [90m119|[39m   [35mif[39m (_anthropicClient [33m===[39m [35mnull[39m) {
+    [90m120|[39m     _anthropicClient = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }…
+    [90m   |[39m                        [31m^[39m
+    [90m121|[39m   }
+    [90m122|[39m   [35mreturn[39m _anthropicClient[33m;[39m
+[90m [2m❯[22m Module.runAgent src/agent.ts:[2m917:18[22m[39m
+[90m [2m❯[22m src/__tests__/agent-task7a.test.ts:[2m547:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/agent-task7a.test.ts[2m > [22magent.ts — Task-7a: Life events tool definitions[2m > [22mAC3: Tool name sets updated to include new tools[2m > [22mshould route get_upcoming_life_events to executeLifeEventsTool
+[31m[1mTypeError[22m: () => ({ messages: { create: vi.fn(async (_params) => {
+					return {
+						stop_reason: ...<omitted>...}) is not a constructor[39m
+[36m [2m❯[22m getAnthropicClient src/agent.ts:[2m120:24[22m[39m
+    [90m118|[39m [35mfunction[39m [34mgetAnthropicClient[39m()[33m:[39m [33mAnthropic[39m {
+    [90m119|[39m   [35mif[39m (_anthropicClient [33m===[39m [35mnull[39m) {
+    [90m120|[39m     _anthropicClient = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }…
+    [90m   |[39m                        [31m^[39m
+    [90m121|[39m   }
+    [90m122|[39m   [35mreturn[39m _anthropicClient[33m;[39m
+[90m [2m❯[22m Module.runAgent src/agent.ts:[2m917:18[22m[39m
+[90m [2m❯[22m src/__tests__/agent-task7a.test.ts:[2m644:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m19 passed[39m[22m[90m (20)[39m
+[2m      Tests [22m [1m[31m9 failed[39m[22m[2m | [22m[1m[32m530 passed[39m[22m[90m (539)[39m
+[2m   Start at [22m 18:54:49
+[2m   Duration [22m 6.21s[2m (transform 1.53s, setup 0ms, import 1.85s, tests 11.85s, environment 3ms)[22m
+
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/agent.ts,title=src/__tests__/agent-task7a.test.ts > agent.ts — Task-7a%3A Life events tool definitions > AC1%3A Life events tool definitions added to TOOL_DEFINITIONS > should include create_life_event tool definition,line=120,column=24::TypeError: () => ({ messages: { create: vi.fn(async (params) => {%0A				capturedTools = params.tools ?...<omitted>...}) is not a constructor%0A ❯ getAnthropicClient src/agent.ts:120:24%0A ❯ Module.runAgent src/agent.ts:917:18%0A ❯ src/__tests__/agent-task7a.test.ts:286:7%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/agent.ts,title=src/__tests__/agent-task7a.test.ts > agent.ts — Task-7a%3A Life events tool definitions > AC1%3A Life events tool definitions added to TOOL_DEFINITIONS > should include get_upcoming_life_events tool definition,line=120,column=24::TypeError: () => ({ messages: { create: vi.fn(async (params) => {%0A				capturedTools = params.tools ?...<omitted>...}) is not a constructor%0A ❯ getAnthropicClient src/agent.ts:120:24%0A ❯ Module.runAgent src/agent.ts:917:18%0A ❯ src/__tests__/agent-task7a.test.ts:303:7%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/agent.ts,title=src/__tests__/agent-task7a.test.ts > agent.ts — Task-7a%3A Life events tool definitions > AC1%3A Life events tool definitions added to TOOL_DEFINITIONS > should have both life events tools in TOOL_DEFINITIONS,line=120,column=24::TypeError: () => ({ messages: { create: vi.fn(async (params) => {%0A				capturedTools = params.tools ?...<omitted>...}) is not a constructor%0A ❯ getAnthropicClient src/agent.ts:120:24%0A ❯ Module.runAgent src/agent.ts:917:18%0A ❯ src/__tests__/agent-task7a.test.ts:320:7%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/agent.ts,title=src/__tests__/agent-task7a.test.ts > agent.ts — Task-7a%3A Life events tool definitions > AC2%3A Tool definitions include proper parameter descriptions > create_life_event should have input_schema with parameter descriptions,line=120,column=24::TypeError: () => ({ messages: { create: vi.fn(async (params) => {%0A				capturedTools = params.tools ?...<omitted>...}) is not a constructor%0A ❯ getAnthropicClient src/agent.ts:120:24%0A ❯ Module.runAgent src/agent.ts:917:18%0A ❯ src/__tests__/agent-task7a.test.ts:340:7%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/agent.ts,title=src/__tests__/agent-task7a.test.ts > agent.ts — Task-7a%3A Life events tool definitions > AC2%3A Tool definitions include proper parameter descriptions > get_upcoming_life_events should have input_schema with parameter descriptions,line=120,column=24::TypeError: () => ({ messages: { create: vi.fn(async (params) => {%0A				capturedTools = params.tools ?...<omitted>...}) is not a constructor%0A ❯ getAnthropicClient src/agent.ts:120:24%0A ❯ Module.runAgent src/agent.ts:917:18%0A ❯ src/__tests__/agent-task7a.test.ts:380:7%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/agent.ts,title=src/__tests__/agent-task7a.test.ts > agent.ts — Task-7a%3A Life events tool definitions > AC2%3A Tool definitions include proper parameter descriptions > create_life_event should have description field,line=120,column=24::TypeError: () => ({ messages: { create: vi.fn(async (params) => {%0A				capturedTools = params.tools ?...<omitted>...}) is not a constructor%0A ❯ getAnthropicClient src/agent.ts:120:24%0A ❯ Module.runAgent src/agent.ts:917:18%0A ❯ src/__tests__/agent-task7a.test.ts:415:7%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/agent.ts,title=src/__tests__/agent-task7a.test.ts > agent.ts — Task-7a%3A Life events tool definitions > AC2%3A Tool definitions include proper parameter descriptions > get_upcoming_life_events should have description field,line=120,column=24::TypeError: () => ({ messages: { create: vi.fn(async (params) => {%0A				capturedTools = params.tools ?...<omitted>...}) is not a constructor%0A ❯ getAnthropicClient src/agent.ts:120:24%0A ❯ Module.runAgent src/agent.ts:917:18%0A ❯ src/__tests__/agent-task7a.test.ts:434:7%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/agent.ts,title=src/__tests__/agent-task7a.test.ts > agent.ts — Task-7a%3A Life events tool definitions > AC3%3A Tool name sets updated to include new tools > should route create_life_event to executeLifeEventsTool,line=120,column=24::TypeError: () => ({ messages: { create: vi.fn(async (_params) => {%0A					return {%0A						stop_reason: ...<omitted>...}) is not a constructor%0A ❯ getAnthropicClient src/agent.ts:120:24%0A ❯ Module.runAgent src/agent.ts:917:18%0A ❯ src/__tests__/agent-task7a.test.ts:547:7%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/agent.ts,title=src/__tests__/agent-task7a.test.ts > agent.ts — Task-7a%3A Life events tool definitions > AC3%3A Tool name sets updated to include new tools > should route get_upcoming_life_events to executeLifeEventsTool,line=120,column=24::TypeError: () => ({ messages: { create: vi.fn(async (_params) => {%0A					return {%0A						stop_reason: ...<omitted>...}) is not a constructor%0A ❯ getAnthropicClient src/agent.ts:120:24%0A ❯ Module.runAgent src/agent.ts:917:18%0A ❯ src/__tests__/agent-task7a.test.ts:644:7%0A%0A
+/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/orchestrator@0.0.1 test: `vitest run --config vitest.config.ts`
+Exit status 1

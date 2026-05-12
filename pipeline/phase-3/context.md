@@ -120,3 +120,18 @@
 - **Error handling consistency**: All nudges functions catch exceptions and return JSON strings with error objects rather than throwing. This maintains the tool interface contract and prevents crashes in the agent loop.
 
 ---
+## task-7a — Add life events tool definitions to agent
+
+**Files:** packages/orchestrator/src/agent.ts
+
+- **Security pattern for external tool results**: All tools that return external or user-provided data must be included in the untrusted content labeling condition at lines 1153-1157 in `agent.ts`. This includes database content that contains user input (person names, event details, notes, etc.).
+
+- **Life events tool integration**: The life events tools (`create_life_event`, `get_upcoming_life_events`) are now properly integrated into the agent's tool execution pipeline with security labeling. They follow the same pattern as other external tools (Gmail, Todoist, Calendar).
+
+- **Tool name set pattern**: New tool modules should define their tool names in a `const TOOL_NAMES = new Set<string>([...])` and add this set to both the tool routing logic in `executeTool()` and the untrusted content labeling condition if the tools return external data.
+
+- **Security rule compliance**: Any tool that returns data from external APIs, databases, or user input must have its results wrapped in `<untrusted>` tags to prevent prompt injection attacks when the results are passed to the Anthropic API.
+
+- **Agent tool definitions structure**: Tool definitions are organized by module (calendar, todoist, gmail, people, life events) and combined into the main `TOOL_DEFINITIONS` array. Each module maintains its own tool definitions and executor function.
+
+---
