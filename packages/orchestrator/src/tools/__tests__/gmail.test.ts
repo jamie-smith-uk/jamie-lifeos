@@ -5,7 +5,7 @@
  * and extracts implied calendar events and tasks with structured data.
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { executeGmailTool } from "../gmail";
 
 describe("Gmail Tools", () => {
@@ -33,7 +33,7 @@ describe("Gmail Tools", () => {
         expect(parsed.calendar_events.length).toBeGreaterThan(0);
 
         const flightEvent = parsed.calendar_events.find(
-          (e: { type: string }) => e.type === "flight"
+          (e: { type: string }) => e.type === "flight",
         );
         expect(flightEvent).toBeDefined();
         expect(flightEvent).toHaveProperty("confirmation_number", "ABC123");
@@ -62,7 +62,7 @@ describe("Gmail Tools", () => {
         expect(parsed.calendar_events.length).toBeGreaterThanOrEqual(2);
 
         const flightEvents = parsed.calendar_events.filter(
-          (e: { type: string }) => e.type === "flight"
+          (e: { type: string }) => e.type === "flight",
         );
         expect(flightEvents.length).toBeGreaterThanOrEqual(2);
       });
@@ -85,8 +85,7 @@ describe("Gmail Tools", () => {
 
         const checkInTask = parsed.tasks.find(
           (t: { title: string }) =>
-            t.title.toLowerCase().includes("check-in") ||
-            t.title.toLowerCase().includes("checkin")
+            t.title.toLowerCase().includes("check-in") || t.title.toLowerCase().includes("checkin"),
         );
         expect(checkInTask).toBeDefined();
         expect(checkInTask).toHaveProperty("due_date");
@@ -113,7 +112,7 @@ describe("Gmail Tools", () => {
         expect(parsed.calendar_events).toBeInstanceOf(Array);
 
         const meetingEvent = parsed.calendar_events.find(
-          (e: { type: string }) => e.type === "meeting"
+          (e: { type: string }) => e.type === "meeting",
         );
         expect(meetingEvent).toBeDefined();
         expect(meetingEvent).toHaveProperty("title", "Q2 Planning Session");
@@ -140,7 +139,7 @@ describe("Gmail Tools", () => {
 
         const parsed = JSON.parse(result);
         const meetingEvent = parsed.calendar_events.find(
-          (e: { type: string }) => e.type === "meeting"
+          (e: { type: string }) => e.type === "meeting",
         );
         expect(meetingEvent).toBeDefined();
         expect(meetingEvent).toHaveProperty("timezone");
@@ -164,8 +163,7 @@ describe("Gmail Tools", () => {
 
         const prepTask = parsed.tasks.find(
           (t: { title: string }) =>
-            t.title.toLowerCase().includes("prepare") ||
-            t.title.toLowerCase().includes("budget")
+            t.title.toLowerCase().includes("prepare") || t.title.toLowerCase().includes("budget"),
         );
         expect(prepTask).toBeDefined();
       });
@@ -189,8 +187,7 @@ describe("Gmail Tools", () => {
 
         const deadlineTask = parsed.tasks.find(
           (t: { title: string }) =>
-            t.title.toLowerCase().includes("redesign") ||
-            t.title.toLowerCase().includes("mockup")
+            t.title.toLowerCase().includes("redesign") || t.title.toLowerCase().includes("mockup"),
         );
         expect(deadlineTask).toBeDefined();
         expect(deadlineTask).toHaveProperty("due_date");
@@ -232,7 +229,7 @@ describe("Gmail Tools", () => {
         const task = parsed.tasks.find(
           (t: { title: string }) =>
             t.title.toLowerCase().includes("contract") ||
-            t.title.toLowerCase().includes("signature")
+            t.title.toLowerCase().includes("signature"),
         );
         expect(task).toBeDefined();
         expect(task).toHaveProperty("priority");
@@ -402,8 +399,7 @@ describe("Gmail Tools", () => {
         expect(parsed.tasks).toBeInstanceOf(Array);
 
         const urgentTask = parsed.tasks.find(
-          (t: { priority: string }) =>
-            t.priority === "high" || t.priority === "urgent"
+          (t: { priority: string }) => t.priority === "high" || t.priority === "urgent",
         );
         expect(urgentTask).toBeDefined();
       });
@@ -524,10 +520,10 @@ describe("Gmail Tools", () => {
         expect(parsed.tasks).toBeInstanceOf(Array);
 
         const flightEvent = parsed.calendar_events.find(
-          (e: { type: string }) => e.type === "flight"
+          (e: { type: string }) => e.type === "flight",
         );
         const meetingEvent = parsed.calendar_events.find(
-          (e: { type: string }) => e.type === "meeting"
+          (e: { type: string }) => e.type === "meeting",
         );
 
         expect(flightEvent).toBeDefined();

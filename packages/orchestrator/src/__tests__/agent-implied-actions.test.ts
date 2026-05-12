@@ -13,8 +13,8 @@
  * - Test confirmation expiry (10 minute window)
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { ConfirmationPayload } from "@lifeos/shared";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // In-memory store for mocking database
@@ -464,9 +464,7 @@ describe("Agent implied actions integration (task-5b)", () => {
         logger: MOCK_LOGGER,
       }));
 
-      const { saveConfirmation, loadConfirmation, clearConfirmation } = await import(
-        "../agent.js"
-      );
+      const { saveConfirmation, loadConfirmation, clearConfirmation } = await import("../agent.js");
 
       const payload: ConfirmationPayload = {
         action: "create_event",
