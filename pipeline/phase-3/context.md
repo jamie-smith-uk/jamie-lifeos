@@ -46,3 +46,10 @@
 - **Timestamp handling**: Use PostgreSQL's `now()` function for database timestamps rather than JavaScript Date objects to ensure consistent timezone handling and precision. Convert database timestamps to ISO strings in response objects using `.toISOString()`.
 
 ---
+## task-4b — Add tests for log_interaction function
+
+**Files:** packages/orchestrator/src/tools/__tests__/people.test.ts, packages/orchestrator/vitest.config.ts, packages/orchestrator/tsconfig.json
+
+⚠ task-4b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
