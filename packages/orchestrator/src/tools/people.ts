@@ -283,6 +283,77 @@ async function getLapsedContacts(input: string): Promise<string> {
   }
 }
 
+/**
+ * Logs an interaction with a person and updates their last_interaction_at.
+ */
+async function logInteraction(input: string): Promise<string> {
+  const log = logger.child({ tool: "log_interaction" });
+
+  try {
+    const params = JSON.parse(input);
+    const { name, notes } = params;
+
+    if (!name || typeof name !== "string" || name.trim().length === 0) {
+      return JSON.stringify({ error: "log_interaction: 'name' is required and cannot be empty" });
+    }
+
+    // Find the person using fuzzy matching
+    const existingPerson = await findPersonByNameForUpdate(name);
+    if (!existingPerson) {
+      return JSON.stringify({
+        success: false,
+        message: `No person found matching "${name}"`,
+      });
+    }
+
+    // Create interaction record
+    const interactionResult = await pool.query(
+      `INSERT INTO interactions (person_id, notes, interacted_at, created_at)
+       VALUES ($1, $2, now(), now())
+       RETURNING id, person_id, notes, interacted_at, created_at`,
+      [existingPerson.id, notes || null],
+    );
+
+    const interaction = interactionResult.rows[0];
+
+    // Update person's last_interaction_at
+    const personUpdateResult = await pool.query(
+      `UPDATE people 
+       SET last_interaction_at = now()
+       WHERE id = $1
+       RETURNING id, name, relationship_type, how_known, notes, last_interaction_at`,
+      [existingPerson.id],
+    );
+
+    const updatedPerson = rowToPersonInfo(personUpdateResult.rows[0]);
+
+    log.info(
+      {
+        person_id: updatedPerson.id,
+        name: updatedPerson.name,
+        interaction_id: interaction.id,
+      },
+      "Interaction logged",
+    );
+
+    return JSON.stringify({
+      success: true,
+      interaction: {
+        id: String(interaction.id),
+        person_id: interaction.person_id,
+        notes: interaction.notes,
+        interacted_at: interaction.interacted_at.toISOString(),
+        created_at: interaction.created_at.toISOString(),
+      },
+      person: updatedPerson,
+      message: `Logged interaction with ${updatedPerson.name}`,
+    });
+  } catch (err) {
+    log.error({ err: String(err) }, "log_interaction failed");
+    return JSON.stringify({ error: "log_interaction failed" });
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Tool Executor
 // ---------------------------------------------------------------------------
@@ -303,6 +374,9 @@ export async function executePeopleTool(operation: string, input: string): Promi
 
     case "get_lapsed_contacts":
       return getLapsedContacts(input);
+
+    case "log_interaction":
+      return logInteraction(input);
 
     default:
       return JSON.stringify({ error: `Unknown people operation: ${operation}` });
