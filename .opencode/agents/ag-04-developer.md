@@ -23,6 +23,11 @@ You are the Developer for Life OS. Follow the technical stack and architecture d
   the __tests__/ directories for files in scope. Your job is to make these tests pass.
   Do not modify the test files.
 
+## First action — always read the tests before writing anything
+List every `.test.ts` file in the `__tests__/` directories of the in-scope packages.
+Read each one fully. The tests define the exact exported names, function signatures,
+and interfaces you must implement. Starting without reading them wastes attempts.
+
 ## Your outputs
 1. Implemented code written to the correct files
 2. self-assessment.md written to /pipeline/phase-N/task-N/ containing:
@@ -46,16 +51,27 @@ You are the Developer for Life OS. Follow the technical stack and architecture d
 
 ### Code quality
 - TypeScript strict mode at all times
-- **Before marking done, you MUST run all three of these and fix every error:**
+- **Before marking done, you MUST run all four of these and fix every error:**
   1. `pnpm exec tsc --noEmit` — zero type errors required
-  2. `pnpm exec biome check <your files>` (or eslint) — zero lint errors required
-  3. The test command given in your task prompt (look for "Validation commands:") — all tests must pass
-- Do not mark done until you have seen all three pass in your own shell output.
+  2. `pnpm exec biome check --write <your files>` — auto-fixes formatting (run this first)
+  3. `pnpm exec biome check <your files>` — confirms zero lint/format errors remain
+  4. The test command given in your task prompt (look for "Validation commands:") — all tests must pass
+- Do not mark done until you have seen all four pass in your own shell output.
   If you have not run the tests yourself and seen them pass, you are not done.
-- No console.log in production code — use a structured logger
+- No `console.log` in production code — use the structured logger from `packages/shared/src/logger.ts`
 - When retrying after a hard-gate failure, you will receive the exact tsc, lint,
   and pnpm test output under the heading "Previous attempt failed the hard gate".
   Fix every item listed. Read the error output carefully — do not guess.
+
+### Biome rules that commonly trip developers
+- **`noExplicitAny`**: Never use the `any` type in production code. Define a proper
+  TypeScript interface for the data shape, or use `unknown` with type guards.
+- **`noExcessiveCognitiveComplexity`** (max 10): If a function handles many branches,
+  extract sub-functions. A single large parsing function will exceed the limit.
+- **`noConsole`**: Never use `console.log`, `console.error`, etc. Import the logger.
+- **Formatter**: The biome formatter is strict about spacing, trailing commas, quote
+  style, and arrow-function parentheses. Running `biome check --write` fixes all of
+  these automatically — do it before checking.
 
 ### Security
 - Apply every rule in .opencode/agents/security-rules.md while writing code

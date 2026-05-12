@@ -330,9 +330,9 @@ if [ ! -f "$GREEN_VERIFIED_FILE" ]; then
   GREEN_PASSED=false
   GATE_FAILURES=""
 
-  while [ "$GREEN_PASSED" = false ] && [ "$DEV_ATTEMPTS" -lt 3 ]; do
+  while [ "$GREEN_PASSED" = false ] && [ "$DEV_ATTEMPTS" -lt 5 ]; do
     DEV_ATTEMPTS=$(( DEV_ATTEMPTS + 1 ))
-    log "GREEN phase — Developer attempt $DEV_ATTEMPTS/3..."
+    log "GREEN phase — Developer attempt $DEV_ATTEMPTS/5..."
 
     CONTEXT_BLOCK=$(build_context_block)
     DEV_PROMPT="You are AG-04 Developer for Life OS.
@@ -340,17 +340,30 @@ Implement this task to make the failing tests pass:
 $TASK_SPEC
 ${CONTEXT_BLOCK:+
 $CONTEXT_BLOCK}
-Failing tests are in __tests__/. Make them pass. Do not modify tests.
 
-## Validation commands (run ALL THREE before marking done)
+## Step 1 — Read the tests BEFORE writing any code
+List and read every \`.test.ts\` file in the __tests__/ directories of the in-scope
+packages. The tests define the exact function signatures, exported names, and
+interfaces you must implement. Do not guess — read the tests first.
+
+## Biome lint rules — violations will fail the gate
+- **noExplicitAny**: Never use \`any\` type. Use specific TypeScript interfaces or \`unknown\`.
+- **noExcessiveCognitiveComplexity**: Max complexity 10 per function. Break complex logic
+  into small focused helpers — do not write one large function.
+- **noConsole**: Never use \`console.log\`. Use the logger from \`packages/shared/src/logger.ts\`.
+- **Formatter**: Run \`biome check --write\` (step 2 below) to auto-fix spacing/quotes/commas.
+
+## Validation commands (run in order before marking done)
 
 \`\`\`bash
 pnpm exec tsc --noEmit
+pnpm exec biome check --write ${FILES_IN_SCOPE_JSON_EXPANDED:-packages/}
 pnpm exec biome check ${FILES_IN_SCOPE_JSON_EXPANDED:-packages/}
 pnpm${AFFECTED_PKGS:+ $AFFECTED_PKGS} test
 \`\`\`
 
-You are not done until you have run these yourself and seen zero errors and all tests passing.
+Step 2 (\`biome check --write\`) auto-fixes formatting. Step 3 confirms the result is clean.
+You are not done until all four pass with zero errors and all tests passing.
 
 Write self-assessment.md to $TASK_DIR/
 Apply all security rules. Use process.env.DATABASE_URL for DB connections."
@@ -388,7 +401,24 @@ $SCOPE_VIOLATIONS
 Only write to files listed in files_in_scope."
     fi
 
-    log "Running hard gate (tsc + eslint + pnpm test)..."
+    # Auto-fix biome formatting on in-scope files before the gate so trivial
+    # whitespace/comma/quote issues don't consume a developer attempt.
+    if grep -q '"@biomejs/biome"' "$REPO_ROOT/package.json" 2>/dev/null; then
+      mapfile -t _fmt_files < <(python3 -c "
+import json, os, sys
+files = json.loads(sys.argv[1])
+for f in files:
+    full = os.path.join('$REPO_ROOT', f)
+    if os.path.isfile(full):
+        print(full)
+" "$FILES_IN_SCOPE_JSON" 2>/dev/null)
+      if [ ${#_fmt_files[@]} -gt 0 ]; then
+        log "Auto-fixing biome formatting on in-scope files..."
+        (cd "$REPO_ROOT" && pnpm exec biome format --write "${_fmt_files[@]}" 2>/dev/null) || true
+      fi
+    fi
+
+    log "Running hard gate (tsc + biome check + pnpm test)..."
     IMPL_FAILURES=$(verify_implementation "$FILES_IN_SCOPE_JSON") || true
     # Only surface scope violations if implementation also failed (L-04 fix).
     # Scope violations alone are already reverted — penalising a passing attempt
@@ -439,10 +469,10 @@ REPORT
       run_code_health_checks "$TASK_ID" "$TASK_DIR" "$FILES_IN_SCOPE_JSON" "pre-refactor"
       log "GREEN phase: PASS"
     else
-      log "Hard gate: FAIL (attempt $DEV_ATTEMPTS/3)"
+      log "Hard gate: FAIL (attempt $DEV_ATTEMPTS/5)"
       printf "%s" "$GATE_FAILURES" > "$TASK_DIR/gate-failures-$DEV_ATTEMPTS.txt"
-      [ "$DEV_ATTEMPTS" -eq 3 ] && halt "Developer could not pass hard gate" "AG-04" \
-        "See $TASK_DIR/gate-failures-3.txt"
+      [ "$DEV_ATTEMPTS" -eq 5 ] && halt "Developer could not pass hard gate" "AG-04" \
+        "See $TASK_DIR/gate-failures-5.txt"
     fi
   done
 else
