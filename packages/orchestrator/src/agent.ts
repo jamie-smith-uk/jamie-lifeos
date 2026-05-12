@@ -92,6 +92,7 @@ import {
 } from "./tools/calendar.js";
 import { executeGmailTool } from "./tools/gmail.js";
 import { executeLifeEventsTool } from "./tools/life_events.js";
+import { executeNudgesTool } from "./tools/nudges.js";
 import { executePeopleTool } from "./tools/people.js";
 import { executeToDoistTool } from "./tools/todoist.js";
 
@@ -553,6 +554,55 @@ const lifeEventsToolDefinitions: Anthropic.Tool[] = [
   },
 ];
 
+/**
+ * Nudges tool definitions.
+ * Task-7b (Phase 3): Nudges tools added — create_nudge, dismiss_nudge.
+ */
+const nudgesToolDefinitions: Anthropic.Tool[] = [
+  {
+    name: "create_nudge",
+    description:
+      "Create a new nudge record to remind about a person or life event at a specific time.",
+    input_schema: {
+      type: "object",
+      properties: {
+        person_id: {
+          type: "number",
+          description: "The ID of the person this nudge is for.",
+        },
+        life_event_id: {
+          type: "number",
+          description: "Optional ID of the life event this nudge is related to.",
+        },
+        message: {
+          type: "string",
+          description: "The reminder message for the nudge.",
+        },
+        trigger_at: {
+          type: "string",
+          description:
+            "When to trigger the nudge in ISO 8601 format (e.g. '2026-05-13T10:00:00Z').",
+        },
+      },
+      required: ["person_id", "message", "trigger_at"],
+    },
+  },
+  {
+    name: "dismiss_nudge",
+    description: "Dismiss a nudge by setting its status to dismissed.",
+    input_schema: {
+      type: "object",
+      properties: {
+        nudge_id: {
+          type: "number",
+          description: "The ID of the nudge to dismiss.",
+        },
+      },
+      required: ["nudge_id"],
+    },
+  },
+];
+
 const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   ...calendarReadToolDefinitions,
   ...calendarWriteToolDefinitions,
@@ -561,6 +611,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   ...gmailToolDefinitions,
   ...peopleToolDefinitions,
   ...lifeEventsToolDefinitions,
+  ...nudgesToolDefinitions,
 ];
 
 // ---------------------------------------------------------------------------
@@ -635,6 +686,14 @@ const PEOPLE_TOOL_NAMES = new Set<string>([
 const LIFE_EVENTS_TOOL_NAMES = new Set<string>(["create_life_event", "get_upcoming_life_events"]);
 
 /**
+ * The set of nudges tool names handled by executeNudgesTool.
+ * Task-7b (Phase 3): All nudges operations are registered here so the
+ * tool loop routes them to the nudges module rather than the unknown-tool
+ * handler.
+ */
+const NUDGES_TOOL_NAMES = new Set<string>(["create_nudge", "dismiss_nudge"]);
+
+/**
  * The set of write tool names that must be confirmation-gated.
  * When the agent calls one of these tools, the tool loop intercepts the call,
  * saves a ConfirmationPayload, and returns a synthetic tool_result so the
@@ -681,6 +740,13 @@ async function executeTool(toolName: string, toolInput: Record<string, unknown>)
   // Delegate life events tools to the life events module (Task-7a, Phase 3).
   if (LIFE_EVENTS_TOOL_NAMES.has(toolName)) {
     return executeLifeEventsTool(toolName, JSON.stringify(toolInput));
+  }
+
+  // Delegate nudges tools to the nudges module (Task-7b, Phase 3).
+  if (NUDGES_TOOL_NAMES.has(toolName)) {
+    // Add operation field to the input for nudges routing
+    const nudgesInput = { ...toolInput, operation: toolName };
+    return executeNudgesTool(JSON.stringify(nudgesInput));
   }
 
   // Unknown tool — return a graceful error so the model can handle it.
@@ -1149,12 +1215,13 @@ export async function runAgent(msg: IncomingMessage): Promise<AgentResult> {
         }
 
         // Security: Wrap external tool results in <untrusted> tags
-        // Gmail, Todoist, Calendar, and Life Events tools return external API data
+        // Gmail, Todoist, Calendar, Life Events, and Nudges tools return external API data
         if (
           GMAIL_TOOL_NAMES.has(toolUse.name) ||
           TODOIST_TOOL_NAMES.has(toolUse.name) ||
           CALENDAR_TOOL_NAMES.has(toolUse.name) ||
-          LIFE_EVENTS_TOOL_NAMES.has(toolUse.name)
+          LIFE_EVENTS_TOOL_NAMES.has(toolUse.name) ||
+          NUDGES_TOOL_NAMES.has(toolUse.name)
         ) {
           resultContent = `<untrusted>\n${resultContent}\n</untrusted>`;
         }
