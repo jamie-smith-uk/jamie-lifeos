@@ -499,6 +499,24 @@ const peopleToolDefinitions: Anthropic.Tool[] = [
       required: [],
     },
   },
+  {
+    name: "log_interaction",
+    description: "Log an interaction with a person and update their last interaction timestamp.",
+    input_schema: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          description: "The person's name to log interaction for (supports fuzzy matching).",
+        },
+        notes: {
+          type: "string",
+          description: "Optional notes about the interaction.",
+        },
+      },
+      required: ["name"],
+    },
+  },
 ];
 
 /**
