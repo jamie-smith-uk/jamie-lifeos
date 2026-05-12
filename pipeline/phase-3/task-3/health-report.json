@@ -1,0 +1,9 @@
+{
+  "task_id": "task-3",
+  "files_checked": [
+    "migrations/004_update_people_interactions.sql"
+  ],
+  "complex_functions": [],
+  "duplication_pct": null,
+  "coverage_pct": null
+}

@@ -16,3 +16,18 @@
 - **Timestamp columns**: Use `timestamptz` type with `DEFAULT now()` for created_at fields, consistent with the architecture specification
 
 ---
+## task-3 — Update people table schema to match architecture
+
+**Files:** migrations/004_update_people_interactions.sql
+
+- **Migration file naming convention**: Continue using the pattern `00X_table_name.sql` where X is the sequential migration number (this task created `004_update_people_interactions.sql`)
+
+- **Idempotent migrations**: Always use `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` for adding columns to ensure migrations can be run multiple times safely without errors
+
+- **Timestamp column patterns**: Use `timestamptz NOT NULL DEFAULT now()` for audit columns like `created_at` and `updated_at`. For optional timestamp columns that represent when events occurred (like `interacted_at`), use `timestamptz` without NOT NULL constraint
+
+- **Database schema evolution**: The people table now has proper audit columns (`created_at`, `updated_at`) and the interactions table distinguishes between when an interaction happened (`interacted_at`) vs when the record was created (`created_at`)
+
+- **Migration testing**: Integration tests for migrations require a live PostgreSQL connection and are excluded from the standard test run. The unit test suite validates overall code quality and TypeScript compilation
+
+---
