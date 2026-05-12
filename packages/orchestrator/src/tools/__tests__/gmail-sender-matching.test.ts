@@ -5,10 +5,10 @@
  * with person information from the people database.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("Gmail Sender Matching", () => {
-  let gmailModule: typeof import("../gmail");
+  let _gmailModule: typeof import("../gmail");
 
   beforeEach(async () => {
     vi.resetModules();
@@ -32,7 +32,7 @@ describe("Gmail Sender Matching", () => {
         GOOGLE_REFRESH_TOKEN: "test-refresh-token",
       },
     }));
-    gmailModule = await import("../gmail");
+    _gmailModule = await import("../gmail");
   });
 
   afterEach(() => {
@@ -82,14 +82,7 @@ describe("Gmail Sender Matching", () => {
 
     it("should return null for invalid email formats", async () => {
       // Test invalid formats
-      const invalidCases = [
-        "not-an-email",
-        "missing@domain",
-        "@nodomain.com",
-        "user@",
-        "",
-        "   ",
-      ];
+      const invalidCases = ["not-an-email", "missing@domain", "@nodomain.com", "user@", "", "   "];
 
       for (const testCase of invalidCases) {
         expect(testCase).toBeTruthy();
@@ -822,7 +815,7 @@ describe("Gmail Sender Matching", () => {
 
     it("should handle missing From header gracefully", async () => {
       const { pool } = await import("@lifeos/shared");
-      const mockQuery = vi.mocked(pool.query);
+      const _mockQuery = vi.mocked(pool.query);
 
       global.fetch = vi.fn();
       const mockFetch = vi.mocked(global.fetch);
@@ -853,9 +846,7 @@ describe("Gmail Sender Matching", () => {
           id: "msg1",
           threadId: "thread1",
           payload: {
-            headers: [
-              { name: "Subject", value: "No From header" },
-            ],
+            headers: [{ name: "Subject", value: "No From header" }],
           },
           snippet: "Test",
         }),
@@ -867,7 +858,7 @@ describe("Gmail Sender Matching", () => {
 
     it("should handle malformed email addresses in From header", async () => {
       const { pool } = await import("@lifeos/shared");
-      const mockQuery = vi.mocked(pool.query);
+      const _mockQuery = vi.mocked(pool.query);
 
       global.fetch = vi.fn();
       const mockFetch = vi.mocked(global.fetch);
