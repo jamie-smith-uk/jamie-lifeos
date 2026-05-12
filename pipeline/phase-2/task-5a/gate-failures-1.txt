@@ -1,0 +1,35 @@
+=== biome ===
+packages/orchestrator/src/tools/gmail.ts:411:10 lint/complexity/noExcessiveCognitiveComplexity ━━━━━━━━━━
+
+  × Excessive complexity of 12 detected (max: 10).
+  
+    409 │ const URGENT_PATTERNS = [/urgent/gi, /asap/gi, /critical/gi, /immediate/gi, /high\s*priority/gi];
+    410 │ 
+  > 411 │ function parseDate(dateStr: string | undefined): string | null {
+        │          ^^^^^^^^^
+    412 │   if (!dateStr) return null;
+    413 │ 
+  
+  i Please refactor this function to reduce its complexity score from 12 to the max allowed complexity 10.
+  
+
+packages/orchestrator/src/tools/gmail.ts:896:10 lint/complexity/noExcessiveCognitiveComplexity ━━━━━━━━━━
+
+  × Excessive complexity of 11 detected (max: 10).
+  
+    894 │ }
+    895 │ 
+  > 896 │ function extractFlightCheckInTasks(text: string): Task[] {
+        │          ^^^^^^^^^^^^^^^^^^^^^^^^^
+    897 │   const tasks: Task[] = [];
+    898 │ 
+  
+  i Please refactor this function to reduce its complexity score from 11 to the max allowed complexity 10.
+  
+
+Checked 2 files in 33ms. No fixes applied.
+Found 2 errors.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  

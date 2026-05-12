@@ -16,3 +16,18 @@
 
 
 ---
+## task-5a — Implement email content parsing for implied actions
+
+**Files:** packages/orchestrator/src/tools/gmail.ts, packages/shared/vitest.config.ts
+
+- **Email parsing patterns**: The `extract_implied_actions` function in `packages/orchestrator/src/tools/gmail.ts` uses regex patterns for date/time extraction. Key patterns are stored in `DATE_PATTERNS` and `TIME_PATTERNS` constants for reusability.
+
+- **Structured data format**: All extracted calendar events and tasks include `confidence` scores (0.0-1.0) and `source` fields set to "email_content" for traceability. This pattern should be maintained for consistency.
+
+- **Security content limits**: Email content is truncated to 10,000 characters before processing to prevent performance issues and potential security risks. This limit is applied in the `extractImpliedActions` function.
+
+- **Helper function pattern**: Complex parsing functions were broken down into smaller helpers (e.g., `parseRelativeDate`, `calculateCheckInDate`) to maintain code complexity under Biome's limit of 10. Use this pattern for future parsing logic.
+
+- **Error handling**: All parsing functions return empty arrays or null values on errors rather than throwing exceptions, ensuring the tool always returns valid JSON to the agent.
+
+---

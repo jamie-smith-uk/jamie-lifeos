@@ -1,0 +1,10 @@
+{
+  "task_id": "task-5a",
+  "files_checked": [
+    "packages/orchestrator/src/tools/gmail.ts",
+    "packages/shared/vitest.config.ts"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 0,
+  "coverage_pct": null
+}
