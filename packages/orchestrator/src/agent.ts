@@ -317,6 +317,7 @@ const todoistToolDefinitions: Anthropic.Tool[] = [
 /**
  * Gmail tool definitions (Task-4, Phase 2).
  * Provides read-only inbox access: get_inbox_summary and get_thread.
+ * Task-5b: Added extract_implied_actions for parsing email content.
  */
 const gmailToolDefinitions: Anthropic.Tool[] = [
   {
@@ -342,6 +343,25 @@ const gmailToolDefinitions: Anthropic.Tool[] = [
         },
       },
       required: ["thread_id"],
+    },
+  },
+  {
+    name: "extract_implied_actions",
+    description:
+      "Extract implied calendar events and tasks from email content. Analyzes email text to identify meetings, flights, deadlines, and action items that could be added to calendar or task list.",
+    input_schema: {
+      type: "object",
+      properties: {
+        email_content: {
+          type: "string",
+          description: "The full text content of the email to analyze.",
+        },
+        subject: {
+          type: "string",
+          description: "The email subject line.",
+        },
+      },
+      required: ["email_content"],
     },
   },
 ];
@@ -395,8 +415,13 @@ const TODOIST_TOOL_NAMES = new Set<string>([
  * Task-4 (Phase 2): Both Gmail read operations are registered here so the
  * tool loop routes them to the Gmail module rather than the unknown-tool
  * handler.
+ * Task-5b: Added extract_implied_actions for email content parsing.
  */
-const GMAIL_TOOL_NAMES = new Set<string>(["get_inbox_summary", "get_thread"]);
+const GMAIL_TOOL_NAMES = new Set<string>([
+  "get_inbox_summary",
+  "get_thread",
+  "extract_implied_actions",
+]);
 
 /**
  * The set of write tool names that must be confirmation-gated.
