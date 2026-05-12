@@ -2231,22 +2231,31 @@ log ""
 log "========================================"
 log "Phase $PHASE validation — smoke-test gate"
 log "========================================"
-log "Running tsc, biome, and pnpm test across all packages..."
 
-VAL_TSC_OUT=$(cd "$REPO_ROOT" && pnpm exec tsc --noEmit 2>&1) || true
-VAL_TSC_EXIT=${PIPESTATUS[0]:-$?}
-[ $VAL_TSC_EXIT -eq 0 ] && log "  tsc:   PASS" || log "  tsc:   FAIL"
+run_smoke_tests() {
+  VAL_TSC_OUT=$(cd "$REPO_ROOT" && pnpm exec tsc --noEmit 2>&1) || true
+  VAL_TSC_EXIT=$?
+  [ $VAL_TSC_EXIT -eq 0 ] && log "  tsc:   PASS" || log "  tsc:   FAIL"
 
-VAL_BIOME_OUT=$(cd "$REPO_ROOT" && pnpm exec biome check packages/ 2>&1) || true
-VAL_BIOME_EXIT=${PIPESTATUS[0]:-$?}
-[ $VAL_BIOME_EXIT -eq 0 ] && log "  biome: PASS" || log "  biome: FAIL"
+  VAL_BIOME_OUT=$(cd "$REPO_ROOT" && pnpm exec biome check packages/ 2>&1) || true
+  VAL_BIOME_EXIT=$?
+  [ $VAL_BIOME_EXIT -eq 0 ] && log "  biome: PASS" || log "  biome: FAIL"
 
-VAL_TEST_OUT=$(cd "$REPO_ROOT" && pnpm test 2>&1) || true
-VAL_TEST_EXIT=${PIPESTATUS[0]:-$?}
-[ $VAL_TEST_EXIT -eq 0 ] && log "  tests: PASS" || log "  tests: FAIL"
+  VAL_TEST_OUT=$(cd "$REPO_ROOT" && pnpm test 2>&1) || true
+  VAL_TEST_EXIT=$?
+  [ $VAL_TEST_EXIT -eq 0 ] && log "  tests: PASS" || log "  tests: FAIL"
+}
 
-if [ $VAL_TSC_EXIT -eq 0 ] && [ $VAL_BIOME_EXIT -eq 0 ] && [ $VAL_TEST_EXIT -eq 0 ]; then
-  cat > "$PIPELINE_DIR/validation-report.md" <<VALEOF
+VAL_ATTEMPTS=0
+MAX_VAL_ATTEMPTS=2
+
+while true; do
+  VAL_ATTEMPTS=$(( VAL_ATTEMPTS + 1 ))
+  log "Running tsc, biome, and pnpm test (attempt $VAL_ATTEMPTS/$MAX_VAL_ATTEMPTS)..."
+  run_smoke_tests
+
+  if [ $VAL_TSC_EXIT -eq 0 ] && [ $VAL_BIOME_EXIT -eq 0 ] && [ $VAL_TEST_EXIT -eq 0 ]; then
+    cat > "$PIPELINE_DIR/validation-report.md" <<VALEOF
 # Phase $PHASE Validation — PASS
 
 **Verdict: PASS**
@@ -2266,26 +2275,29 @@ $VAL_TEST_OUT
 \`\`\`
 VALEOF
 
-  git -C "$REPO_ROOT" tag "phase-$PHASE-complete" 2>/dev/null \
-    && log "Git tag phase-$PHASE-complete created" \
-    || log "Git tag already exists — skipping"
+    git -C "$REPO_ROOT" tag "phase-$PHASE-complete" 2>/dev/null \
+      && log "Git tag phase-$PHASE-complete created" \
+      || log "Git tag already exists — skipping"
 
-  printf "\a"  # terminal bell
-  log ""
-  log "========================================"
-  log "Phase $PHASE: COMPLETE"
-  log "========================================"
-else
-  FAILURES=""
-  [ $VAL_TSC_EXIT   -ne 0 ] && FAILURES+="=== tsc ===
+    printf "\a"  # terminal bell
+    log ""
+    log "========================================"
+    log "Phase $PHASE: COMPLETE"
+    log "========================================"
+    break
+  fi
+
+  # Build the failure summary the developer will receive
+  VAL_FAILURES=""
+  [ $VAL_TSC_EXIT   -ne 0 ] && VAL_FAILURES+="=== tsc ===
 $VAL_TSC_OUT
 
 "
-  [ $VAL_BIOME_EXIT -ne 0 ] && FAILURES+="=== biome ===
+  [ $VAL_BIOME_EXIT -ne 0 ] && VAL_FAILURES+="=== biome ===
 $VAL_BIOME_OUT
 
 "
-  [ $VAL_TEST_EXIT  -ne 0 ] && FAILURES+="=== pnpm test ===
+  [ $VAL_TEST_EXIT  -ne 0 ] && VAL_FAILURES+="=== pnpm test ===
 $VAL_TEST_OUT
 
 "
@@ -2295,18 +2307,63 @@ $VAL_TEST_OUT
 
 **Verdict: FAIL**
 
-One or more smoke-test checks failed. Every task's hard gate passed individually,
-so these failures indicate a cross-task integration issue or an infrastructure
-problem. Fix the failures below and re-run the pipeline.
+One or more smoke-test checks failed at the phase level. Every task's individual
+hard gate passed, so this is likely a cross-task integration issue. Fix the
+failures below — do not modify test files.
 
 ## Failures
 
-$FAILURES
+$VAL_FAILURES
 VALEOF
 
-  halt "Phase $PHASE smoke-test gate failed" "validation" \
-    "See pipeline/phase-$PHASE/validation-report.md for details."
-fi
+  if [ $VAL_ATTEMPTS -ge $MAX_VAL_ATTEMPTS ]; then
+    halt "Phase $PHASE smoke-test gate failed after $VAL_ATTEMPTS attempt(s)" "validation" \
+      "See pipeline/phase-$PHASE/validation-report.md for details."
+  fi
+
+  # ── Developer fix cycle ──────────────────────────────────────────────────
+  log "Smoke-test gate FAIL — running Developer fix cycle $VAL_ATTEMPTS..."
+
+  ALL_TASKS_FILES_JSON=$(python3 -c "
+import json
+data = json.load(open('$PIPELINE_DIR/task-manifest.json'))
+tasks = data if isinstance(data, list) else data.get('tasks', [])
+files = []
+for t in tasks:
+    if isinstance(t, dict):
+        files.extend(t.get('files_in_scope', []))
+print(json.dumps(list(dict.fromkeys(files))))
+" 2>/dev/null || echo "[]")
+
+  VAL_FIX_PROMPT="You are AG-04 Developer for Life OS.
+
+The phase $PHASE smoke-test gate failed. Fix every error listed below. These checks
+all passed per-task during implementation, so this is likely a cross-task
+integration issue.
+
+<gate-failures>
+$VAL_FAILURES
+</gate-failures>
+
+Files in scope across all phase $PHASE tasks:
+$ALL_TASKS_FILES_JSON
+
+Rules:
+- Read the failing files before changing anything.
+- Fix only source files — never modify test files.
+- Run \`pnpm exec tsc --noEmit\`, \`pnpm exec biome check --write <files>\`, and
+  \`pnpm test\` yourself before marking done. All three must pass.
+- Apply all security rules. Do not introduce new issues."
+
+  run_agent "ag-04-developer" "$VAL_FIX_PROMPT" \
+    "$PIPELINE_DIR/val-fix-dev-$VAL_ATTEMPTS.md" 900
+
+  SCOPE_VIOLATIONS=$(check_scope_compliance "$ALL_TASKS_FILES_JSON") || true
+  if [ -n "$SCOPE_VIOLATIONS" ]; then
+    log "Reverting out-of-scope changes from validation fix..."
+    revert_scope_violations <<< "$SCOPE_VIOLATIONS"
+  fi
+done
 
 # ── Phase metrics summary ─────────────────────────────────────────────────────
 python3 - "$PIPELINE_DIR/metrics.json" "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" <<'PYEOF'
