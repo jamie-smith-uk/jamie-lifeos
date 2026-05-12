@@ -215,6 +215,22 @@ print('true' if any('migration' in f.lower() or f.startswith('migrations/') for 
 " "$FILES_IN_SCOPE_JSON")
 AC_COUNT=$(python3 -c "import json,sys; print(len(json.loads(sys.argv[1]).get('acceptance_criteria',[])))" "$TASK_JSON")
 
+AFFECTED_PKGS=$(python3 -c "
+import json, sys, re
+files = json.loads(sys.argv[1])
+pkgs = set()
+for f in files:
+    m = re.match(r'packages/([^/]+)/', f)
+    if m: pkgs.add('@lifeos/' + m.group(1))
+print(' '.join('--filter ' + p for p in sorted(pkgs)) if pkgs else '')
+" "$FILES_IN_SCOPE_JSON" 2>/dev/null)
+
+FILES_IN_SCOPE_JSON_EXPANDED=$(python3 -c "
+import json, sys
+files = json.loads(sys.argv[1])
+print(' '.join(files) if files else 'packages/')
+" "$FILES_IN_SCOPE_JSON" 2>/dev/null)
+
 # ── Setup task directory ──────────────────────────────────────────────────────
 SLUG=$(echo "$TASK_ID" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g')
 TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
@@ -325,6 +341,17 @@ $TASK_SPEC
 ${CONTEXT_BLOCK:+
 $CONTEXT_BLOCK}
 Failing tests are in __tests__/. Make them pass. Do not modify tests.
+
+## Validation commands (run ALL THREE before marking done)
+
+\`\`\`bash
+pnpm exec tsc --noEmit
+pnpm exec biome check ${FILES_IN_SCOPE_JSON_EXPANDED:-packages/}
+pnpm${AFFECTED_PKGS:+ $AFFECTED_PKGS} test --run
+\`\`\`
+
+You are not done until you have run these yourself and seen zero errors and all tests passing.
+
 Write self-assessment.md to $TASK_DIR/
 Apply all security rules. Use process.env.DATABASE_URL for DB connections."
 

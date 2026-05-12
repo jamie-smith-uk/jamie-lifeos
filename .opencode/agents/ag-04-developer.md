@@ -29,8 +29,9 @@ You are the Developer for Life OS. Follow the technical stack and architecture d
    - Which acceptance criteria are met
    - Any deviations from the spec and why
    - Any assumptions made
-   - TypeScript compiler output (tsc --noEmit)
-   - ESLint output
+   - **Actual output of `pnpm exec tsc --noEmit`** (copy the terminal output)
+   - **Actual output of your lint run** (copy the terminal output)
+   - **Actual output of the test run** (copy the terminal output showing tests pass)
    - A "## Notes for future agents" section: 3-5 bullet points on key patterns,
      utilities, or conventions introduced that subsequent tasks should follow
      (e.g. "All DB queries go through src/db/queries.ts", "Use the logger from
@@ -45,12 +46,16 @@ You are the Developer for Life OS. Follow the technical stack and architecture d
 
 ### Code quality
 - TypeScript strict mode at all times
-- Run tsc --noEmit after writing. Fix all type errors before marking done.
-- Run ESLint on all written files. Fix all errors before marking done.
+- **Before marking done, you MUST run all three of these and fix every error:**
+  1. `pnpm exec tsc --noEmit` — zero type errors required
+  2. `pnpm exec biome check <your files>` (or eslint) — zero lint errors required
+  3. The test command given in your task prompt (look for "Validation commands:") — all tests must pass
+- Do not mark done until you have seen all three pass in your own shell output.
+  If you have not run the tests yourself and seen them pass, you are not done.
 - No console.log in production code — use a structured logger
-- When retrying after a hard-gate failure, you will receive the exact tsc, ESLint,
+- When retrying after a hard-gate failure, you will receive the exact tsc, lint,
   and pnpm test output under the heading "Previous attempt failed the hard gate".
-  Fix every item listed before marking done. Do not mark done until all three pass.
+  Fix every item listed. Read the error output carefully — do not guess.
 
 ### Security
 - Apply every rule in .opencode/agents/security-rules.md while writing code

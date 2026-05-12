@@ -1278,6 +1278,23 @@ $TASK_JSON
   # HAS_MIGRATION, SECURITY_SENSITIVE, TASK_JSON, TASK_TITLE, FILES_IN_SCOPE_JSON,
   # and AC_COUNT are all set by the single-parse eval block above.
 
+  # Pre-compute package filter and expanded file list for the DEV_PROMPT validation block.
+  AFFECTED_PKGS=$(python3 -c "
+import json, sys, re
+files = json.loads(sys.argv[1])
+pkgs = set()
+for f in files:
+    m = re.match(r'packages/([^/]+)/', f)
+    if m: pkgs.add('@lifeos/' + m.group(1))
+print(' '.join('--filter ' + p for p in sorted(pkgs)) if pkgs else '')
+" "$FILES_IN_SCOPE_JSON" 2>/dev/null)
+
+  FILES_IN_SCOPE_JSON_EXPANDED=$(python3 -c "
+import json, sys
+files = json.loads(sys.argv[1])
+print(' '.join(files) if files else 'packages/')
+" "$FILES_IN_SCOPE_JSON" 2>/dev/null)
+
   # ── RED phase: Tester writes failing tests ────────────────────────────────
   TESTS_WRITTEN_FILE="$TASK_DIR/tests-written.txt"
 
@@ -1385,6 +1402,17 @@ $ARCH_DOC
 The Tester has already written failing tests in the __tests__/ directories.
 Your job is to write implementation code that makes every test pass.
 Do not modify the test files.
+
+## Validation commands (run ALL THREE before marking done)
+
+\`\`\`bash
+pnpm exec tsc --noEmit
+pnpm exec biome check ${FILES_IN_SCOPE_JSON_EXPANDED:-packages/}
+pnpm${AFFECTED_PKGS:+ $AFFECTED_PKGS} test --run
+\`\`\`
+
+You are not done until you have run these yourself and seen zero errors and all tests passing.
+Copy the output of each into self-assessment.md as proof.
 
 Write self-assessment.md to pipeline/phase-$PHASE/$TASK_ID/
 Follow your system prompt exactly. Apply all security rules.
