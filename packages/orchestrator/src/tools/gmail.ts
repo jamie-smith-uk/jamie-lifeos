@@ -352,6 +352,666 @@ async function getThread(input: Record<string, unknown>): Promise<string> {
 }
 
 // ---------------------------------------------------------------------------
+// extract_implied_actions
+// ---------------------------------------------------------------------------
+
+interface CalendarEvent {
+  type: string;
+  title: string;
+  start_time?: string;
+  end_time?: string;
+  all_day?: boolean;
+  location?: string;
+  meeting_link?: string;
+  attendees?: string[];
+  timezone?: string;
+  confirmation_number?: string;
+  departure_time?: string;
+  arrival_time?: string;
+  from?: string;
+  to?: string;
+  confidence: number;
+  source: string;
+}
+
+interface Task {
+  title: string;
+  due_date?: string;
+  priority?: string;
+  confidence: number;
+  source: string;
+}
+
+interface ExtractedActions {
+  calendar_events: CalendarEvent[];
+  tasks: Task[];
+}
+
+// Date parsing patterns
+const DATE_PATTERNS = [
+  // ISO 8601: 2026-05-20
+  /(\d{4}-\d{2}-\d{2})/g,
+  // US format: 5/25/2026, 05/25/2026
+  /(\d{1,2}\/\d{1,2}\/\d{4})/g,
+  // Long format: May 22, 2026
+  /((?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4})/gi,
+  // Short format: May 22
+  /((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2})/gi,
+];
+
+// Time parsing patterns
+const TIME_PATTERNS = [
+  // 10:30 AM, 2:00 PM, 14:30:00
+  /(\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)/g,
+];
+
+// Priority indicators
+const URGENT_PATTERNS = [/urgent/gi, /asap/gi, /critical/gi, /immediate/gi, /high\s*priority/gi];
+
+function parseRelativeDate(lowerStr: string, today: Date): string | null {
+  if (lowerStr.includes("today")) {
+    return today.toISOString().split("T")[0] || null;
+  }
+
+  if (lowerStr.includes("tomorrow")) {
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split("T")[0] || null;
+  }
+
+  if (lowerStr.includes("friday")) {
+    const friday = new Date(today);
+    const daysUntilFriday = (5 - today.getDay() + 7) % 7;
+    friday.setDate(today.getDate() + (daysUntilFriday === 0 ? 7 : daysUntilFriday));
+    return friday.toISOString().split("T")[0] || null;
+  }
+
+  return null;
+}
+
+function parseDate(dateStr: string | undefined): string | null {
+  if (!dateStr) return null;
+
+  try {
+    const today = new Date();
+    const lowerStr = dateStr.toLowerCase().trim();
+
+    // Handle relative dates
+    const relativeDate = parseRelativeDate(lowerStr, today);
+    if (relativeDate) return relativeDate;
+
+    // Try parsing as standard date
+    const parsed = new Date(dateStr);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString().split("T")[0] || null;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: time parsing requires multiple format checks
+function parseTime(timeStr: string | undefined): { time: string; timezone?: string } | null {
+  if (!timeStr) return null;
+
+  const match = timeStr.match(/(\d{1,2}:\d{2}(?::\d{2})?)\s*([AP]M)?\s*([A-Z]{2,3})?/i);
+  if (!match) return null;
+
+  let [, time, ampm, tz] = match;
+
+  // Convert to 24-hour format if needed
+  if (ampm && time) {
+    const timeParts = time.split(":");
+    const hours = timeParts[0];
+    const minutes = timeParts[1];
+    if (hours && minutes) {
+      let hour24 = parseInt(hours, 10);
+      if (ampm.toUpperCase() === "PM" && hour24 !== 12) {
+        hour24 += 12;
+      } else if (ampm.toUpperCase() === "AM" && hour24 === 12) {
+        hour24 = 0;
+      }
+      time = `${hour24.toString().padStart(2, "0")}:${minutes}`;
+    }
+  }
+
+  if (!time) return null;
+
+  return {
+    time: time.length === 5 ? `${time}:00` : time,
+    ...(tz && { timezone: tz }),
+  };
+}
+
+function extractDatesAndTimes(text: string): { dates: string[]; times: string[] } {
+  const dates: string[] = [];
+  for (const pattern of DATE_PATTERNS) {
+    dates.push(
+      ...Array.from(text.matchAll(pattern))
+        .map((m) => m[1])
+        .filter((item): item is string => Boolean(item)),
+    );
+  }
+
+  const times: string[] = [];
+  for (const pattern of TIME_PATTERNS) {
+    times.push(
+      ...Array.from(text.matchAll(pattern))
+        .map((m) => m[1])
+        .filter((item): item is string => Boolean(item)),
+    );
+  }
+
+  return { dates, times };
+}
+
+function createFlightEvent(
+  from: string,
+  to: string,
+  date: string | null,
+  timeInfo: { time: string; timezone?: string } | null,
+  confirmationNumber?: string,
+): CalendarEvent {
+  const event: CalendarEvent = {
+    type: "flight",
+    title: `Flight ${from} to ${to}`,
+    from,
+    to,
+    confidence: 0.8,
+    source: "email_content",
+  };
+
+  if (timeInfo && date) {
+    event.departure_time = `${date}T${timeInfo.time}`;
+    event.start_time = event.departure_time;
+    if (timeInfo.timezone) {
+      event.timezone = timeInfo.timezone;
+    }
+  }
+
+  if (confirmationNumber) {
+    event.confirmation_number = confirmationNumber;
+  }
+
+  return event;
+}
+
+function createGenericFlightEvent(
+  date: string | null,
+  timeInfo: { time: string; timezone?: string } | null,
+  confirmationNumber?: string,
+): CalendarEvent {
+  const event: CalendarEvent = {
+    type: "flight",
+    title: "Flight",
+    confidence: 0.6,
+    source: "email_content",
+  };
+
+  if (timeInfo && date) {
+    event.start_time = `${date}T${timeInfo.time}`;
+    if (timeInfo.timezone) {
+      event.timezone = timeInfo.timezone;
+    }
+  }
+
+  if (confirmationNumber) {
+    event.confirmation_number = confirmationNumber;
+  }
+
+  return event;
+}
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: flight parsing requires multiple pattern checks
+function extractFlightEvents(content: string, subject: string): CalendarEvent[] {
+  const events: CalendarEvent[] = [];
+  const text = `${subject}\n${content}`;
+
+  // Look for flight confirmation patterns
+  const flightMatches = Array.from(text.matchAll(/flight:?\s*([A-Z]{2}\d+)/gi));
+  const confirmationMatches = Array.from(
+    text.matchAll(/confirmation\s*(?:number|#):?\s*([A-Z0-9]+)/gi),
+  );
+  const routeMatches = Array.from(text.matchAll(/(\w{3})\s*(?:to|→)\s*(\w{3})/gi));
+
+  if (flightMatches.length > 0 || confirmationMatches.length > 0 || routeMatches.length > 0) {
+    const { dates, times } = extractDatesAndTimes(text);
+
+    // Create flight events
+    let eventCount = 0;
+    for (const routeMatch of routeMatches) {
+      const [, from, to] = routeMatch;
+      if (from && to) {
+        const date = dates[eventCount] ? parseDate(dates[eventCount]) : null;
+        const timeInfo = times[eventCount] ? parseTime(times[eventCount]) : null;
+
+        if (date) {
+          const confirmationNumber = confirmationMatches[0] ? confirmationMatches[0][1] : undefined;
+          const event = createFlightEvent(from, to, date, timeInfo, confirmationNumber);
+          events.push(event);
+          eventCount++;
+        }
+      }
+    }
+
+    // If no route matches but we have flight info, create a generic flight event
+    if (events.length === 0 && (flightMatches.length > 0 || confirmationMatches.length > 0)) {
+      const date = dates[0] ? parseDate(dates[0]) : null;
+      const timeInfo = times[0] ? parseTime(times[0]) : null;
+
+      if (date) {
+        const confirmationNumber = confirmationMatches[0] ? confirmationMatches[0][1] : undefined;
+        const event = createGenericFlightEvent(date, timeInfo, confirmationNumber);
+        events.push(event);
+      }
+    }
+  }
+
+  return events;
+}
+
+function extractMeetingDetails(text: string): {
+  timeRangeMatches: RegExpMatchArray[];
+  locationMatches: RegExpMatchArray[];
+  linkMatches: RegExpMatchArray[];
+  attendeeMatches: RegExpMatchArray[];
+} {
+  return {
+    timeRangeMatches: Array.from(
+      text.matchAll(/(\d{1,2}:\d{2}(?:\s*[AP]M)?)\s*[-–]\s*(\d{1,2}:\d{2}(?:\s*[AP]M)?)/gi),
+    ),
+    locationMatches: Array.from(text.matchAll(/location:?\s*(.+?)(?:\n|organizer|attendees|$)/gi)),
+    linkMatches: Array.from(
+      text.matchAll(/(?:zoom|teams|meet|join)\s*(?:link|url)?:?\s*(https?:\/\/[^\s]+)/gi),
+    ),
+    attendeeMatches: Array.from(text.matchAll(/attendees:?\s*(.+?)(?:\n|$)/gi)),
+  };
+}
+
+function createMeetingEvent(title: string): CalendarEvent {
+  return {
+    type: "meeting",
+    title,
+    confidence: 0.8,
+    source: "email_content",
+  };
+}
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: time handling requires multiple format checks
+function addTimeToEvent(
+  event: CalendarEvent,
+  date: string,
+  timeRangeMatches: RegExpMatchArray[],
+  times: string[],
+): void {
+  if (timeRangeMatches.length > 0) {
+    const match = timeRangeMatches[0];
+    if (match?.[1] && match[2]) {
+      const startTime = match[1];
+      const endTime = match[2];
+      const startTimeInfo = parseTime(startTime);
+      const endTimeInfo = parseTime(endTime);
+
+      if (startTimeInfo) {
+        event.start_time = `${date}T${startTimeInfo.time}`;
+        if (startTimeInfo.timezone) {
+          event.timezone = startTimeInfo.timezone;
+        }
+      }
+
+      if (endTimeInfo) {
+        event.end_time = `${date}T${endTimeInfo.time}`;
+      }
+    }
+  } else if (times.length > 0) {
+    const timeInfo = parseTime(times[0]);
+    if (timeInfo) {
+      event.start_time = `${date}T${timeInfo.time}`;
+      if (timeInfo.timezone) {
+        event.timezone = timeInfo.timezone;
+      }
+    }
+  }
+}
+
+function addLocationAndAttendeesToEvent(
+  event: CalendarEvent,
+  locationMatches: RegExpMatchArray[],
+  linkMatches: RegExpMatchArray[],
+  attendeeMatches: RegExpMatchArray[],
+): void {
+  if (locationMatches.length > 0 && locationMatches[0] && locationMatches[0][1]) {
+    event.location = locationMatches[0][1].trim();
+  }
+
+  if (linkMatches.length > 0 && linkMatches[0] && linkMatches[0][1]) {
+    event.meeting_link = linkMatches[0][1];
+    if (!event.location) {
+      event.location = "Virtual";
+    }
+  }
+
+  if (attendeeMatches.length > 0 && attendeeMatches[0] && attendeeMatches[0][1]) {
+    const attendeeStr = attendeeMatches[0][1];
+    event.attendees = attendeeStr
+      .split(/[,;]/)
+      .map((email) => email.trim())
+      .filter(Boolean);
+  }
+}
+
+function extractAllDayEvents(text: string, subject: string): CalendarEvent[] {
+  const events: CalendarEvent[] = [];
+
+  if (text.toLowerCase().includes("all day")) {
+    const { dates } = extractDatesAndTimes(text);
+
+    if (dates.length > 0) {
+      const date = parseDate(dates[0]);
+      if (date) {
+        const title = subject.replace(/all\s*day/gi, "").trim() || "All Day Event";
+        events.push({
+          type: "event",
+          title,
+          start_time: date,
+          all_day: true,
+          confidence: 0.7,
+          source: "email_content",
+        });
+      }
+    }
+  }
+
+  return events;
+}
+
+function extractMeetingEvents(content: string, subject: string): CalendarEvent[] {
+  const events: CalendarEvent[] = [];
+  const text = `${subject}\n${content}`;
+
+  // Look for meeting patterns
+  const meetingMatches = Array.from(text.matchAll(/meeting:?\s*(.+?)(?:\n|date|time|$)/gi));
+
+  if (meetingMatches.length > 0 || subject.toLowerCase().includes("meeting")) {
+    const { dates, times } = extractDatesAndTimes(text);
+    const { timeRangeMatches, locationMatches, linkMatches, attendeeMatches } =
+      extractMeetingDetails(text);
+
+    const title = meetingMatches[0]?.[1]
+      ? meetingMatches[0][1].trim()
+      : subject.replace(/meeting:?\s*/gi, "").trim() || "Meeting";
+
+    const date = dates[0] ? parseDate(dates[0]) : null;
+
+    if (date) {
+      const event = createMeetingEvent(title);
+      addTimeToEvent(event, date, timeRangeMatches, times);
+      addLocationAndAttendeesToEvent(event, locationMatches, linkMatches, attendeeMatches);
+      events.push(event);
+    }
+  }
+
+  // Check for all-day events
+  events.push(...extractAllDayEvents(text, subject));
+
+  return events;
+}
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: action item parsing requires multiple pattern checks
+function extractActionItems(text: string): Task[] {
+  const tasks: Task[] = [];
+  const actionItemMatches = Array.from(
+    text.matchAll(/(?:action\s*items?|todo|to\s*do):?\s*\n?((?:[-•*]\s*.+(?:\n|$))+)/gi),
+  );
+
+  for (const match of actionItemMatches) {
+    const itemsText = match[1];
+    if (itemsText) {
+      const items = itemsText
+        .split(/\n/)
+        .map((line) => line.replace(/^[-•*]\s*/, "").trim())
+        .filter(Boolean);
+
+      for (const item of items) {
+        if (item.length > 0) {
+          const priority = URGENT_PATTERNS.some((p) => p.test(item)) ? "high" : "normal";
+
+          tasks.push({
+            title: item,
+            priority,
+            confidence: 0.9,
+            source: "email_content",
+          });
+        }
+      }
+    }
+  }
+
+  return tasks;
+}
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: imperative task parsing requires multiple pattern checks
+function extractImperativeTasks(text: string): Task[] {
+  const tasks: Task[] = [];
+  const imperativeMatches = Array.from(text.matchAll(/(?:please|kindly)\s+(.+?)(?:\.|by|$)/gi));
+
+  for (const match of imperativeMatches) {
+    const action = match[1];
+    if (action) {
+      const actionText = action.trim();
+      if (actionText.length > 0) {
+        const priority = URGENT_PATTERNS.some((p) => p.test(actionText)) ? "high" : "normal";
+
+        // Extract deadline if present
+        let dueDate: string | null = null;
+        const deadlineMatch = actionText.match(/by\s+(.+?)(?:\.|$)/i);
+        if (deadlineMatch?.[1]) {
+          dueDate = parseDate(deadlineMatch[1]);
+        }
+
+        const task: Task = {
+          title: actionText,
+          priority,
+          confidence: 0.8,
+          source: "email_content",
+          ...(dueDate && { due_date: dueDate }),
+        };
+
+        tasks.push(task);
+      }
+    }
+  }
+
+  return tasks;
+}
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: deadline task parsing requires multiple pattern checks
+function extractDeadlineTasks(text: string): Task[] {
+  const tasks: Task[] = [];
+  const deadlineMatches = Array.from(text.matchAll(/deadline:?\s*(.+?)(?:\n|$)/gi));
+
+  for (const match of deadlineMatches) {
+    const deadlineText = match[1];
+    if (deadlineText) {
+      const date = parseDate(deadlineText.trim());
+
+      if (date) {
+        // Try to extract what the deadline is for
+        const matchIndex = match.index || 0;
+        const context = text.substring(Math.max(0, matchIndex - 100), matchIndex + 100);
+        const projectMatch = context.match(
+          /(?:project|task|assignment):?\s*(.+?)(?:\n|deadline)/gi,
+        );
+
+        const title = projectMatch?.[0]
+          ? projectMatch[0].replace(/(?:project|task|assignment):?\s*/gi, "").trim()
+          : "Complete task";
+
+        const priority = URGENT_PATTERNS.some((p) => p.test(context)) ? "high" : "normal";
+
+        tasks.push({
+          title,
+          due_date: date,
+          priority,
+          confidence: 0.8,
+          source: "email_content",
+        });
+      }
+    }
+  }
+
+  return tasks;
+}
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: relative deadline parsing requires multiple pattern checks
+function extractRelativeDeadlineTasks(text: string): Task[] {
+  const tasks: Task[] = [];
+  const relativeDeadlineMatches = Array.from(
+    text.matchAll(/by\s+(end\s+of\s+day|friday|thursday|tomorrow|today)/gi),
+  );
+
+  for (const match of relativeDeadlineMatches) {
+    const relativeDate = match[1];
+    if (relativeDate) {
+      const date = parseDate(relativeDate);
+
+      if (date) {
+        // Extract context around the deadline
+        const matchIndex = match.index || 0;
+        const context = text.substring(Math.max(0, matchIndex - 50), matchIndex);
+        const actionMatch = context.match(/(?:review|approve|confirm|send|complete)\s+(.+?)$/i);
+
+        const title = actionMatch?.[0] ? actionMatch[0].trim() : "Complete task";
+        const priority = URGENT_PATTERNS.some((p) => p.test(text)) ? "high" : "normal";
+
+        tasks.push({
+          title,
+          due_date: date,
+          priority,
+          confidence: 0.7,
+          source: "email_content",
+        });
+      }
+    }
+  }
+
+  return tasks;
+}
+
+function calculateCheckInDate(flightDate: string): string | null {
+  const checkInDate = new Date(flightDate);
+  checkInDate.setDate(checkInDate.getDate() - 1);
+  return checkInDate.toISOString().split("T")[0] || null;
+}
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: flight check-in parsing requires multiple checks
+function extractFlightCheckInTasks(text: string): Task[] {
+  const tasks: Task[] = [];
+
+  if (text.toLowerCase().includes("flight") && text.toLowerCase().includes("check")) {
+    const { dates } = extractDatesAndTimes(text);
+
+    if (dates.length > 0) {
+      const flightDate = parseDate(dates[0]);
+      if (flightDate) {
+        const checkInDateStr = calculateCheckInDate(flightDate);
+        if (checkInDateStr) {
+          tasks.push({
+            title: "Flight check-in",
+            due_date: checkInDateStr,
+            priority: "normal",
+            confidence: 0.7,
+            source: "email_content",
+          });
+        }
+      }
+    }
+  }
+
+  return tasks;
+}
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: preparation task parsing requires multiple pattern checks
+function extractPreparationTasks(text: string): Task[] {
+  const tasks: Task[] = [];
+
+  if (text.toLowerCase().includes("prepare") || text.toLowerCase().includes("preparation")) {
+    const prepMatches = Array.from(text.matchAll(/prepare\s+(.+?)(?:\.|before|by|$)/gi));
+
+    for (const match of prepMatches) {
+      const prepTask = match[1];
+      if (prepTask) {
+        const prepTaskText = prepTask.trim();
+        if (prepTaskText.length > 0) {
+          tasks.push({
+            title: `Prepare ${prepTaskText}`,
+            priority: "normal",
+            confidence: 0.8,
+            source: "email_content",
+          });
+        }
+      }
+    }
+  }
+
+  return tasks;
+}
+
+function extractTasks(content: string, subject: string): Task[] {
+  const text = `${subject}\n${content}`;
+  const tasks: Task[] = [];
+
+  // Extract different types of tasks
+  tasks.push(...extractActionItems(text));
+  tasks.push(...extractImperativeTasks(text));
+  tasks.push(...extractDeadlineTasks(text));
+  tasks.push(...extractRelativeDeadlineTasks(text));
+  tasks.push(...extractFlightCheckInTasks(text));
+  tasks.push(...extractPreparationTasks(text));
+
+  return tasks;
+}
+
+async function extractImpliedActions(input: Record<string, unknown>): Promise<string> {
+  try {
+    const emailContent = typeof input.email_content === "string" ? input.email_content : "";
+    const subject = typeof input.subject === "string" ? input.subject : "";
+
+    if (!emailContent && !subject) {
+      return JSON.stringify({
+        calendar_events: [],
+        tasks: [],
+      });
+    }
+
+    // Limit content length for security
+    const maxLength = 10000;
+    const truncatedContent =
+      emailContent.length > maxLength ? emailContent.substring(0, maxLength) : emailContent;
+
+    const result: ExtractedActions = {
+      calendar_events: [],
+      tasks: [],
+    };
+
+    // Extract different types of events and tasks
+    result.calendar_events.push(...extractFlightEvents(truncatedContent, subject));
+    result.calendar_events.push(...extractMeetingEvents(truncatedContent, subject));
+    result.tasks.push(...extractTasks(truncatedContent, subject));
+
+    return JSON.stringify(result);
+  } catch (err) {
+    log.error({ err: String(err) }, "extract_implied_actions failed");
+    return JSON.stringify({
+      calendar_events: [],
+      tasks: [],
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Unified executor
 // ---------------------------------------------------------------------------
 
@@ -369,6 +1029,9 @@ export async function executeGmailTool(
 
     case "get_thread":
       return getThread(input);
+
+    case "extract_implied_actions":
+      return extractImpliedActions(input);
 
     default:
       return JSON.stringify({ error: `Unknown Gmail operation: ${operation}` });
