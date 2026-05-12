@@ -21,18 +21,9 @@
  * The server is closed after each suite.
  */
 
-import {
-  describe,
-  it,
-  expect,
-  vi,
-  beforeAll,
-  afterAll,
-  beforeEach,
-  afterEach,
-} from "vitest";
 import http from "http";
-import { AddressInfo } from "net";
+import type { AddressInfo } from "net";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Environment — set required vars before any module that reads process.env
@@ -54,11 +45,7 @@ interface HttpResponse {
   body: string;
 }
 
-function httpPost(
-  port: number,
-  path: string,
-  payload: unknown,
-): Promise<HttpResponse> {
+function httpPost(port: number, path: string, payload: unknown): Promise<HttpResponse> {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify(payload);
     const options: http.RequestOptions = {
@@ -75,9 +62,7 @@ function httpPost(
       let data = "";
       res.setEncoding("utf8");
       res.on("data", (chunk) => (data += chunk));
-      res.on("end", () =>
-        resolve({ statusCode: res.statusCode ?? 0, body: data }),
-      );
+      res.on("end", () => resolve({ statusCode: res.statusCode ?? 0, body: data }));
     });
     req.on("error", reject);
     req.write(body);
@@ -135,8 +120,7 @@ async function startServer(port: number): Promise<ServerHandle> {
       TELEGRAM_BOT_TOKEN: "bot:test_token",
       TELEGRAM_ALLOWED_CHAT_ID: "123456",
       ANTHROPIC_API_KEY: "sk-ant-test",
-      DATABASE_URL:
-        "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
+      DATABASE_URL: "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
       DIGEST_CRON: "0 7 * * *",
       TZ: "Europe/London",
       ANTHROPIC_MODEL: "claude-sonnet-4-20250514",
@@ -158,7 +142,9 @@ async function startServer(port: number): Promise<ServerHandle> {
   // Mock the agent module so runAgent returns a stub response without
   // hitting the real Anthropic API or database.
   vi.doMock("../agent.js", () => ({
-      runAgent: vi.fn().mockResolvedValue({ text: "Agent not yet implemented.", showConfirmationKeyboard: false }),
+    runAgent: vi
+      .fn()
+      .mockResolvedValue({ text: "Agent not yet implemented.", showConfirmationKeyboard: false }),
     loadContext: vi.fn().mockResolvedValue([]),
     saveMessage: vi.fn().mockResolvedValue(undefined),
     loadConfirmation: vi.fn().mockResolvedValue(null),
@@ -183,9 +169,7 @@ async function startServer(port: number): Promise<ServerHandle> {
     server,
     runMigrationsMock,
     close: () =>
-      new Promise((resolve, reject) =>
-        server.close((err) => (err ? reject(err) : resolve())),
-      ),
+      new Promise((resolve, reject) => server.close((err) => (err ? reject(err) : resolve()))),
   };
 }
 
@@ -259,9 +243,7 @@ function getServerOnPort(port: number): Promise<http.Server> {
           }
         }
         reject(
-          new Error(
-            `Could not find http.Server listening on port ${port} via _getActiveHandles`,
-          ),
+          new Error(`Could not find http.Server listening on port ${port} via _getActiveHandles`),
         );
       } catch (e) {
         reject(e);
@@ -366,9 +348,7 @@ describe("AC1 — POST /message returns 200 and a text reply", () => {
         let data = "";
         res.setEncoding("utf8");
         res.on("data", (chunk) => (data += chunk));
-        res.on("end", () =>
-          resolve({ statusCode: res.statusCode ?? 0, body: data }),
-        );
+        res.on("end", () => resolve({ statusCode: res.statusCode ?? 0, body: data }));
       });
       req.on("error", reject);
       req.write(body);
@@ -553,8 +533,7 @@ describe("AC3 — migrations run before server accepts requests", () => {
         TELEGRAM_BOT_TOKEN: "bot:test_token",
         TELEGRAM_ALLOWED_CHAT_ID: "123456",
         ANTHROPIC_API_KEY: "sk-ant-test",
-        DATABASE_URL:
-          "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
+        DATABASE_URL: "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
         DIGEST_CRON: "0 7 * * *",
         TZ: "Europe/London",
         ANTHROPIC_MODEL: "claude-sonnet-4-20250514",
@@ -574,7 +553,9 @@ describe("AC3 — migrations run before server accepts requests", () => {
     }));
 
     vi.doMock("../agent.js", () => ({
-      runAgent: vi.fn().mockResolvedValue({ text: "stub response", showConfirmationKeyboard: false }),
+      runAgent: vi
+        .fn()
+        .mockResolvedValue({ text: "stub response", showConfirmationKeyboard: false }),
       loadContext: vi.fn().mockResolvedValue([]),
       saveMessage: vi.fn().mockResolvedValue(undefined),
       loadConfirmation: vi.fn().mockResolvedValue(null),
@@ -629,8 +610,7 @@ describe("AC3 — migrations run before server accepts requests", () => {
         TELEGRAM_BOT_TOKEN: "bot:test_token",
         TELEGRAM_ALLOWED_CHAT_ID: "123456",
         ANTHROPIC_API_KEY: "sk-ant-test",
-        DATABASE_URL:
-          "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
+        DATABASE_URL: "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
         DIGEST_CRON: "0 7 * * *",
         TZ: "Europe/London",
         ANTHROPIC_MODEL: "claude-sonnet-4-20250514",
@@ -650,7 +630,9 @@ describe("AC3 — migrations run before server accepts requests", () => {
     }));
 
     vi.doMock("../agent.js", () => ({
-      runAgent: vi.fn().mockResolvedValue({ text: "stub response", showConfirmationKeyboard: false }),
+      runAgent: vi
+        .fn()
+        .mockResolvedValue({ text: "stub response", showConfirmationKeyboard: false }),
       loadContext: vi.fn().mockResolvedValue([]),
       saveMessage: vi.fn().mockResolvedValue(undefined),
       loadConfirmation: vi.fn().mockResolvedValue(null),
@@ -702,8 +684,7 @@ describe("AC3 — migrations run before server accepts requests", () => {
         TELEGRAM_BOT_TOKEN: "bot:test_token",
         TELEGRAM_ALLOWED_CHAT_ID: "123456",
         ANTHROPIC_API_KEY: "sk-ant-test",
-        DATABASE_URL:
-          "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
+        DATABASE_URL: "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
         DIGEST_CRON: "0 7 * * *",
         TZ: "Europe/London",
         ANTHROPIC_MODEL: "claude-sonnet-4-20250514",
@@ -723,7 +704,9 @@ describe("AC3 — migrations run before server accepts requests", () => {
     }));
 
     vi.doMock("../agent.js", () => ({
-      runAgent: vi.fn().mockResolvedValue({ text: "stub response", showConfirmationKeyboard: false }),
+      runAgent: vi
+        .fn()
+        .mockResolvedValue({ text: "stub response", showConfirmationKeyboard: false }),
       loadContext: vi.fn().mockResolvedValue([]),
       saveMessage: vi.fn().mockResolvedValue(undefined),
       loadConfirmation: vi.fn().mockResolvedValue(null),
@@ -787,8 +770,7 @@ describe("AC4 — server listens on PORT env var, defaults to 3001", () => {
         TELEGRAM_BOT_TOKEN: "bot:test_token",
         TELEGRAM_ALLOWED_CHAT_ID: "123456",
         ANTHROPIC_API_KEY: "sk-ant-test",
-        DATABASE_URL:
-          "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
+        DATABASE_URL: "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
         DIGEST_CRON: "0 7 * * *",
         TZ: "Europe/London",
         ANTHROPIC_MODEL: "claude-sonnet-4-20250514",
@@ -808,7 +790,9 @@ describe("AC4 — server listens on PORT env var, defaults to 3001", () => {
     }));
 
     vi.doMock("../agent.js", () => ({
-      runAgent: vi.fn().mockResolvedValue({ text: "stub response", showConfirmationKeyboard: false }),
+      runAgent: vi
+        .fn()
+        .mockResolvedValue({ text: "stub response", showConfirmationKeyboard: false }),
       loadContext: vi.fn().mockResolvedValue([]),
       saveMessage: vi.fn().mockResolvedValue(undefined),
       loadConfirmation: vi.fn().mockResolvedValue(null),
@@ -840,7 +824,8 @@ describe("AC4 — server listens on PORT env var, defaults to 3001", () => {
     // Since we cannot import index.ts without a custom PORT (it would conflict
     // with other tests), we verify the default value is declared in shared/env.ts
     // by checking its compiled output.
-    const sharedEnvDist = "/Users/jamie/Documents/jamie-lifeos/packages/shared/dist/env.js";
+    const path = require("path") as typeof import("path");
+    const sharedEnvDist = path.resolve(__dirname, "../../../../packages/shared/dist/env.js");
     const fs = require("fs") as typeof import("fs");
     const content = fs.readFileSync(sharedEnvDist, "utf8");
     // env.ts contains OPTIONAL_DEFAULTS with PORT: "3001"
@@ -873,8 +858,7 @@ describe("AC4 — server listens on PORT env var, defaults to 3001", () => {
         TELEGRAM_BOT_TOKEN: "bot:test_token",
         TELEGRAM_ALLOWED_CHAT_ID: "123456",
         ANTHROPIC_API_KEY: "sk-ant-test",
-        DATABASE_URL:
-          "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
+        DATABASE_URL: "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
         DIGEST_CRON: "0 7 * * *",
         TZ: "Europe/London",
         ANTHROPIC_MODEL: "claude-sonnet-4-20250514",
@@ -894,7 +878,9 @@ describe("AC4 — server listens on PORT env var, defaults to 3001", () => {
     }));
 
     vi.doMock("../agent.js", () => ({
-      runAgent: vi.fn().mockResolvedValue({ text: "stub response", showConfirmationKeyboard: false }),
+      runAgent: vi
+        .fn()
+        .mockResolvedValue({ text: "stub response", showConfirmationKeyboard: false }),
       loadContext: vi.fn().mockResolvedValue([]),
       saveMessage: vi.fn().mockResolvedValue(undefined),
       loadConfirmation: vi.fn().mockResolvedValue(null),

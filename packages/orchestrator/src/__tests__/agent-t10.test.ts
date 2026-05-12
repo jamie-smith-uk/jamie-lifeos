@@ -27,8 +27,8 @@
  * `as unknown as Anthropic.Message` casts for mock response construction.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import type Anthropic from "@anthropic-ai/sdk";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Shared test state
@@ -188,8 +188,9 @@ function buildPoolMock() {
 function buildAnthropicMock(responses: Anthropic.Message[]) {
   const queue = [...responses];
 
-  const createMock = vi.fn().mockImplementation(
-    (params: { system: string; model: string; messages: unknown[] }) => {
+  const createMock = vi
+    .fn()
+    .mockImplementation((params: { system: string; model: string; messages: unknown[] }) => {
       anthropicCreateCallCount++;
       capturedSystemPrompt = params.system;
       capturedModelIds.push(params.model);
@@ -200,8 +201,7 @@ function buildAnthropicMock(responses: Anthropic.Message[]) {
         return Promise.resolve(makeTextResponse("(no more responses queued)"));
       }
       return Promise.resolve(response);
-    },
-  );
+    });
 
   // Must be a real function (not an arrow function) to work with `new`.
   const capturedCreateMock = createMock;
@@ -318,9 +318,7 @@ describe("T-10 — runAgent agent core", () => {
 
     it("passes the user message as the last message to the API", async () => {
       const poolMock = buildPoolMock();
-      const { AnthropicMockClass } = buildAnthropicMock([
-        makeTextResponse("Hi there!"),
-      ]);
+      const { AnthropicMockClass } = buildAnthropicMock([makeTextResponse("Hi there!")]);
 
       vi.doMock("@anthropic-ai/sdk", () => ({ default: AnthropicMockClass }));
       vi.doMock("@lifeos/shared", () => ({
@@ -353,9 +351,7 @@ describe("T-10 — runAgent agent core", () => {
 
     it("calls messages.create() exactly once for a simple message", async () => {
       const poolMock = buildPoolMock();
-      const { AnthropicMockClass, createMock } = buildAnthropicMock([
-        makeTextResponse("Hi!"),
-      ]);
+      const { AnthropicMockClass, createMock } = buildAnthropicMock([makeTextResponse("Hi!")]);
 
       vi.doMock("@anthropic-ai/sdk", () => ({ default: AnthropicMockClass }));
       vi.doMock("@lifeos/shared", () => ({
@@ -479,15 +475,13 @@ describe("T-10 — runAgent agent core", () => {
       const toolResultUserMsg = userMessages.find(
         (m) =>
           Array.isArray(m.content) &&
-          (m.content as Anthropic.ToolResultBlockParam[]).some(
-            (b) => b.type === "tool_result",
-          ),
+          (m.content as Anthropic.ToolResultBlockParam[]).some((b) => b.type === "tool_result"),
       );
       expect(toolResultUserMsg).toBeDefined();
 
-      const toolResultContent = (toolResultUserMsg!.content as Anthropic.ToolResultBlockParam[]).find(
-        (b) => b.type === "tool_result",
-      );
+      const toolResultContent = (
+        toolResultUserMsg!.content as Anthropic.ToolResultBlockParam[]
+      ).find((b) => b.type === "tool_result");
       expect(toolResultContent).toBeDefined();
       expect(toolResultContent!.tool_use_id).toBe(TOOL_ID);
     });
@@ -952,15 +946,13 @@ describe("T-10 — runAgent agent core", () => {
       // does not appear outside of comments — it should only be read from env.ANTHROPIC_MODEL.
       // Comments are stripped before checking, so doc comments explaining the default are allowed.
       const fs = await import("fs");
-      const agentSource = fs.readFileSync(
-        "/Users/jamie/Documents/jamie-lifeos/packages/orchestrator/src/agent.ts",
-        "utf8",
-      );
+      const path = await import("path");
+      const agentSource = fs.readFileSync(path.resolve(__dirname, "../agent.ts"), "utf8");
 
       // Strip line comments (// ...) and block comments (/* ... */) from the source
       const sourceWithoutComments = agentSource
         .replace(/\/\*[\s\S]*?\*\//g, "") // block comments
-        .replace(/\/\/[^\n]*/g, "");       // line comments
+        .replace(/\/\/[^\n]*/g, ""); // line comments
 
       // After removing comments, the model ID should not appear as a string literal
       const modelLiteralPattern = /"claude-sonnet-4-20250514"/g;
@@ -972,8 +964,9 @@ describe("T-10 — runAgent agent core", () => {
     it("env.ts (shared) contains the claude-sonnet-4-20250514 default as the canonical definition", async () => {
       // The canonical source of the model ID default should be in shared/src/env.ts
       const fs = await import("fs");
+      const path = await import("path");
       const envSource = fs.readFileSync(
-        "/Users/jamie/Documents/jamie-lifeos/packages/shared/src/env.ts",
+        path.resolve(__dirname, "../../../../packages/shared/src/env.ts"),
         "utf8",
       );
       expect(envSource).toContain("claude-sonnet-4-20250514");
@@ -987,9 +980,7 @@ describe("T-10 — runAgent agent core", () => {
   describe("Integration — context and message persistence", () => {
     it("loads context via pool.query before calling the Anthropic API", async () => {
       const poolMock = buildPoolMock();
-      const { AnthropicMockClass, createMock } = buildAnthropicMock([
-        makeTextResponse("Hello!"),
-      ]);
+      const { AnthropicMockClass, createMock } = buildAnthropicMock([makeTextResponse("Hello!")]);
 
       vi.doMock("@anthropic-ai/sdk", () => ({ default: AnthropicMockClass }));
       vi.doMock("@lifeos/shared", () => ({
@@ -1015,9 +1006,7 @@ describe("T-10 — runAgent agent core", () => {
 
     it("saves the user message and assistant reply after the agent loop", async () => {
       const poolMock = buildPoolMock();
-      const { AnthropicMockClass } = buildAnthropicMock([
-        makeTextResponse("The assistant reply."),
-      ]);
+      const { AnthropicMockClass } = buildAnthropicMock([makeTextResponse("The assistant reply.")]);
 
       vi.doMock("@anthropic-ai/sdk", () => ({ default: AnthropicMockClass }));
       vi.doMock("@lifeos/shared", () => ({

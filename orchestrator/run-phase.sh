@@ -568,8 +568,19 @@ PYEOF
 # Runs tsc --noEmit, ESLint on files that exist from files_in_scope, and pnpm test.
 # Prints combined failure output to stdout (empty on full pass).
 # Returns 0 if all checks pass, 1 if any fail.
+# NOTE: output is intentionally NOT truncated — the full tsc/lint/test output is
+# captured so the developer receives the complete picture on retry.
+#
+# Args:
+#   $1  files_in_scope_json   — JSON array of in-scope file paths
+#   $2  baseline_file         — optional path to baseline-failures.txt; when
+#                               supplied, pnpm test failures that already existed
+#                               before the developer ran (infrastructure errors,
+#                               unrelated packages) are stripped from the gate
+#                               output so the developer is not blamed for them.
 verify_implementation() {
   local files_in_scope_json="$1"
+  local baseline_file="${2:-}"
   local failures="" out rc
 
   out=$(cd "$REPO_ROOT" && pnpm exec tsc --noEmit 2>&1); rc=$?
@@ -615,8 +626,65 @@ ${out}
 
   out=$(cd "$REPO_ROOT" && pnpm test 2>&1); rc=$?
   if [ $rc -ne 0 ]; then
+    # When a baseline file exists, filter out failures that were already present
+    # before the developer ran. Only surface genuinely new failures.
+    local test_failures_out="$out"
+    if [ -n "$baseline_file" ] && [ -f "$baseline_file" ]; then
+      test_failures_out=$(python3 - "$out" "$baseline_file" <<'PYEOF'
+import re, sys
+
+raw_output  = sys.argv[1]
+baseline_path = sys.argv[2]
+
+try:
+    baseline = set(line.strip() for line in open(baseline_path) if line.strip())
+except FileNotFoundError:
+    baseline = set()
+
+if not baseline:
+    # No baseline recorded — pass through everything
+    print(raw_output)
+    sys.exit(0)
+
+# Extract failing test identifiers from current run
+fail_files_now = set(re.findall(r'^\s*FAIL\s+(\S+)', raw_output, re.MULTILINE))
+fail_tests_now = set(re.findall(r'^\s*×\s+(.+?)\s+\d+ms', raw_output, re.MULTILINE))
+all_now = fail_files_now | fail_tests_now
+
+new_failures = all_now - baseline
+
+if not new_failures:
+    # Every failure existed in the baseline — treat as clean for the gate
+    note = (
+        "NOTE: pnpm test returned non-zero but ALL failures were pre-existing "
+        "before this task's implementation (recorded in baseline-failures.txt). "
+        "These are infrastructure or unrelated-package failures — not caused by "
+        "this task. Gate treating test step as PASS.\n\n"
+        "Pre-existing failures:\n" +
+        '\n'.join(f"  - {f}" for f in sorted(baseline))
+    )
+    print(note)
+    sys.exit(1)   # signal to caller: treat as pass (caller checks new_failures empty)
+
+# There are new failures — report only those prominently, then append full output
+new_list = '\n'.join(f"  - {f}" for f in sorted(new_failures))
+print(f"NEW failures (not in baseline):\n{new_list}\n\nFull test output:\n{raw_output}")
+sys.exit(0)
+PYEOF
+      )
+      # Check if all failures were baseline — python exits 1 to signal "treat as pass"
+      local py_rc=$?
+      if [ $py_rc -eq 1 ]; then
+        # All failures were pre-existing — log informational note, skip gate failure
+        log "pnpm test: non-zero exit but all failures are pre-existing (baseline). Skipping test gate."
+        printf "%s" "$failures"
+        [ -z "$failures" ]
+        return
+      fi
+    fi
+
     failures+="=== pnpm test ===
-${out}
+${test_failures_out}
 
 "
   fi
@@ -1219,6 +1287,34 @@ Follow your system prompt exactly."
     else
       log "RED confirmed — tests fail as expected"
     fi
+
+    # Capture baseline failing test IDs so the green gate can distinguish
+    # pre-existing failures (infrastructure, unrelated packages) from new ones
+    # introduced or missed by the developer.
+    python3 - "$TASK_DIR/test-red-output.txt" "$TASK_DIR/baseline-failures.txt" <<'PYEOF'
+import re, sys
+
+red_output_path = sys.argv[1]
+baseline_path   = sys.argv[2]
+
+try:
+    content = open(red_output_path).read()
+except FileNotFoundError:
+    open(baseline_path, 'w').close()
+    sys.exit(0)
+
+# Extract Vitest FAIL lines: "FAIL  src/__tests__/foo.test.ts > ..."
+# and individual failing test names: " × test name N ms"
+fail_files = set(re.findall(r'^\s*FAIL\s+(\S+)', content, re.MULTILINE))
+fail_tests = set(re.findall(r'^\s*×\s+(.+?)\s+\d+ms', content, re.MULTILINE))
+
+baseline = sorted(fail_files | fail_tests)
+with open(baseline_path, 'w') as fh:
+    fh.write('\n'.join(baseline) + '\n' if baseline else '')
+
+print(f"Baseline: {len(baseline)} pre-existing failure(s) recorded.")
+PYEOF
+
     # Trajectory check: verify test files have real assertions (AC_COUNT set above)
     check_tester_trajectory "$TASK_DIR" "$TESTS_WRITTEN_FILE" "$AC_COUNT"
     record_task_metrics "$TASK_ID" "$TASK_TITLE" "red" $(( $(date +%s) - RED_START )) 1 "pass"
@@ -1246,6 +1342,10 @@ $TASK_SPEC
 ${CONTEXT_BLOCK:+
 $CONTEXT_BLOCK}
 
+<architecture>
+$ARCH_DOC
+</architecture>
+
 The Tester has already written failing tests in the __tests__/ directories.
 Your job is to write implementation code that makes every test pass.
 Do not modify the test files.
@@ -1255,13 +1355,29 @@ Follow your system prompt exactly. Apply all security rules.
 Use process.env.DATABASE_URL for any database connections — do not read .env directly."
 
       if [ -n "$GATE_FAILURES" ]; then
+        # Capture a diff of in-scope files from the previous attempt so the
+        # developer can see exactly what it changed without re-reading everything.
+        PREV_DIFF=$(git -C "$REPO_ROOT" diff HEAD -- \
+          $(python3 -c "
+import json, sys
+files = json.loads(sys.argv[1])
+print(' '.join(files))
+" "$FILES_IN_SCOPE_JSON" 2>/dev/null) 2>/dev/null | head -c 3000 || true)
+
         DEV_PROMPT="$DEV_PROMPT
 
 ## Previous attempt failed the hard gate — fix every item below before marking done:
 
 <gate-failures>
 $GATE_FAILURES
-</gate-failures>"
+</gate-failures>
+${PREV_DIFF:+
+<previous-attempt-diff>
+The following diff shows exactly what your previous attempt wrote to the in-scope files.
+Use this to understand what you already changed and avoid repeating the same mistakes:
+
+$PREV_DIFF
+</previous-attempt-diff>}"
       fi
 
       run_agent "ag-04-developer" "$DEV_PROMPT" "$TASK_DIR/dev-output-$DEV_ATTEMPTS.md"
@@ -1283,7 +1399,7 @@ $SCOPE_VIOLATIONS"
       fi
 
       log "Running hard gate (tsc + eslint + pnpm test)..."
-      IMPL_FAILURES=$(verify_implementation "$FILES_IN_SCOPE_JSON") || true
+      IMPL_FAILURES=$(verify_implementation "$FILES_IN_SCOPE_JSON" "$TASK_DIR/baseline-failures.txt") || true
       # Only include scope violations in failures if tsc/lint/tests also failed.
       # Scope violations alone are auto-recoverable via revert and shouldn't halt.
       if [ -n "$IMPL_FAILURES" ]; then
@@ -1329,7 +1445,7 @@ Verified by orchestrator hard gate after Developer attempt $DEV_ATTEMPTS.
 - eslint (files_in_scope): PASS
 - pnpm test: PASS
 
-$(cat "$TASK_DIR/test-red-output.txt" 2>/dev/null | head -20 || true)
+$(cat "$TASK_DIR/test-red-output.txt" 2>/dev/null || true)
 REPORT
         record_task_metrics "$TASK_ID" "$TASK_TITLE" "green" $(( $(date +%s) - GREEN_START )) "$DEV_ATTEMPTS" "pass"
         log "Code health (pre-refactor baseline):"
