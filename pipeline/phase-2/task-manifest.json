@@ -84,7 +84,8 @@
     "description": "Add logic to detect calendar events and tasks implied in email content and propose adding them to calendar or Todoist with user confirmation.",
     "files_in_scope": [
       "packages/orchestrator/src/tools/gmail.ts",
-      "packages/orchestrator/src/agent.ts"
+      "packages/orchestrator/src/agent.ts",
+      "packages/shared/vitest.config.ts"
     ],
     "dependencies": ["task-2", "task-3"],
     "acceptance_criteria": [
