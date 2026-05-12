@@ -31,3 +31,18 @@
 - **Migration testing**: Integration tests for migrations require a live PostgreSQL connection and are excluded from the standard test run. The unit test suite validates overall code quality and TypeScript compilation
 
 ---
+## task-4a — Implement log_interaction function in people module
+
+**Files:** packages/orchestrator/src/tools/people.ts
+
+- **Database interaction pattern**: All people module functions use parameterized queries with the `pool.query()` method from `@lifeos/shared`. Never use string concatenation for SQL queries.
+
+- **Fuzzy name matching**: The `findPersonByNameForUpdate` helper function provides consistent fuzzy matching across all people operations. It uses ILIKE with wildcards and prioritizes exact matches. Reuse this function rather than implementing custom matching logic.
+
+- **Error handling convention**: All people module functions catch exceptions and return JSON strings with error objects rather than throwing. This ensures the tool interface remains consistent and never crashes the agent loop.
+
+- **Response format pattern**: Success responses include `success: true`, relevant data objects (`person`, `interaction`, etc.), and a human-readable `message` field. Error responses include `error` or `success: false` with a `message` field.
+
+- **Timestamp handling**: Use PostgreSQL's `now()` function for database timestamps rather than JavaScript Date objects to ensure consistent timezone handling and precision. Convert database timestamps to ISO strings in response objects using `.toISOString()`.
+
+---

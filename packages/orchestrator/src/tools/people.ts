@@ -24,6 +24,67 @@ interface PersonInfo {
 }
 
 // ---------------------------------------------------------------------------
+// Input Validation
+// ---------------------------------------------------------------------------
+
+/**
+ * Validates string input length constraints for security.
+ */
+function validateStringLength(
+  value: string | undefined,
+  fieldName: string,
+  maxLength: number,
+): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    return `${fieldName} must be a string`;
+  }
+
+  if (value.length > maxLength) {
+    return `${fieldName} exceeds maximum length of ${maxLength} characters`;
+  }
+
+  return null;
+}
+
+/**
+ * Validates all string inputs for a person record.
+ */
+function validatePersonInputs(params: {
+  name?: string;
+  notes?: string;
+  relationship_type?: string;
+  how_known?: string;
+}): string | null {
+  // Validate name (required, max 255 chars)
+  if (!params.name || typeof params.name !== "string" || params.name.trim().length === 0) {
+    return "'name' is required and cannot be empty";
+  }
+
+  const nameError = validateStringLength(params.name, "name", 255);
+  if (nameError) return nameError;
+
+  // Validate optional fields
+  const notesError = validateStringLength(params.notes, "notes", 10000);
+  if (notesError) return notesError;
+
+  const relationshipError = validateStringLength(
+    params.relationship_type,
+    "relationship_type",
+    100,
+  );
+  if (relationshipError) return relationshipError;
+
+  const howKnownError = validateStringLength(params.how_known, "how_known", 500);
+  if (howKnownError) return howKnownError;
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Helper Functions
 // ---------------------------------------------------------------------------
 
@@ -112,8 +173,10 @@ async function createPerson(input: string): Promise<string> {
     const params = JSON.parse(input);
     const { name, relationship_type, how_known, notes } = params;
 
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
-      return JSON.stringify({ error: "create_person: 'name' is required and cannot be empty" });
+    // Validate all string inputs for length constraints
+    const validationError = validatePersonInputs(params);
+    if (validationError) {
+      return JSON.stringify({ error: `create_person: ${validationError}` });
     }
 
     const result = await pool.query(
@@ -124,7 +187,7 @@ async function createPerson(input: string): Promise<string> {
     );
 
     const person = rowToPersonInfo(result.rows[0]);
-    log.info({ person_id: person.id, name: person.name }, "Person created");
+    log.info({ person_id: person.id }, "Person created");
 
     return JSON.stringify({
       success: true,
@@ -147,8 +210,10 @@ async function getPerson(input: string): Promise<string> {
     const params = JSON.parse(input);
     const { name } = params;
 
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
-      return JSON.stringify({ error: "get_person: 'name' is required and cannot be empty" });
+    // Validate name input for length constraints
+    const validationError = validatePersonInputs({ name });
+    if (validationError) {
+      return JSON.stringify({ error: `get_person: ${validationError}` });
     }
 
     const fuzzyName = buildFuzzyNameQuery(name);
@@ -171,7 +236,7 @@ async function getPerson(input: string): Promise<string> {
     }
 
     const person = rowToPersonInfo(result.rows[0]);
-    log.info({ person_id: person.id, name: person.name }, "Person retrieved");
+    log.info({ person_id: person.id }, "Person retrieved");
 
     return JSON.stringify({
       success: true,
@@ -193,8 +258,10 @@ async function updatePerson(input: string): Promise<string> {
     const params = JSON.parse(input);
     const { name, notes, relationship_type, how_known } = params;
 
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
-      return JSON.stringify({ error: "update_person: 'name' is required and cannot be empty" });
+    // Validate all string inputs for length constraints
+    const validationError = validatePersonInputs(params);
+    if (validationError) {
+      return JSON.stringify({ error: `update_person: ${validationError}` });
     }
 
     // Find the person using fuzzy matching
@@ -221,7 +288,7 @@ async function updatePerson(input: string): Promise<string> {
     );
 
     const updatedPerson = rowToPersonInfo(updateResult.rows[0]);
-    log.info({ person_id: updatedPerson.id, name: updatedPerson.name }, "Person updated");
+    log.info({ person_id: updatedPerson.id }, "Person updated");
 
     return JSON.stringify({
       success: true,
@@ -254,11 +321,11 @@ async function getLapsedContacts(input: string): Promise<string> {
       `SELECT id, name, relationship_type, how_known, notes, last_interaction_at
        FROM people
        WHERE last_interaction_at IS NULL 
-          OR last_interaction_at < (now() - interval '${days_threshold} days')
+          OR last_interaction_at < (now() - interval '1 day' * $1)
        ORDER BY 
          last_interaction_at ASC NULLS FIRST,
          name ASC`,
-      [],
+      [days_threshold],
     );
 
     const lapsedContacts = result.rows.map(rowToPersonInfo);
@@ -293,8 +360,10 @@ async function logInteraction(input: string): Promise<string> {
     const params = JSON.parse(input);
     const { name, notes } = params;
 
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
-      return JSON.stringify({ error: "log_interaction: 'name' is required and cannot be empty" });
+    // Validate string inputs for length constraints
+    const validationError = validatePersonInputs({ name, notes });
+    if (validationError) {
+      return JSON.stringify({ error: `log_interaction: ${validationError}` });
     }
 
     // Find the person using fuzzy matching
@@ -330,7 +399,6 @@ async function logInteraction(input: string): Promise<string> {
     log.info(
       {
         person_id: updatedPerson.id,
-        name: updatedPerson.name,
         interaction_id: interaction.id,
       },
       "Interaction logged",
