@@ -1,7 +1,7 @@
 ---
 description: Translates the task manifest into a plain English summary written to a file. The orchestrator displays it in the terminal for human approval. Read-only.
 mode: subagent
-model: anthropic/claude-sonnet-4-20250514
+model: anthropic/claude-haiku-4-5-20251001
 temperature: 0.1
 permissions:
   write: false
