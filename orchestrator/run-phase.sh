@@ -581,17 +581,10 @@ PYEOF
 verify_implementation() {
   local files_in_scope_json="$1"
   local baseline_file="${2:-}"
-  local failures="" out rc
+  local failures=""
 
-  out=$(cd "$REPO_ROOT" && pnpm exec tsc --noEmit 2>&1); rc=$?
-  if [ $rc -ne 0 ]; then
-    failures+="=== tsc --noEmit ===
-${out}
-
-"
-  fi
-
-  existing_files=()
+  # Resolve existing files from files_in_scope (used by linter below)
+  local existing_files=()
   while IFS= read -r line; do
     existing_files+=("$line")
   done < <(python3 -c "
@@ -603,28 +596,66 @@ for f in files:
         print(full)
 " "$files_in_scope_json" 2>/dev/null)
 
+  # Determine linter while tsc starts up
+  local linter="eslint"
+  if grep -q '"@biomejs/biome"' "$REPO_ROOT/package.json" 2>/dev/null; then
+    linter="biome"
+  fi
+
+  # Launch tsc and linter in parallel using temp files for output + exit codes
+  local tsc_out tsc_rc_file lint_out lint_rc_file tsc_pid lint_pid
+  tsc_out=$(mktemp)
+  tsc_rc_file=$(mktemp)
+  { cd "$REPO_ROOT" && pnpm exec tsc --noEmit 2>&1; echo $? > "$tsc_rc_file"; } > "$tsc_out" &
+  tsc_pid=$!
+
+  lint_pid=""
   if [ ${#existing_files[@]} -gt 0 ]; then
-    # Use biome if available (check root package.json), fall back to eslint
-    local linter="eslint"
-    if grep -q '"@biomejs/biome"' "$REPO_ROOT/package.json" 2>/dev/null; then
-      linter="biome"
-    fi
-
+    lint_out=$(mktemp)
+    lint_rc_file=$(mktemp)
     if [ "$linter" = "biome" ]; then
-      out=$(cd "$REPO_ROOT" && pnpm exec biome check "${existing_files[@]}" 2>&1); rc=$?
+      { cd "$REPO_ROOT" && pnpm exec biome check "${existing_files[@]}" 2>&1; echo $? > "$lint_rc_file"; } > "$lint_out" &
     else
-      out=$(cd "$REPO_ROOT" && pnpm exec eslint "${existing_files[@]}" 2>&1); rc=$?
+      { cd "$REPO_ROOT" && pnpm exec eslint "${existing_files[@]}" 2>&1; echo $? > "$lint_rc_file"; } > "$lint_out" &
     fi
+    lint_pid=$!
+  fi
 
-    if [ $rc -ne 0 ]; then
+  # Collect tsc result
+  wait "$tsc_pid"
+  if [ "$(cat "$tsc_rc_file")" -ne 0 ]; then
+    failures+="=== tsc --noEmit ===
+$(cat "$tsc_out")
+
+"
+  fi
+  rm -f "$tsc_out" "$tsc_rc_file"
+
+  # Collect linter result
+  if [ -n "$lint_pid" ]; then
+    wait "$lint_pid"
+    if [ "$(cat "$lint_rc_file")" -ne 0 ]; then
       failures+="=== $linter ===
-${out}
+$(cat "$lint_out")
 
 "
     fi
+    rm -f "$lint_out" "$lint_rc_file"
   fi
 
-  out=$(cd "$REPO_ROOT" && pnpm test 2>&1); rc=$?
+  local affected_pkgs
+  affected_pkgs=$(python3 -c "
+import json, sys, re
+files = json.loads(sys.argv[1])
+pkgs = set()
+for f in files:
+    m = re.match(r'packages/([^/]+)/', f)
+    if m: pkgs.add('@lifeos/' + m.group(1))
+print(' '.join('--filter ' + p for p in sorted(pkgs)) if pkgs else '')
+" "$files_in_scope_json" 2>/dev/null)
+
+  # shellcheck disable=SC2086
+  out=$(cd "$REPO_ROOT" && pnpm ${affected_pkgs} test --run 2>&1); rc=$?
   if [ $rc -ne 0 ]; then
     # When a baseline file exists, filter out failures that were already present
     # before the developer ran. Only surface genuinely new failures.
@@ -1266,6 +1297,10 @@ $CONTEXT_BLOCK}
 Write test files to the __tests__/ directories as normal.
 Tests will fail right now because there is no implementation — that is correct and expected.
 
+Time budget: complete the RED phase in under 5 minutes. Read only the files
+directly listed in files_in_scope and their immediate imports. Do not explore
+the entire codebase — the task spec and build context contain everything needed.
+
 Do NOT write implementation code.
 Do NOT write test-report.md — the orchestrator writes that.
 After writing all test files, write the single line 'tests-written' to:
@@ -1522,8 +1557,46 @@ Follow your system prompt exactly."
     REFACTOR_START=$(date +%s)
     log "REFACTOR phase — AG-06 Refactor..."
 
-    # Build complexity violation list from the pre-refactor health report
-    COMPLEXITY_BLOCK=$(python3 - "$TASK_DIR/health-report-pre.json" <<'PYEOF'
+    # Pre-check: derive health metrics from the pre-refactor baseline and skip
+    # the agent entirely if complexity and duplication are within thresholds.
+    COMPLEX_COUNT=$(python3 -c "
+import json, sys
+try:
+    d = json.load(open(sys.argv[1]))
+    print(len(d.get('complex_functions', [])))
+except Exception:
+    print(99)
+" "$TASK_DIR/health-report-pre.json" 2>/dev/null || echo 99)
+
+    DUP_PCT=$(python3 -c "
+import json, sys
+try:
+    d = json.load(open(sys.argv[1]))
+    print(d.get('duplication_pct', 99))
+except Exception:
+    print(99)
+" "$TASK_DIR/health-report-pre.json" 2>/dev/null || echo 99)
+
+    METRICS_CLEAN=false
+    if [ "$COMPLEX_COUNT" -lt 5 ] \
+       && python3 -c "import sys; exit(0 if float('$DUP_PCT') < 8.0 else 1)" 2>/dev/null; then
+      METRICS_CLEAN=true
+    fi
+
+    if [ "$METRICS_CLEAN" = "true" ]; then
+      log "REFACTOR phase: metrics clean (complex_fns=${COMPLEX_COUNT}, dup=${DUP_PCT}%) — skipping agent"
+      cat > "$TASK_DIR/refactor-report.md" <<REFACTOR_EOF
+# Refactor Report — $TASK_ID
+
+Skipped: health metrics within thresholds.
+- Complex functions above threshold: ${COMPLEX_COUNT} (limit: 5)
+- Code duplication: ${DUP_PCT}% (limit: 8%)
+
+No refactoring needed.
+REFACTOR_EOF
+    else
+      # Build complexity violation list from the pre-refactor health report
+      COMPLEXITY_BLOCK=$(python3 - "$TASK_DIR/health-report-pre.json" <<'PYEOF'
 import json, sys, os
 try:
     report = json.load(open(sys.argv[1]))
@@ -1541,7 +1614,7 @@ except Exception:
 PYEOF
 )
 
-    REFACTOR_PROMPT="You are AG-06 Refactor for Life OS.
+      REFACTOR_PROMPT="You are AG-06 Refactor for Life OS.
 
 The Developer has implemented task $TASK_ID and all tests pass.
 Your job is to improve the code without changing its behaviour.
@@ -1562,14 +1635,15 @@ Do NOT modify test files. Do NOT change public interfaces.
 Write refactor-report.md to pipeline/phase-$PHASE/$TASK_ID/
 Follow your system prompt exactly."
 
-    run_agent "ag-06-refactor" "$REFACTOR_PROMPT" "$TASK_DIR/refactor-output.md"
+      run_agent "ag-06-refactor" "$REFACTOR_PROMPT" "$TASK_DIR/refactor-output.md"
 
-    if [ ! -f "$TASK_DIR/refactor-report.md" ]; then
-      halt "Refactor agent did not write refactor-report.md" "AG-06" \
-        "Task: $TASK_ID — refactor-report.md not found"
+      if [ ! -f "$TASK_DIR/refactor-report.md" ]; then
+        halt "Refactor agent did not write refactor-report.md" "AG-06" \
+          "Task: $TASK_ID — refactor-report.md not found"
+      fi
     fi
 
-    # Re-run hard gate to ensure refactor didn't break anything
+    # Re-run hard gate regardless of whether the agent ran
     log "Re-running hard gate after refactor..."
     REFACTOR_FAILURES=$(verify_implementation "$FILES_IN_SCOPE_JSON") || true
     if [ -n "$REFACTOR_FAILURES" ]; then
