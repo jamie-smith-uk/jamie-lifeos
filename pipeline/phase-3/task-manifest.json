@@ -1,0 +1,326 @@
+[
+  {
+    "id": "task-1",
+    "title": "Create database migration for life_events table",
+    "description": "Create SQL migration file to add life_events table with person_id foreign key, event_type, event_date, is_recurring flag, and notes fields",
+    "files_in_scope": [
+      "migrations/002_life_events.sql"
+    ],
+    "dependencies": [],
+    "acceptance_criteria": [
+      "Migration file creates life_events table with all required columns",
+      "Foreign key constraint references people(id) with CASCADE delete",
+      "is_recurring defaults to false",
+      "created_at timestamp defaults to NOW()"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-2", 
+    "title": "Create database migration for nudges table",
+    "description": "Create SQL migration file to add nudges table with person_id and life_event_id foreign keys, message, trigger_at, status, sent_at, dismissed_at fields",
+    "files_in_scope": [
+      "migrations/003_nudges.sql"
+    ],
+    "dependencies": [],
+    "acceptance_criteria": [
+      "Migration file creates nudges table with all required columns",
+      "Foreign key constraints reference people(id) and life_events(id) with SET NULL on delete",
+      "Status field has CHECK constraint for 'pending', 'sent', 'dismissed' values",
+      "Status defaults to 'pending'",
+      "created_at timestamp defaults to NOW()"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-3",
+    "title": "Update people table schema to match architecture",
+    "description": "Create migration to add missing created_at and updated_at columns to people table and update interactions table to match architecture schema",
+    "files_in_scope": [
+      "migrations/004_update_people_interactions.sql"
+    ],
+    "dependencies": [],
+    "acceptance_criteria": [
+      "People table has created_at and updated_at columns with NOT NULL and DEFAULT NOW()",
+      "Interactions table has interacted_at column instead of created_at for interaction timestamp",
+      "Interactions table retains created_at for record creation timestamp",
+      "All existing data is preserved during migration"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-4",
+    "title": "Add log_interaction tool to people module",
+    "description": "Implement log_interaction function in people.ts to create interaction records and update last_interaction_at on person",
+    "files_in_scope": [
+      "packages/orchestrator/src/tools/people.ts",
+      "packages/orchestrator/vitest.config.ts",
+      "packages/orchestrator/tsconfig.json",
+      "packages/orchestrator/src/tools/__tests__/people.test.ts"
+    ],
+    "dependencies": ["task-3"],
+    "acceptance_criteria": [
+      "log_interaction function accepts person name and interaction notes",
+      "Function finds person using fuzzy matching",
+      "Creates new interaction record with interacted_at timestamp",
+      "Updates person.last_interaction_at to current timestamp",
+      "Returns success response with interaction details",
+      "Handles person not found gracefully"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "medium"
+  },
+  {
+    "id": "task-5",
+    "title": "Create life events tools module",
+    "description": "Create new tools/life_events.ts module with create_life_event and get_upcoming_life_events functions",
+    "files_in_scope": [
+      "packages/orchestrator/src/tools/life_events.ts",
+      "packages/orchestrator/vitest.config.ts", 
+      "packages/orchestrator/tsconfig.json",
+      "packages/orchestrator/src/tools/__tests__/life_events.test.ts"
+    ],
+    "dependencies": ["task-1"],
+    "acceptance_criteria": [
+      "create_life_event accepts person name, event_type, event_date, and optional notes",
+      "Birthdays and anniversaries automatically set is_recurring to true",
+      "get_upcoming_life_events accepts date range and returns events within window",
+      "Recurring events are adjusted to current year in results",
+      "Both functions use fuzzy person name matching",
+      "All functions return JSON responses and handle errors gracefully"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "medium"
+  },
+  {
+    "id": "task-6",
+    "title": "Create nudges tools module", 
+    "description": "Create new tools/nudges.ts module with create_nudge and dismiss_nudge functions",
+    "files_in_scope": [
+      "packages/orchestrator/src/tools/nudges.ts",
+      "packages/orchestrator/vitest.config.ts",
+      "packages/orchestrator/tsconfig.json", 
+      "packages/orchestrator/src/tools/__tests__/nudges.test.ts"
+    ],
+    "dependencies": ["task-2"],
+    "acceptance_criteria": [
+      "create_nudge accepts person_id, life_event_id, message, and trigger_at timestamp",
+      "dismiss_nudge accepts nudge_id and sets status to 'dismissed' with dismissed_at timestamp",
+      "Both functions return JSON responses",
+      "create_nudge validates required fields and returns error for missing data",
+      "dismiss_nudge handles non-existent nudge IDs gracefully"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "medium"
+  },
+  {
+    "id": "task-7",
+    "title": "Add life events and nudges tool definitions to agent",
+    "description": "Update agent.ts to include tool definitions for life events and nudges, and route tool calls to appropriate modules",
+    "files_in_scope": [
+      "packages/orchestrator/src/agent.ts",
+      "packages/orchestrator/vitest.config.ts",
+      "packages/orchestrator/tsconfig.json",
+      "packages/orchestrator/src/__tests__/agent.test.ts"
+    ],
+    "dependencies": ["task-5", "task-6"],
+    "acceptance_criteria": [
+      "Life events tool definitions added: create_life_event, get_upcoming_life_events",
+      "Nudges tool definitions added: create_nudge, dismiss_nudge", 
+      "Tool routing added to executeTool function for both modules",
+      "Tool name sets updated to include new tools",
+      "Agent can successfully call all new tools through the tool loop"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "medium"
+  },
+  {
+    "id": "task-8",
+    "title": "Add log_interaction tool definition to agent",
+    "description": "Update agent.ts to include log_interaction tool definition and ensure it routes to people module",
+    "files_in_scope": [
+      "packages/orchestrator/src/agent.ts",
+      "packages/orchestrator/vitest.config.ts",
+      "packages/orchestrator/tsconfig.json"
+    ],
+    "dependencies": ["task-4"],
+    "acceptance_criteria": [
+      "log_interaction tool definition added to peopleToolDefinitions array",
+      "Tool accepts name and notes parameters with name required",
+      "Tool is included in PEOPLE_TOOL_NAMES set for routing",
+      "executePeopleTool function handles log_interaction operation"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-9",
+    "title": "Update people.ts to include life events in get_person response",
+    "description": "Modify get_person function to join with life_events table and include upcoming life events in the response",
+    "files_in_scope": [
+      "packages/orchestrator/src/tools/people.ts",
+      "packages/orchestrator/vitest.config.ts",
+      "packages/orchestrator/tsconfig.json",
+      "packages/orchestrator/src/tools/__tests__/people.test.ts"
+    ],
+    "dependencies": ["task-1", "task-5"],
+    "acceptance_criteria": [
+      "get_person response includes life_events array with upcoming events",
+      "Life events show event_type, event_date, is_recurring, and notes",
+      "Recurring events are adjusted to show next occurrence date",
+      "Response maintains backward compatibility with existing fields",
+      "Query efficiently joins tables using person_id"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "medium"
+  },
+  {
+    "id": "task-10",
+    "title": "Create scheduler module with nudge evaluator",
+    "description": "Create scheduler.ts module with node-cron job that runs every 15 minutes to check for due nudges and send them",
+    "files_in_scope": [
+      "packages/orchestrator/src/scheduler.ts",
+      "packages/orchestrator/vitest.config.ts",
+      "packages/orchestrator/tsconfig.json",
+      "packages/orchestrator/src/__tests__/scheduler.test.ts"
+    ],
+    "dependencies": ["task-6"],
+    "acceptance_criteria": [
+      "Scheduler exports startScheduler function to initialize cron jobs",
+      "Nudge evaluator runs every 15 minutes using node-cron",
+      "Evaluator queries nudges table for pending nudges past trigger_at",
+      "Maximum 3 nudges sent per hour to prevent spam",
+      "Nudges are marked as sent with sent_at timestamp after sending",
+      "Scheduler logs all nudge processing activities"
+    ],
+    "security_sensitive": true,
+    "estimated_complexity": "medium"
+  },
+  {
+    "id": "task-11",
+    "title": "Add automatic nudge creation for life events",
+    "description": "Update create_life_event to automatically create nudges 7 days before birthdays and 14 days before anniversaries",
+    "files_in_scope": [
+      "packages/orchestrator/src/tools/life_events.ts",
+      "packages/orchestrator/vitest.config.ts",
+      "packages/orchestrator/tsconfig.json",
+      "packages/orchestrator/src/tools/__tests__/life_events.test.ts"
+    ],
+    "dependencies": ["task-5", "task-6"],
+    "acceptance_criteria": [
+      "Birthday events automatically create nudge 7 days before event_date",
+      "Anniversary events automatically create nudge 14 days before event_date", 
+      "Nudge message includes person name and event type",
+      "Nudge creation handles date calculations correctly for recurring events",
+      "Function continues to work if nudge creation fails (logs error but doesn't fail life event creation)"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "medium"
+  },
+  {
+    "id": "task-12",
+    "title": "Add nudge sending capability to scheduler",
+    "description": "Update scheduler to send nudge messages via Telegram bot when nudges are due",
+    "files_in_scope": [
+      "packages/orchestrator/src/scheduler.ts",
+      "packages/orchestrator/vitest.config.ts",
+      "packages/orchestrator/tsconfig.json",
+      "packages/orchestrator/src/__tests__/scheduler.test.ts"
+    ],
+    "dependencies": ["task-10"],
+    "acceptance_criteria": [
+      "Scheduler sends nudge messages to TELEGRAM_ALLOWED_CHAT_ID",
+      "Each nudge message includes a Dismiss button with callback data",
+      "Nudge status updated to 'sent' with sent_at timestamp after successful send",
+      "Failed sends are logged but don't prevent other nudges from processing",
+      "Dismiss button callback includes nudge ID for later dismissal"
+    ],
+    "security_sensitive": true,
+    "estimated_complexity": "medium"
+  },
+  {
+    "id": "task-13",
+    "title": "Add dismiss nudge callback handling",
+    "description": "Update bot callback handling to process nudge dismiss actions and call orchestrator dismiss_nudge endpoint",
+    "files_in_scope": [
+      "packages/bot/src/index.ts",
+      "packages/bot/src/keyboard.ts", 
+      "packages/bot/vitest.config.ts",
+      "packages/bot/tsconfig.json",
+      "packages/bot/src/__tests__/index.test.ts"
+    ],
+    "dependencies": ["task-6", "task-12"],
+    "acceptance_criteria": [
+      "Bot parses dismiss callback data to extract nudge ID",
+      "Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID",
+      "Successful dismissal removes the inline keyboard from the message",
+      "Bot handles dismiss callback errors gracefully",
+      "Callback query is answered to remove loading state"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "medium"
+  },
+  {
+    "id": "task-14",
+    "title": "Add dismiss-nudge endpoint to orchestrator",
+    "description": "Create POST /dismiss-nudge endpoint in orchestrator to handle nudge dismissal requests from bot",
+    "files_in_scope": [
+      "packages/orchestrator/src/index.ts",
+      "packages/orchestrator/vitest.config.ts",
+      "packages/orchestrator/tsconfig.json",
+      "packages/orchestrator/src/__tests__/index.test.ts"
+    ],
+    "dependencies": ["task-6"],
+    "acceptance_criteria": [
+      "POST /dismiss-nudge endpoint accepts nudge_id in request body",
+      "Endpoint calls dismiss_nudge tool function",
+      "Returns success/error response to bot",
+      "Validates nudge_id is provided and is valid number",
+      "Endpoint follows same error handling patterns as other orchestrator endpoints"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-15",
+    "title": "Initialize scheduler in orchestrator startup",
+    "description": "Update orchestrator index.ts to start the scheduler when the service starts up",
+    "files_in_scope": [
+      "packages/orchestrator/src/index.ts",
+      "packages/orchestrator/vitest.config.ts",
+      "packages/orchestrator/tsconfig.json"
+    ],
+    "dependencies": ["task-10"],
+    "acceptance_criteria": [
+      "Orchestrator calls startScheduler() during service initialization",
+      "Scheduler starts before HTTP server begins accepting requests",
+      "Startup logs indicate scheduler has been initialized",
+      "Service continues to start even if scheduler initialization fails (with error logging)"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-16",
+    "title": "Update shared types for Phase 3 data structures",
+    "description": "Add TypeScript interfaces for life events, nudges, and callback actions to shared types",
+    "files_in_scope": [
+      "packages/shared/src/types.ts",
+      "packages/shared/vitest.config.ts",
+      "packages/shared/tsconfig.json",
+      "packages/shared/src/__tests__/types.test.ts"
+    ],
+    "dependencies": [],
+    "acceptance_criteria": [
+      "LifeEvent interface with id, person_id, event_type, event_date, is_recurring, notes, created_at",
+      "Nudge interface with id, person_id, life_event_id, message, trigger_at, status, sent_at, dismissed_at, created_at",
+      "CallbackAction type updated to include dismiss action with nudgeId",
+      "All interfaces match database schema column names and types"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "low"
+  }
+]
