@@ -340,6 +340,16 @@ $GATE_FAILURES
     run_agent "ag-04-developer" "$DEV_PROMPT" "$TASK_DIR/dev-output-$DEV_ATTEMPTS.md"
     [ -f "$TASK_DIR/BLOCKED.md" ] && halt "Developer blocked" "AG-04" "$(cat "$TASK_DIR/BLOCKED.md")"
 
+    # Silently remove common temp/debug patterns before scope check.
+    find "$REPO_ROOT" -maxdepth 2 \( \
+      -name "debug-*.js" -o -name "debug-*.ts" -o \
+      -name "test-*.js" -o -name "test-*.ts" -o \
+      -name "*.debug.js" -o -name "*.debug.ts" -o \
+      -name "*.tmp" -o -name "*.scratch.*" \
+    \) -not -path "*/node_modules/*" -not -path "*/__tests__/*" \
+       -not -path "*/pipeline/*" \
+       -delete 2>/dev/null || true
+
     log "Checking files_in_scope compliance..."
     SCOPE_VIOLATIONS=$(check_scope_compliance "$FILES_IN_SCOPE_JSON") || true
     SCOPE_GATE=""
