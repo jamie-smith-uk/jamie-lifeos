@@ -203,6 +203,7 @@ function stripHtml(text: string): string {
 // ---------------------------------------------------------------------------
 
 interface PersonInfo {
+  id?: number;
   name: string;
   relationship_type: string | null;
 }
@@ -262,7 +263,7 @@ async function findPersonByEmail(email: string): Promise<PersonInfo | null> {
     const likePatterns = searchTerms.map((term) => `%${term}%`);
 
     const result = await pool.query(
-      `SELECT name, relationship_type 
+      `SELECT id, name, relationship_type 
        FROM people 
        WHERE LOWER(name) LIKE ANY($1::text[])
        LIMIT 1`,
@@ -271,6 +272,7 @@ async function findPersonByEmail(email: string): Promise<PersonInfo | null> {
 
     if (result.rows.length > 0) {
       return {
+        id: result.rows[0].id,
         name: result.rows[0].name,
         relationship_type: result.rows[0].relationship_type,
       };
@@ -281,24 +283,6 @@ async function findPersonByEmail(email: string): Promise<PersonInfo | null> {
     log.error({ err: String(err) }, "Failed to query people database");
     return null;
   }
-}
-
-/**
- * Enriches email sender information with person details if a match is found.
- */
-async function enrichSenderInfo(fromHeader: string): Promise<string> {
-  const email = extractEmailAddress(fromHeader);
-  if (!email) return fromHeader;
-
-  const person = await findPersonByEmail(email);
-  if (!person?.name) return fromHeader;
-
-  // Build enriched sender info with person details
-  const personDetails = person.relationship_type
-    ? `${person.name} - ${person.relationship_type}`
-    : person.name;
-
-  return `${fromHeader} (${personDetails})`;
 }
 
 // ---------------------------------------------------------------------------
@@ -382,11 +366,26 @@ async function getInboxSummary(_input: Record<string, unknown>): Promise<string>
 
     for (const msg of emails) {
       const from = getHeader(msg, "From") || "(unknown sender)";
-      const enrichedFrom = await enrichSenderInfo(from);
+      const { enriched: enrichedFrom, person: senderPerson } =
+        await enrichSenderInfoWithPerson(from);
       const subject = getHeader(msg, "Subject") || "(no subject)";
       const snippet = msg.snippet ?? "";
       const threadId = msg.threadId ?? msg.id ?? "";
       const category = classifyEmail(subject, snippet);
+
+      // Detect people mentioned in content
+      const mentionedPeople = await findMentionedPeople(`${subject} ${snippet}`);
+
+      // Collect all people for this email (sender + mentions, avoiding duplicates)
+      const allPeople: PersonInfo[] = [];
+      if (senderPerson) {
+        allPeople.push(senderPerson);
+      }
+      for (const mentioned of mentionedPeople) {
+        if (!allPeople.some((p) => p.id === mentioned.id)) {
+          allPeople.push(mentioned);
+        }
+      }
 
       lines.push(`<untrusted>`);
       lines.push(`From: ${enrichedFrom}`);
@@ -395,6 +394,14 @@ async function getInboxSummary(_input: Record<string, unknown>): Promise<string>
       if (threadId) lines.push(`Thread ID: ${threadId}`);
       lines.push(`</untrusted>`);
       lines.push(`Category: ${category}`);
+
+      // Add people information for agent awareness
+      if (allPeople.length > 0) {
+        const peopleNames = allPeople.map((p) => p.name).join(", ");
+        lines.push(`Known people: ${peopleNames}`);
+        lines.push(`People IDs: ${allPeople.map((p) => p.id).join(", ")}`);
+      }
+
       lines.push("");
     }
 
@@ -429,12 +436,31 @@ async function getThread(input: Record<string, unknown>): Promise<string> {
       "",
     ];
 
+    // Collect all people mentioned across the entire thread
+    const allThreadPeople: PersonInfo[] = [];
+
     for (const msg of messages) {
       const from = getHeader(msg, "From") || "(unknown)";
-      const enrichedFrom = await enrichSenderInfo(from);
+      const { enriched: enrichedFrom, person: senderPerson } =
+        await enrichSenderInfoWithPerson(from);
       const subject = getHeader(msg, "Subject") || "(no subject)";
       const date = getHeader(msg, "Date");
       const body = extractPlainText(msg.payload);
+
+      // Detect people mentioned in this message
+      const mentionedPeople = await findMentionedPeople(`${subject} ${body}`);
+
+      // Add sender to thread people if known
+      if (senderPerson && !allThreadPeople.some((p) => p.id === senderPerson.id)) {
+        allThreadPeople.push(senderPerson);
+      }
+
+      // Add mentioned people to thread people
+      for (const mentioned of mentionedPeople) {
+        if (!allThreadPeople.some((p) => p.id === mentioned.id)) {
+          allThreadPeople.push(mentioned);
+        }
+      }
 
       lines.push(`--- Message ---`);
       lines.push(`<untrusted>`);
@@ -446,6 +472,15 @@ async function getThread(input: Record<string, unknown>): Promise<string> {
         lines.push(body);
       }
       lines.push(`</untrusted>`);
+      lines.push("");
+    }
+
+    // Add summary of all people detected in the thread
+    if (allThreadPeople.length > 0) {
+      lines.push(`--- People Detected in Thread ---`);
+      lines.push(`Known people: ${allThreadPeople.map((p) => p.name).join(", ")}`);
+      lines.push(`People IDs: ${allThreadPeople.map((p) => p.id).join(", ")}`);
+      lines.push(`Use log_interaction tool to record this email interaction with these people.`);
       lines.push("");
     }
 
@@ -1117,6 +1152,284 @@ async function extractImpliedActions(input: Record<string, unknown>): Promise<st
 }
 
 // ---------------------------------------------------------------------------
+// People mention detection in email content
+// ---------------------------------------------------------------------------
+
+// Patterns to detect people mentions in email content
+const PEOPLE_MENTION_PATTERNS = [
+  /(?:talked|spoke|met|discussed|chatted|emailed|called)\s+with\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/gi,
+  /(?:from|by)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/gi,
+  /(?:email|message|call|meeting)\s+(?:from|with)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/gi,
+  /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:said|mentioned|told|asked|suggested)/gi,
+];
+
+/**
+ * Validates if a potential name is reasonable and not a common word.
+ */
+function isValidPersonName(name: string): boolean {
+  if (!name || name.length < 2 || name.length > 50) return false;
+
+  const lowerName = name.toLowerCase();
+  const commonWords = ["email", "message", "call", "meeting", "from", "with", "said", "told"];
+  return !commonWords.includes(lowerName);
+}
+
+/**
+ * Extracts potential people names from email content using pattern matching.
+ * Returns an array of unique names found in the content.
+ */
+function extractPeopleMentions(content: string): string[] {
+  const mentions = new Set<string>();
+
+  for (const pattern of PEOPLE_MENTION_PATTERNS) {
+    const matches = Array.from(content.matchAll(pattern));
+    for (const match of matches) {
+      const name = match[1];
+      if (isValidPersonName(name)) {
+        mentions.add(name.trim());
+      }
+    }
+  }
+
+  return Array.from(mentions);
+}
+
+/**
+ * Searches the people database for a person by name using fuzzy matching.
+ */
+async function findPersonByName(name: string): Promise<PersonInfo | null> {
+  if (!name || name.length < 2) return null;
+
+  try {
+    // Use ILIKE for case-insensitive partial matching
+    const result = await pool.query(
+      `SELECT id, name, relationship_type 
+       FROM people 
+       WHERE LOWER(name) ILIKE $1
+       LIMIT 1`,
+      [`%${name.toLowerCase()}%`],
+    );
+
+    if (result.rows.length > 0) {
+      return {
+        id: result.rows[0].id,
+        name: result.rows[0].name,
+        relationship_type: result.rows[0].relationship_type,
+      };
+    }
+
+    return null;
+  } catch (err) {
+    log.error({ err: String(err), name }, "Failed to query people database by name");
+    return null;
+  }
+}
+
+/**
+ * Finds all people mentioned in email content and returns their database records.
+ */
+async function findMentionedPeople(content: string): Promise<PersonInfo[]> {
+  const mentions = extractPeopleMentions(content);
+  const people: PersonInfo[] = [];
+
+  for (const mention of mentions) {
+    const person = await findPersonByName(mention);
+    if (person) {
+      // Avoid duplicates
+      if (!people.some((p) => p.id === person.id)) {
+        people.push(person);
+      }
+    }
+  }
+
+  return people;
+}
+
+// ---------------------------------------------------------------------------
+// log_interaction tool
+// ---------------------------------------------------------------------------
+
+/**
+ * Validates log_interaction input parameters.
+ */
+function validateLogInteractionInput(input: Record<string, unknown>): {
+  valid: boolean;
+  error?: string;
+  data?: { threadId: string; people: string[]; interactionType: string; notes: string };
+} {
+  const threadId = typeof input.thread_id === "string" ? input.thread_id.trim() : "";
+  const people = Array.isArray(input.people) ? input.people : [];
+  const interactionType =
+    typeof input.interaction_type === "string" ? input.interaction_type : "email";
+  const notes = typeof input.notes === "string" ? input.notes : "";
+
+  if (!threadId || threadId.length > MAX_THREAD_ID_LEN) {
+    return { valid: false, error: "log_interaction: invalid 'thread_id'" };
+  }
+
+  if (!Array.isArray(people) || people.length === 0) {
+    return {
+      valid: false,
+      error: "log_interaction: 'people' array is required and cannot be empty",
+    };
+  }
+
+  return { valid: true, data: { threadId, people, interactionType, notes } };
+}
+
+/**
+ * Resolves a person reference (ID or name) to a PersonInfo object.
+ */
+async function resolvePersonReference(personRef: string): Promise<PersonInfo | null> {
+  if (typeof personRef !== "string") return null;
+
+  // Try as ID first (numeric string)
+  if (/^\d+$/.test(personRef)) {
+    try {
+      const result = await pool.query(
+        `SELECT id, name, relationship_type FROM people WHERE id = $1`,
+        [parseInt(personRef, 10)],
+      );
+      if (result.rows.length > 0) {
+        return {
+          id: result.rows[0].id,
+          name: result.rows[0].name,
+          relationship_type: result.rows[0].relationship_type,
+        };
+      }
+    } catch (err) {
+      log.error({ err: String(err), personRef }, "Failed to query person by ID");
+    }
+  }
+
+  // If not found by ID, try by name
+  return findPersonByName(personRef);
+}
+
+/**
+ * Creates interaction records for all resolved people in a transaction.
+ */
+async function createInteractionRecords(
+  resolvedPeople: PersonInfo[],
+  threadId: string,
+  notes: string,
+): Promise<number[]> {
+  const interactionIds: number[] = [];
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    for (const person of resolvedPeople) {
+      // Insert interaction record
+      const interactionResult = await client.query(
+        `INSERT INTO interactions (person_id, notes, interacted_at)
+         VALUES ($1, $2, NOW())
+         RETURNING id`,
+        [person.id, notes || `Email interaction (thread: ${threadId})`],
+      );
+
+      interactionIds.push(interactionResult.rows[0].id);
+
+      // Update last_interaction_at for the person
+      await client.query(
+        `UPDATE people 
+         SET last_interaction_at = NOW(), updated_at = NOW()
+         WHERE id = $1`,
+        [person.id],
+      );
+    }
+
+    await client.query("COMMIT");
+    return interactionIds;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Logs an email interaction with specified people in the database.
+ * Creates interaction records and updates last_interaction_at for each person.
+ */
+async function logInteraction(input: Record<string, unknown>): Promise<string> {
+  try {
+    // Validate input
+    const validation = validateLogInteractionInput(input);
+    if (!validation.valid) {
+      return JSON.stringify({ error: validation.error });
+    }
+
+    const { threadId, people, interactionType, notes } = validation.data as {
+      threadId: string;
+      people: string[];
+      interactionType: string;
+      notes: string;
+    };
+
+    // Resolve all people references
+    const resolvedPeople: PersonInfo[] = [];
+    for (const personRef of people) {
+      const person = await resolvePersonReference(personRef);
+      if (person && !resolvedPeople.some((p) => p.id === person.id)) {
+        resolvedPeople.push(person);
+      }
+    }
+
+    if (resolvedPeople.length === 0) {
+      return JSON.stringify({
+        error: "log_interaction: no valid people found in database",
+        provided_people: people,
+      });
+    }
+
+    // Create interaction records
+    const interactionIds = await createInteractionRecords(resolvedPeople, threadId, notes);
+
+    return JSON.stringify({
+      success: true,
+      message: `Logged email interaction with ${resolvedPeople.length} person(s)`,
+      interaction_ids: interactionIds,
+      people: resolvedPeople.map((p) => ({ id: p.id, name: p.name })),
+      thread_id: threadId,
+      interaction_type: interactionType,
+    });
+  } catch (err) {
+    log.error({ err: String(err) }, "log_interaction failed");
+    return JSON.stringify({ error: "log_interaction failed" });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Enhanced email functions with people detection
+// ---------------------------------------------------------------------------
+
+/**
+ * Enhanced version of enrichSenderInfo that also returns person info for further processing.
+ */
+async function enrichSenderInfoWithPerson(
+  fromHeader: string,
+): Promise<{ enriched: string; person: PersonInfo | null }> {
+  const email = extractEmailAddress(fromHeader);
+  if (!email) return { enriched: fromHeader, person: null };
+
+  const person = await findPersonByEmail(email);
+  if (!person?.name) return { enriched: fromHeader, person: null };
+
+  // Build enriched sender info with person details
+  const personDetails = person.relationship_type
+    ? `${person.name} - ${person.relationship_type}`
+    : person.name;
+
+  return {
+    enriched: `${fromHeader} (${personDetails})`,
+    person: { id: person.id || 0, name: person.name, relationship_type: person.relationship_type },
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Unified executor
 // ---------------------------------------------------------------------------
 
@@ -1137,6 +1450,9 @@ export async function executeGmailTool(
 
     case "extract_implied_actions":
       return extractImpliedActions(input);
+
+    case "log_interaction":
+      return logInteraction(input);
 
     default:
       return JSON.stringify({ error: `Unknown Gmail operation: ${operation}` });
