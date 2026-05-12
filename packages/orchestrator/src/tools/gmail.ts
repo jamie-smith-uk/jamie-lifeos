@@ -207,6 +207,12 @@ interface PersonInfo {
   relationship_type: string | null;
 }
 
+// Email validation pattern
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Separators to split email local part into search terms
+const EMAIL_SEPARATOR_PATTERN = /[._+-]/g;
+
 /**
  * Extracts email address from various "From" header formats:
  * - user@domain.com
@@ -222,20 +228,12 @@ function extractEmailAddress(fromHeader: string): string | null {
   const displayNameMatch = fromHeader.match(/<([^>]+)>/);
   if (displayNameMatch?.[1]) {
     const email = displayNameMatch[1].trim().toLowerCase();
-    return isValidEmail(email) ? email : null;
+    return EMAIL_REGEX.test(email) ? email : null;
   }
 
   // Handle plain email format
   const plainEmail = fromHeader.trim().toLowerCase();
-  return isValidEmail(plainEmail) ? plainEmail : null;
-}
-
-/**
- * Basic email validation to ensure we have a valid email format.
- */
-function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  return EMAIL_REGEX.test(plainEmail) ? plainEmail : null;
 }
 
 /**
@@ -252,7 +250,7 @@ async function findPersonByEmail(email: string): Promise<PersonInfo | null> {
 
     // Remove common separators and convert to searchable format
     const searchTerms = localPart
-      .replace(/[._+-]/g, " ")
+      .replace(EMAIL_SEPARATOR_PATTERN, " ")
       .split(" ")
       .filter(Boolean)
       .map((term) => term.toLowerCase());
@@ -260,13 +258,15 @@ async function findPersonByEmail(email: string): Promise<PersonInfo | null> {
     if (searchTerms.length === 0) return null;
 
     // Query for people whose names might match the email address
+    // Use LIKE patterns for safe matching instead of regex to prevent injection
+    const likePatterns = searchTerms.map((term) => `%${term}%`);
+
     const result = await pool.query(
       `SELECT name, relationship_type 
        FROM people 
-       WHERE LOWER(name) ~ $1 
-       OR LOWER(name) LIKE ANY($2::text[])
+       WHERE LOWER(name) LIKE ANY($1::text[])
        LIMIT 1`,
-      [searchTerms.join("|"), searchTerms.map((term) => `%${term}%`)],
+      [likePatterns],
     );
 
     if (result.rows.length > 0) {
@@ -278,7 +278,7 @@ async function findPersonByEmail(email: string): Promise<PersonInfo | null> {
 
     return null;
   } catch (err) {
-    log.error({ err: String(err), email }, "Failed to query people database");
+    log.error({ err: String(err) }, "Failed to query people database");
     return null;
   }
 }
@@ -291,20 +291,14 @@ async function enrichSenderInfo(fromHeader: string): Promise<string> {
   if (!email) return fromHeader;
 
   const person = await findPersonByEmail(email);
-  if (!person) return fromHeader;
+  if (!person?.name) return fromHeader;
 
-  // Build enriched sender info
-  let enrichedInfo = fromHeader;
+  // Build enriched sender info with person details
+  const personDetails = person.relationship_type
+    ? `${person.name} - ${person.relationship_type}`
+    : person.name;
 
-  if (person.name) {
-    enrichedInfo += ` (${person.name}`;
-    if (person.relationship_type) {
-      enrichedInfo += ` - ${person.relationship_type}`;
-    }
-    enrichedInfo += ")";
-  }
-
-  return enrichedInfo;
+  return `${fromHeader} (${personDetails})`;
 }
 
 // ---------------------------------------------------------------------------

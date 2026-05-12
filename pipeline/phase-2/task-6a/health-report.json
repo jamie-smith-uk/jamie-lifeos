@@ -1,0 +1,9 @@
+{
+  "task_id": "task-6a",
+  "files_checked": [
+    "packages/orchestrator/src/tools/gmail.ts"
+  ],
+  "complex_functions": [],
+  "duplication_pct": null,
+  "coverage_pct": null
+}
