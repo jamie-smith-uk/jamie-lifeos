@@ -17,7 +17,7 @@
         "noUnusedImports": "error"
       },
       "suspicious": {
-        "noExplicitAny": "warn",
+        "noExplicitAny": "error",
         "noConsole": "warn"
       },
       "security": {

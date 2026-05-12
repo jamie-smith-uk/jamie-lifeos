@@ -341,17 +341,25 @@ $TASK_SPEC
 ${CONTEXT_BLOCK:+
 $CONTEXT_BLOCK}
 
-## Step 1 — Read the tests BEFORE writing any code
-List and read every \`.test.ts\` file in the __tests__/ directories of the in-scope
-packages. The tests define the exact function signatures, exported names, and
-interfaces you must implement. Do not guess — read the tests first.
+## Step 1 — Read the in-scope source files FIRST
+Read the current content of every file listed in files_in_scope. Understand what is
+already implemented before writing anything. Do not duplicate or conflict with existing code.
+
+## Step 2 — Read the tests
+Read every \`.test.ts\` file in the __tests__/ directories of the in-scope packages.
+The tests define the exact function signatures, exported names, and interfaces you
+must implement. If in doubt, the tests are the source of truth.
 
 ## Biome lint rules — violations will fail the gate
-- **noExplicitAny**: Never use \`any\` type. Use specific TypeScript interfaces or \`unknown\`.
-- **noExcessiveCognitiveComplexity**: Max complexity 10 per function. Break complex logic
-  into small focused helpers — do not write one large function.
-- **noConsole**: Never use \`console.log\`. Use the logger from \`packages/shared/src/logger.ts\`.
-- **Formatter**: Run \`biome check --write\` (step 2 below) to auto-fix spacing/quotes/commas.
+- **noExplicitAny** (error): Never use \`any\` type. Define a typed interface for the
+  data shape, or use \`unknown\` with a type guard.
+- **noExcessiveCognitiveComplexity** (error, max 10): Break complex logic into small
+  focused helper functions. If a function genuinely must exceed 10 (e.g. a parser),
+  add \`// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <reason>\`
+  on the line immediately above the function declaration.
+- **noConsole** (warning, won't block gate): Avoid \`console.log\` — use the logger
+  from \`packages/shared/src/logger.ts\`.
+- **Formatter**: Run \`biome check --write\` (step 3 below) to auto-fix spacing/quotes/commas.
 
 ## Validation commands (run in order before marking done)
 
@@ -369,12 +377,27 @@ Write self-assessment.md to $TASK_DIR/
 Apply all security rules. Use process.env.DATABASE_URL for DB connections."
 
     if [ -n "$GATE_FAILURES" ]; then
+      PREV_DIFF=$(git -C "$REPO_ROOT" diff HEAD -- \
+        $(python3 -c "
+import json, sys
+files = json.loads(sys.argv[1])
+print(' '.join(files))
+" "$FILES_IN_SCOPE_JSON" 2>/dev/null) 2>/dev/null | head -c 8000 || true)
+
       DEV_PROMPT="$DEV_PROMPT
 
-## Previous attempt failed — fix every item below:
+## Previous attempt failed the hard gate — fix every item below before marking done:
+
 <gate-failures>
 $GATE_FAILURES
-</gate-failures>"
+</gate-failures>
+${PREV_DIFF:+
+<previous-attempt-diff>
+The following diff shows exactly what your previous attempt wrote to the in-scope files.
+Use this to understand what you already changed and avoid repeating the same mistakes:
+
+$PREV_DIFF
+</previous-attempt-diff>}"
     fi
 
     run_agent "ag-04-developer" "$DEV_PROMPT" "$TASK_DIR/dev-output-$DEV_ATTEMPTS.md"

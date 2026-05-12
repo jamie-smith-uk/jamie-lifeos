@@ -44,7 +44,7 @@ fi
 
 mkdir -p "$PIPELINE_DIR"
 PHASE_STARTED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-CONTEXT_MAX_CHARS=4000   # max context.md chars injected into agent prompts (~1k tokens)
+CONTEXT_MAX_CHARS=12000  # max context.md chars injected into agent prompts (~3k tokens)
 ARCH_DOC_MAX_CHARS=6000  # include full architecture doc below this size; tier above it
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -1403,17 +1403,25 @@ The Tester has already written failing tests in the __tests__/ directories.
 Your job is to write implementation code that makes every test pass.
 Do not modify the test files.
 
-## Step 1 — Read the tests BEFORE writing any code
-List and read every \`.test.ts\` file in the __tests__/ directories of the in-scope
-packages. The tests define the exact function signatures, exported names, and
-interfaces you must implement. Do not guess — read the tests first.
+## Step 1 — Read the in-scope source files FIRST
+Read the current content of every file listed in files_in_scope. Understand what is
+already implemented before writing anything. Do not duplicate or conflict with existing code.
+
+## Step 2 — Read the tests
+Read every \`.test.ts\` file in the __tests__/ directories of the in-scope packages.
+The tests define the exact function signatures, exported names, and interfaces you
+must implement. If in doubt, the tests are the source of truth.
 
 ## Biome lint rules — violations will fail the gate
-- **noExplicitAny**: Never use \`any\` type. Use specific TypeScript interfaces or \`unknown\`.
-- **noExcessiveCognitiveComplexity**: Max complexity 10 per function. Break complex logic
-  into small focused helpers — do not write one large function.
-- **noConsole**: Never use \`console.log\`. Use the logger from \`packages/shared/src/logger.ts\`.
-- **Formatter**: Run \`biome check --write\` (step 2 below) to auto-fix spacing/quotes/commas.
+- **noExplicitAny** (error): Never use \`any\` type. Define a typed interface for the
+  data shape, or use \`unknown\` with a type guard.
+- **noExcessiveCognitiveComplexity** (error, max 10): Break complex logic into small
+  focused helper functions. If a function genuinely must exceed 10 (e.g. a parser),
+  add \`// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <reason>\`
+  on the line immediately above the function declaration.
+- **noConsole** (warning, won't block gate): Avoid \`console.log\` — use the logger
+  from \`packages/shared/src/logger.ts\`.
+- **Formatter**: Run \`biome check --write\` (step 3 below) to auto-fix spacing/quotes/commas.
 
 ## Validation commands (run in order before marking done)
 
@@ -1426,7 +1434,7 @@ pnpm${AFFECTED_PKGS:+ $AFFECTED_PKGS} test
 
 Step 2 (\`biome check --write\`) auto-fixes formatting. Step 3 confirms the result is clean.
 You are not done until you have run all four and seen zero errors and all tests passing.
-Copy the output of each into self-assessment.md as proof.
+Copy the terminal output of each command into self-assessment.md as proof.
 
 Write self-assessment.md to pipeline/phase-$PHASE/$TASK_ID/
 Follow your system prompt exactly. Apply all security rules.
@@ -1440,7 +1448,7 @@ Use process.env.DATABASE_URL for any database connections — do not read .env d
 import json, sys
 files = json.loads(sys.argv[1])
 print(' '.join(files))
-" "$FILES_IN_SCOPE_JSON" 2>/dev/null) 2>/dev/null | head -c 3000 || true)
+" "$FILES_IN_SCOPE_JSON" 2>/dev/null) 2>/dev/null | head -c 8000 || true)
 
         DEV_PROMPT="$DEV_PROMPT
 
