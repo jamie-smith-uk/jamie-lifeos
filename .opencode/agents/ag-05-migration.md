@@ -1,6 +1,6 @@
 ---
 description: Validates and runs database migrations written by the Developer. Checks reversibility, schema consistency, and destructive-operation safety. Only runs when the task's files_in_scope includes migration files.
-mode: agent
+mode: primary
 model: anthropic/claude-haiku-4-5-20251001
 temperature: 0.1
 permissions:
