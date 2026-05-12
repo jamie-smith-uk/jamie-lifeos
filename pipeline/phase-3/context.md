@@ -83,3 +83,18 @@
 - **Biome complexity suppression**: Used `// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: date filtering and recurring event logic requires multiple conditions` to suppress complexity warnings for the date filtering logic, which legitimately requires multiple conditional branches for proper recurring event handling.
 
 ---
+## task-5c — Add tests for life events module
+
+**Files:** packages/orchestrator/src/tools/__tests__/life_events.test.ts, packages/orchestrator/vitest.config.ts, packages/orchestrator/tsconfig.json
+
+- **Life events test structure**: The test file uses comprehensive mocking of the `@lifeos/shared` module to isolate database interactions. Tests are organized by function (`get_upcoming_life_events`, `create_life_event`) and then by concern (date filtering, error handling, response format, etc.).
+
+- **Test data patterns**: Tests use consistent mock data structures with realistic person and life event records. Database query results are mocked with proper PostgreSQL result object structure including `rows`, `rowCount`, `command`, `oid`, and `fields` properties.
+
+- **Recurring event testing approach**: Tests verify the `isRecurringEventType()` logic by checking that "birthday" and "anniversary" events (case-insensitive) are marked as recurring, while other event types are not. Date adjustment logic is tested by verifying that recurring events maintain their month/day but adjust to the target year.
+
+- **Error handling test patterns**: Tests cover both validation errors (missing fields, invalid formats, length constraints) and runtime errors (database failures, JSON parsing errors). All error responses are expected to contain an `error` property with descriptive messages.
+
+- **Vitest configuration**: The `vitest.config.ts` includes the life events test file in the test suite. Tests use `vi.resetModules()` and `vi.doMock()` for proper module isolation between test cases.
+
+---

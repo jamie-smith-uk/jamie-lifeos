@@ -1,0 +1,11 @@
+{
+  "task_id": "task-5c",
+  "files_checked": [
+    "packages/orchestrator/src/tools/__tests__/life_events.test.ts",
+    "packages/orchestrator/vitest.config.ts",
+    "packages/orchestrator/tsconfig.json"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 0,
+  "coverage_pct": null
+}
