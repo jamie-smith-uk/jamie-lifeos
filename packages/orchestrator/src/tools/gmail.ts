@@ -19,7 +19,7 @@
  *   - HTTPS only.
  */
 
-import { env, logger } from "@lifeos/shared";
+import { env, logger, pool } from "@lifeos/shared";
 
 const log = logger.child({ service: "gmail-tools" });
 
@@ -199,6 +199,115 @@ function stripHtml(text: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Email sender matching against people graph
+// ---------------------------------------------------------------------------
+
+interface PersonInfo {
+  name: string;
+  relationship_type: string | null;
+}
+
+/**
+ * Extracts email address from various "From" header formats:
+ * - user@domain.com
+ * - Name <user@domain.com>
+ * - "Name" <user@domain.com>
+ * - user+tag@domain.com
+ * Returns the email address in lowercase for consistent matching.
+ */
+function extractEmailAddress(fromHeader: string): string | null {
+  if (!fromHeader) return null;
+
+  // Handle display name formats: "Name" <email> or Name <email>
+  const displayNameMatch = fromHeader.match(/<([^>]+)>/);
+  if (displayNameMatch?.[1]) {
+    const email = displayNameMatch[1].trim().toLowerCase();
+    return isValidEmail(email) ? email : null;
+  }
+
+  // Handle plain email format
+  const plainEmail = fromHeader.trim().toLowerCase();
+  return isValidEmail(plainEmail) ? plainEmail : null;
+}
+
+/**
+ * Basic email validation to ensure we have a valid email format.
+ */
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+/**
+ * Queries the people database to find a person record that matches the given email address.
+ * Uses fuzzy matching to handle variations in email formats and names.
+ */
+async function findPersonByEmail(email: string): Promise<PersonInfo | null> {
+  if (!email) return null;
+
+  try {
+    // Extract the local part (before @) to match against names
+    const localPart = email.split("@")[0];
+    if (!localPart) return null;
+
+    // Remove common separators and convert to searchable format
+    const searchTerms = localPart
+      .replace(/[._+-]/g, " ")
+      .split(" ")
+      .filter(Boolean)
+      .map((term) => term.toLowerCase());
+
+    if (searchTerms.length === 0) return null;
+
+    // Query for people whose names might match the email address
+    const result = await pool.query(
+      `SELECT name, relationship_type 
+       FROM people 
+       WHERE LOWER(name) ~ $1 
+       OR LOWER(name) LIKE ANY($2::text[])
+       LIMIT 1`,
+      [searchTerms.join("|"), searchTerms.map((term) => `%${term}%`)],
+    );
+
+    if (result.rows.length > 0) {
+      return {
+        name: result.rows[0].name,
+        relationship_type: result.rows[0].relationship_type,
+      };
+    }
+
+    return null;
+  } catch (err) {
+    log.error({ err: String(err), email }, "Failed to query people database");
+    return null;
+  }
+}
+
+/**
+ * Enriches email sender information with person details if a match is found.
+ */
+async function enrichSenderInfo(fromHeader: string): Promise<string> {
+  const email = extractEmailAddress(fromHeader);
+  if (!email) return fromHeader;
+
+  const person = await findPersonByEmail(email);
+  if (!person) return fromHeader;
+
+  // Build enriched sender info
+  let enrichedInfo = fromHeader;
+
+  if (person.name) {
+    enrichedInfo += ` (${person.name}`;
+    if (person.relationship_type) {
+      enrichedInfo += ` - ${person.relationship_type}`;
+    }
+    enrichedInfo += ")";
+  }
+
+  return enrichedInfo;
+}
+
+// ---------------------------------------------------------------------------
 // Email classification
 // ---------------------------------------------------------------------------
 
@@ -279,13 +388,14 @@ async function getInboxSummary(_input: Record<string, unknown>): Promise<string>
 
     for (const msg of emails) {
       const from = getHeader(msg, "From") || "(unknown sender)";
+      const enrichedFrom = await enrichSenderInfo(from);
       const subject = getHeader(msg, "Subject") || "(no subject)";
       const snippet = msg.snippet ?? "";
       const threadId = msg.threadId ?? msg.id ?? "";
       const category = classifyEmail(subject, snippet);
 
       lines.push(`<untrusted>`);
-      lines.push(`From: ${from}`);
+      lines.push(`From: ${enrichedFrom}`);
       lines.push(`Subject: ${subject}`);
       if (snippet) lines.push(`Summary: ${snippet}`);
       if (threadId) lines.push(`Thread ID: ${threadId}`);
@@ -327,13 +437,14 @@ async function getThread(input: Record<string, unknown>): Promise<string> {
 
     for (const msg of messages) {
       const from = getHeader(msg, "From") || "(unknown)";
+      const enrichedFrom = await enrichSenderInfo(from);
       const subject = getHeader(msg, "Subject") || "(no subject)";
       const date = getHeader(msg, "Date");
       const body = extractPlainText(msg.payload);
 
       lines.push(`--- Message ---`);
       lines.push(`<untrusted>`);
-      lines.push(`From: ${from}`);
+      lines.push(`From: ${enrichedFrom}`);
       lines.push(`Subject: ${subject}`);
       if (date) lines.push(`Date: ${date}`);
       if (body) {
