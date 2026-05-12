@@ -1,0 +1,9 @@
+{
+  "task_id": "task-2",
+  "files_checked": [
+    "migrations/003_nudges.sql"
+  ],
+  "complex_functions": [],
+  "duplication_pct": null,
+  "coverage_pct": null
+}
