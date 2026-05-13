@@ -23,13 +23,13 @@ The orchestrator prompt tells you:
 
 ### When to split
 Split a task if it has **any** of:
-- `estimated_complexity: "high"`
+- `estimated_complexity: "medium"` or `"high"`
 - More than 4 acceptance criteria
 - More than 3 files in `files_in_scope`
 
 ### When NOT to split
 - Tasks already marked complete in the pipeline output directory
-- Tasks with `estimated_complexity: "low"` and ≤ 4 ACs and ≤ 3 files
+- Tasks with `estimated_complexity: "low"` and ≤ 4 ACs and ≤ 3 files (these are already small enough)
 - Tasks where splitting would create a sub-task with only 1 AC that is purely "glue" with no testable behaviour of its own
 
 ### How to split
@@ -39,7 +39,7 @@ Each sub-task must:
 - Have a clear, single responsibility (one module, one layer, one concept)
 - Have ≤ 4 acceptance criteria
 - Have ≤ 3 files in `files_in_scope`
-- Have `estimated_complexity: "low"` or `"medium"`
+- Have `estimated_complexity: "low"` (always — never "medium" or "high")
 - Be independently testable — the Tester must be able to write failing tests for it before the Developer touches any code
 
 ### Dependency chaining

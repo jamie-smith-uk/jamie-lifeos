@@ -72,6 +72,62 @@ EOF
   exit 1
 }
 
+# try_fixer REASON FAILING_AGENT FAILURE_OUTPUT FILES_IN_SCOPE_JSON
+# Invokes the Fixer agent (up to 2 attempts) and re-runs verify_implementation.
+# Outputs remaining failures to stdout (empty = fixed).
+# Uses $TASK_DIR, $TASK_ID, $PHASE, $TASK_SPEC from outer scope.
+try_fixer() {
+  local reason="$1" failing_agent="$2" failure_output="$3" files_json="$4"
+  local max_fixer_attempts=2
+  local n
+
+  for n in $(seq 1 $max_fixer_attempts); do
+    log "→ Fixer agent (attempt $n/$max_fixer_attempts): $reason"
+
+    local fixer_out="$TASK_DIR/fixer-output-$n.md"
+    rm -f "$TASK_DIR/fixer-report.md"
+
+    local fixer_prompt
+    fixer_prompt="GATE FAILURE [attempt $n/$max_fixer_attempts]
+Phase: $PHASE
+Task: $TASK_ID
+Failing agent: $failing_agent
+Reason: $reason
+
+<failure-output>
+${failure_output}
+</failure-output>
+
+Task spec:
+${TASK_SPEC:-}
+
+Files in scope for this task:
+$(python3 -c "import json,sys; print('\n'.join('  - '+f for f in json.loads(sys.argv[1])))" "$files_json" 2>/dev/null || echo "  (error reading scope)")
+
+Repo root: $REPO_ROOT
+Pipeline dir: $TASK_DIR
+
+Diagnose the root cause, fix it, run all four validation commands, then write fixer-report.md to $TASK_DIR/. Follow your system prompt exactly."
+
+    run_agent "ag-fixer" "$fixer_prompt" "$fixer_out" 900 || true
+
+    local new_failures
+    new_failures=$(verify_implementation "$files_json") || true
+
+    if [ -z "$new_failures" ]; then
+      log "Fixer resolved: $reason"
+      return 0
+    fi
+
+    log "Fixer attempt $n: gate still failing"
+    failure_output="$new_failures"
+  done
+
+  # All fixer attempts exhausted — surface the remaining failures
+  echo "$failure_output"
+  return 1
+}
+
 run_agent() {
   local agent_id="$1" prompt="$2" output_file="$3" timeout_secs="${4:-0}"
   log "[$agent_id] Starting..."
@@ -1498,8 +1554,13 @@ Follow your system prompt exactly."
         log "ERROR: All new test files ran 0 tests — likely a load error (missing vitest import, syntax error, etc.)"
         log "Test files with 0 tests: $ZERO_TEST_COUNT"
         log "Check $TASK_DIR/test-red-output.txt for details"
-        halt "Tester produced broken test files (0 tests ran)" "AG-03" \
-          "Task: $TASK_ID — all new test files loaded with 0 tests. Check for missing 'import { describe, it, expect } from \"vitest\"'."
+        local _tester_broken_failures
+        _tester_broken_failures=$(try_fixer \
+          "Tester produced broken test files (0 tests ran)" "AG-03" \
+          "Task: $TASK_ID — all new test files loaded with 0 tests. Check for missing 'import { describe, it, expect } from \"vitest\"'." \
+          "$FILES_IN_SCOPE_JSON") || true
+        [ -n "$_tester_broken_failures" ] && halt "Tester produced broken test files (0 tests ran)" "AG-03" \
+          "Task: $TASK_ID — all new test files loaded with 0 tests. Fixer also failed. Check test files for import errors."
       fi
     fi
 
@@ -1767,8 +1828,17 @@ for f in json.loads(sys.argv[1]):
         log "Hard gate: FAIL (attempt $DEV_ATTEMPTS/5)"
         printf "%s" "$GATE_FAILURES" > "$TASK_DIR/gate-failures-$DEV_ATTEMPTS.txt"
         if [ "$DEV_ATTEMPTS" -eq 5 ]; then
-          halt "Developer could not pass hard gate after 5 attempts" "AG-04" \
-            "Task: $TASK_ID — see $TASK_DIR/gate-failures-5.txt"
+          local _all_gate_failures
+          _all_gate_failures="$(cat "$TASK_DIR/gate-failures-1.txt" 2>/dev/null || true)
+$(cat "$TASK_DIR/gate-failures-5.txt" 2>/dev/null || true)"
+          GATE_FAILURES=$(try_fixer \
+            "Developer could not pass hard gate after 5 attempts" "AG-04" \
+            "$_all_gate_failures" "$FILES_IN_SCOPE_JSON") || true
+          if [ -n "$GATE_FAILURES" ]; then
+            halt "Developer and Fixer could not pass hard gate" "AG-04" \
+              "Task: $TASK_ID — Fixer exhausted. See $TASK_DIR/fixer-output-*.md"
+          fi
+          # Fixer resolved it — GATE_FAILURES is empty, loop exits with GREEN_PASSED=true
         fi
       fi
     done
@@ -1934,9 +2004,14 @@ Follow your system prompt exactly."
     log "Re-running hard gate after refactor..."
     REFACTOR_FAILURES=$(verify_implementation "$FILES_IN_SCOPE_JSON") || true
     if [ -n "$REFACTOR_FAILURES" ]; then
-      halt "Refactor broke tsc or tests on task $TASK_ID" "AG-06" \
-        "Task: $TASK_ID
+      REFACTOR_FAILURES=$(try_fixer \
+        "Refactor broke tsc or tests" "AG-06" \
+        "$REFACTOR_FAILURES" "$FILES_IN_SCOPE_JSON") || true
+      if [ -n "$REFACTOR_FAILURES" ]; then
+        halt "Refactor broke tsc or tests on task $TASK_ID" "AG-06" \
+          "Task: $TASK_ID
 $REFACTOR_FAILURES"
+      fi
     fi
 
     echo "refactor-verified" > "$REFACTOR_VERIFIED_FILE"
@@ -2098,10 +2173,15 @@ $SCOPE_VIOLATIONS
 ${POST_SEC_FAILURES}"
       fi
       if [ -n "$POST_SEC_FAILURES" ]; then
-        rm -f "$GREEN_VERIFIED_FILE" "$REFACTOR_VERIFIED_FILE"
-        halt "Security fix broke tsc or tests on task $TASK_ID" "AG-07" \
-          "Task: $TASK_ID
+        POST_SEC_FAILURES=$(try_fixer \
+          "Security fix broke tsc or tests" "AG-07" \
+          "$POST_SEC_FAILURES" "$FILES_IN_SCOPE_JSON") || true
+        if [ -n "$POST_SEC_FAILURES" ]; then
+          rm -f "$GREEN_VERIFIED_FILE" "$REFACTOR_VERIFIED_FILE"
+          halt "Security fix broke tsc or tests on task $TASK_ID" "AG-07" \
+            "Task: $TASK_ID
 $POST_SEC_FAILURES"
+        fi
       fi
       log "Post-security hard gate: PASS"
     fi

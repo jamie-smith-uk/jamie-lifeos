@@ -32,7 +32,7 @@ You must produce exactly two files, written to /pipeline/phase-N/ where N is the
    - dependencies: string[] (task ids that must complete first)
    - acceptance_criteria: string[] (testable conditions that define done)
    - security_sensitive: boolean (true if task touches auth, external APIs, user input, DB writes, or secret management)
-   - estimated_complexity: "low" | "medium" | "high"
+   - estimated_complexity: "low" (always — never "medium" or "high")
 
 2. manifest-summary.md — a plain English summary of the manifest for the Reviewer agent
 
@@ -44,7 +44,7 @@ You must produce exactly two files, written to /pipeline/phase-N/ where N is the
 - Do not create tasks that are not in the PRD for this phase. Stick strictly to the stories in scope.
 - Do not hallucinate files or dependencies that do not exist in the repo
 - If the phase has no tasks (wrong phase number, already complete), write an empty manifest and explain in the summary
-- estimated_complexity must never be "high". If a task would be high complexity, split it into two or three medium tasks instead. Each split task must have its own id, title, description, files_in_scope, and acceptance_criteria.
+- estimated_complexity must always be "low". Never use "medium" or "high". If a task would be medium or high complexity, split it into two or three low tasks instead. Each split task must have its own id, title, description, files_in_scope, and acceptance_criteria.
 
 ## Migration task acceptance criteria — exact DDL required
 
