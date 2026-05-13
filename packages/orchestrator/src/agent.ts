@@ -721,6 +721,24 @@ const NUDGES_TOOL_NAMES = new Set<string>(["create_nudge", "dismiss_nudge"]);
 const CONFIRMATION_GATED_TOOLS = new Set<string>(["create_event", "update_event", "delete_event"]);
 
 /**
+ * Determines if a tool's results should be wrapped in <untrusted> tags.
+ * Tools that return external API data or user-provided database content
+ * must be labeled to prevent prompt injection attacks.
+ *
+ * @param toolName  The name of the tool to check.
+ * @returns         True if the tool returns untrusted content.
+ */
+function isUntrustedTool(toolName: string): boolean {
+  return (
+    GMAIL_TOOL_NAMES.has(toolName) ||
+    TODOIST_TOOL_NAMES.has(toolName) ||
+    CALENDAR_TOOL_NAMES.has(toolName) ||
+    LIFE_EVENTS_TOOL_NAMES.has(toolName) ||
+    NUDGES_TOOL_NAMES.has(toolName)
+  );
+}
+
+/**
  * Execute a single tool call and return its result as a string.
  * Delegates to the appropriate tool module based on toolName.
  * Unrecognised tools return an error string so the model can handle it
@@ -1234,13 +1252,7 @@ export async function runAgent(msg: IncomingMessage): Promise<AgentResult> {
 
         // Security: Wrap external tool results in <untrusted> tags
         // Gmail, Todoist, Calendar, Life Events, and Nudges tools return external API data
-        if (
-          GMAIL_TOOL_NAMES.has(toolUse.name) ||
-          TODOIST_TOOL_NAMES.has(toolUse.name) ||
-          CALENDAR_TOOL_NAMES.has(toolUse.name) ||
-          LIFE_EVENTS_TOOL_NAMES.has(toolUse.name) ||
-          NUDGES_TOOL_NAMES.has(toolUse.name)
-        ) {
+        if (isUntrustedTool(toolUse.name)) {
           resultContent = `<untrusted>\n${resultContent}\n</untrusted>`;
         }
 

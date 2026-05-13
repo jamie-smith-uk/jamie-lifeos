@@ -142,3 +142,10 @@
 ⚠ task-7b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-8 — Add log_interaction tool definition to agent
+
+**Files:** packages/orchestrator/src/agent.ts, packages/orchestrator/vitest.config.ts, packages/orchestrator/tsconfig.json
+
+⚠ task-8: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
