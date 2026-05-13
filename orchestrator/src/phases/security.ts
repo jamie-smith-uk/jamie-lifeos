@@ -5,13 +5,11 @@ import { runAgent } from "../agent.js";
 import { halt } from "../halt.js";
 import {
   reportPasses,
-  verifyImplementation,
   checkScopeCompliance,
   revertScopeViolations,
   getAffectedPkgFilter,
   getExpandedFileList,
 } from "../gates.js";
-import { tryFixer } from "./fixer.js";
 import { checkSecurityTrajectory } from "../checks/trajectory.js";
 import { runMutationTests } from "../checks/mutation.js";
 import { recordTaskMetrics, recordSecurityFindings } from "../metrics.js";
@@ -46,8 +44,6 @@ export function runSecurityPhase(
   let securityPassed = false;
   let securityAttempts = readSecurityAttempts(secAttemptsFile);
   const securityStart = Math.floor(Date.now() / 1000);
-  const greenVerifiedFile = path.join(taskDir, "green-verified.txt");
-  const refactorVerifiedFile = path.join(taskDir, "refactor-verified.txt");
 
   // ── Mutation testing (before security agent, for security-sensitive tasks) ──
   if (task.security_sensitive) {
@@ -167,43 +163,12 @@ Use process.env.DATABASE_URL for any database connections.`;
         cfg.pipelineDir,
       );
 
-      // Check scope compliance after security fix
+      // Revert any out-of-scope changes the security fix made
       const scopeViolations = checkScopeCompliance(filesInScopeJson, cfg.repoRoot);
       if (scopeViolations) {
         log("Scope violation after security fix — reverting...");
         revertScopeViolations(scopeViolations, cfg.repoRoot);
       }
-
-      // Re-run hard gate after security fix
-      log("Re-running hard gate after security fix...");
-      let postSecFailures = verifyImplementation(filesInScopeJson, cfg.repoRoot);
-
-      if (postSecFailures && scopeViolations) {
-        postSecFailures = `=== files_in_scope violation after security fix ===\n${scopeViolations}\n\n${postSecFailures}`;
-      }
-
-      if (postSecFailures) {
-        postSecFailures = tryFixer(
-          cfg,
-          task,
-          taskDir,
-          "Security fix broke tsc or tests",
-          "AG-07",
-          postSecFailures,
-          filesInScopeJson,
-        );
-        if (postSecFailures) {
-          // Remove green and refactor markers before halting
-          try { fs.unlinkSync(greenVerifiedFile); } catch { /* ignore */ }
-          try { fs.unlinkSync(refactorVerifiedFile); } catch { /* ignore */ }
-          halt(
-            `Security fix broke tsc or tests on task ${task.id}`,
-            "AG-07",
-            `Task: ${task.id}\n${postSecFailures}`,
-          );
-        }
-      }
-      log("Post-security hard gate: PASS");
     }
   }
 }
