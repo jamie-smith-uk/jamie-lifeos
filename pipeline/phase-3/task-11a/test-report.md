@@ -1,0 +1,199 @@
+Title: Test Report — task-11a — PASS
+
+Verified by orchestrator hard gate after Developer attempt 1.
+
+- tsc --noEmit: PASS
+- eslint (files_in_scope): PASS
+- pnpm test: PASS
+
+
+> jamie-lifeos@0.0.1 test /home/runner/work/jamie-lifeos/jamie-lifeos
+> pnpm -r test
+
+Scope: 4 of 5 workspace projects
+packages/shared test$ vitest run --config vitest.config.ts
+packages/shared test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared[39m
+packages/shared test:  [32m✓[39m src/__tests__/logger.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 79[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/env.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 76[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 102[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/types.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate-async-await.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/db.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+packages/shared test: [2m Test Files [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+packages/shared test: [2m      Tests [22m [1m[32m89 passed[39m[22m[90m (89)[39m
+packages/shared test: [2m   Start at [22m 06:40:37
+packages/shared test: [2m   Duration [22m 622ms[2m (transform 229ms, setup 0ms, import 417ms, tests 285ms, environment 1ms)[22m
+packages/shared test: Done
+packages/bot test$ vitest run --config vitest.config.ts
+packages/orchestrator test$ vitest run --config vitest.config.ts
+packages/bot test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot[39m
+packages/orchestrator test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator[39m
+packages/bot test:  [32m✓[39m src/__tests__/keyboard.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+packages/orchestrator test:  [31m❯[39m src/tools/__tests__/life_events_nudges.test.ts [2m([22m[2m14 tests[22m[2m | [22m[31m10 failed[39m[2m)[22m[32m 141[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should create a nudge 7 days before birthday event_date[39m[32m 70[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should calculate nudge trigger_at as 7 days before birthday[39m[32m 9[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should include person name in birthday nudge message[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should create a nudge 14 days before anniversary event_date[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should calculate nudge trigger_at as 14 days before anniversary[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should include person name and event type in anniversary nudge message[39m[32m 4[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should not create nudge for non-recurring event types[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle leap year dates correctly for birthday nudges[32m 29[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle month boundary dates correctly for anniversary nudges[32m 5[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should format birthday nudge message with person name and event type[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should format anniversary nudge message with person name and event type[39m[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle nudge creation failure gracefully[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should recognize 'Birthday' (capitalized) as recurring event type[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should recognize 'ANNIVERSARY' (uppercase) as recurring event type[39m[32m 2[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m36 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 1000[2mms[22m[39m
+packages/bot test: [2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+packages/bot test: [2m      Tests [22m [1m[32m63 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (64)[39m
+packages/bot test: [2m   Start at [22m 06:40:38
+packages/bot test: [2m   Duration [22m 1.40s[2m (transform 354ms, setup 0ms, import 361ms, tests 1.02s, environment 0ms)[22m
+packages/bot test: Done
+packages/orchestrator test:  [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m25 tests[22m[2m)[22m[33m 1007[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/typing-indicator-t11.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 1364[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t16.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 282[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task3.test.ts [2m([22m[2m42 tests[22m[2m)[22m[33m 446[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t17.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 240[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t18.test.ts [2m([22m[2m38 tests[22m[2m)[22m[32m 201[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 204[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task4.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 218[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t19.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 212[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t10.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 212[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t20.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 170[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/todoist-task1.test.ts [2m([22m[2m71 tests[22m[2m)[22m[32m 161[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/life_events.test.ts [2m([22m[2m52 tests[22m[2m)[22m[32m 139[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task7b.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 136[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task7a.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 147[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-implied-actions.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 174[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/scheduler.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 213[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/people.test.ts [2m([22m[2m48 tests[22m[2m)[22m[32m 135[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/typecheck-async-await.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 5621[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/shared typechecks without errors (tsc --noEmit) [33m 1127[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/orchestrator typechecks without errors (tsc --noEmit) [33m 1427[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/shared typecheck output contains no 'error TS' messages [33m 1498[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/orchestrator typecheck output contains no 'error TS' messages [33m 1565[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task8.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 111[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/nudges.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 77[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/index-async-await.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/gmail-email-interactions.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 69[2mms[22m[39m
+packages/orchestrator test: [31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 10 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events_nudges.test.ts[2m > [22mLife Events Automatic Nudge Creation[2m > [22mcreate_life_event with automatic nudge creation[2m > [22mBirthday nudge creation[2m > [22mshould create a nudge 7 days before birthday event_date
+packages/orchestrator test: [31m[1mAssertionError[22m: expected "vi.fn()" to be called 3 times, but got 2 times[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events_nudges.test.ts:[2m116:27[22m[39m
+packages/orchestrator test:     [90m114|[39m
+packages/orchestrator test:     [90m115|[39m         // Verify that pool.query was called 3 times: find person, cre…
+packages/orchestrator test:     [90m116|[39m         [34mexpect[39m(mockQuery)[33m.[39m[34mtoHaveBeenCalledTimes[39m([34m3[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                           [31m^[39m
+packages/orchestrator test:     [90m117|[39m       })[33m;[39m
+packages/orchestrator test:     [90m118|[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events_nudges.test.ts[2m > [22mLife Events Automatic Nudge Creation[2m > [22mcreate_life_event with automatic nudge creation[2m > [22mBirthday nudge creation[2m > [22mshould calculate nudge trigger_at as 7 days before birthday
+packages/orchestrator test: [31m[1mAssertionError[22m: expected undefined to be defined[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events_nudges.test.ts:[2m194:33[22m[39m
+packages/orchestrator test:     [90m192|[39m         // Verify nudge was created with correct trigger_at (7 days be…
+packages/orchestrator test:     [90m193|[39m         [35mconst[39m createNudgeCall [33m=[39m mockQuery[33m.[39mmock[33m.[39mcalls[[34m2[39m][33m;[39m
+packages/orchestrator test:     [90m194|[39m         [34mexpect[39m(createNudgeCall)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                 [31m^[39m
+packages/orchestrator test:     [90m195|[39m         // The nudge should be created with trigger_at 7 days before t…
+packages/orchestrator test:     [90m196|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events_nudges.test.ts[2m > [22mLife Events Automatic Nudge Creation[2m > [22mcreate_life_event with automatic nudge creation[2m > [22mBirthday nudge creation[2m > [22mshould include person name in birthday nudge message
+packages/orchestrator test: [31m[1mTypeError[22m: Cannot read properties of undefined (reading '0')[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events_nudges.test.ts:[2m273:16[22m[39m
+packages/orchestrator test:     [90m271|[39m         [90m// Verify the nudge message includes the person's name[39m
+packages/orchestrator test:     [90m272|[39m         [35mconst[39m createNudgeCall [33m=[39m mockQuery[33m.[39mmock[33m.[39mcalls[[34m2[39m][33m;[39m
+packages/orchestrator test:     [90m273|[39m         [34mexpect[39m(createNudgeCall[[34m0[39m])[33m.[39m[34mtoContain[39m([32m"message"[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                [31m^[39m
+packages/orchestrator test:     [90m274|[39m         [90m// The message should include "Charlie" and "birthday"[39m
+packages/orchestrator test:     [90m275|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events_nudges.test.ts[2m > [22mLife Events Automatic Nudge Creation[2m > [22mcreate_life_event with automatic nudge creation[2m > [22mAnniversary nudge creation[2m > [22mshould create a nudge 14 days before anniversary event_date
+packages/orchestrator test: [31m[1mAssertionError[22m: expected "vi.fn()" to be called 3 times, but got 2 times[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events_nudges.test.ts:[2m356:27[22m[39m
+packages/orchestrator test:     [90m354|[39m
+packages/orchestrator test:     [90m355|[39m         // Verify that pool.query was called 3 times: find person, cre…
+packages/orchestrator test:     [90m356|[39m         [34mexpect[39m(mockQuery)[33m.[39m[34mtoHaveBeenCalledTimes[39m([34m3[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                           [31m^[39m
+packages/orchestrator test:     [90m357|[39m       })[33m;[39m
+packages/orchestrator test:     [90m358|[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events_nudges.test.ts[2m > [22mLife Events Automatic Nudge Creation[2m > [22mcreate_life_event with automatic nudge creation[2m > [22mAnniversary nudge creation[2m > [22mshould calculate nudge trigger_at as 14 days before anniversary
+packages/orchestrator test: [31m[1mAssertionError[22m: expected undefined to be defined[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events_nudges.test.ts:[2m434:33[22m[39m
+packages/orchestrator test:     [90m432|[39m         // Verify nudge was created with correct trigger_at (14 days b…
+packages/orchestrator test:     [90m433|[39m         [35mconst[39m createNudgeCall [33m=[39m mockQuery[33m.[39mmock[33m.[39mcalls[[34m2[39m][33m;[39m
+packages/orchestrator test:     [90m434|[39m         [34mexpect[39m(createNudgeCall)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                 [31m^[39m
+packages/orchestrator test:     [90m435|[39m         // The nudge should be created with trigger_at 14 days before …
+packages/orchestrator test:     [90m436|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events_nudges.test.ts[2m > [22mLife Events Automatic Nudge Creation[2m > [22mcreate_life_event with automatic nudge creation[2m > [22mAnniversary nudge creation[2m > [22mshould include person name and event type in anniversary nudge message
+packages/orchestrator test: [31m[1mAssertionError[22m: expected undefined to be defined[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events_nudges.test.ts:[2m513:33[22m[39m
+packages/orchestrator test:     [90m511|[39m         // Verify the nudge message includes the person's name and eve…
+packages/orchestrator test:     [90m512|[39m         [35mconst[39m createNudgeCall [33m=[39m mockQuery[33m.[39mmock[33m.[39mcalls[[34m2[39m][33m;[39m
+packages/orchestrator test:     [90m513|[39m         [34mexpect[39m(createNudgeCall)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                 [31m^[39m
+packages/orchestrator test:     [90m514|[39m         [90m// The message should include "Frank" and "anniversary"[39m
+packages/orchestrator test:     [90m515|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events_nudges.test.ts[2m > [22mLife Events Automatic Nudge Creation[2m > [22mcreate_life_event with automatic nudge creation[2m > [22mNudge message format[2m > [22mshould format birthday nudge message with person name and event type
+packages/orchestrator test: [31m[1mTypeError[22m: Cannot read properties of undefined (reading '0')[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events_nudges.test.ts:[2m806:16[22m[39m
+packages/orchestrator test:     [90m804|[39m         [90m// Verify the nudge was created with proper message format[39m
+packages/orchestrator test:     [90m805|[39m         [35mconst[39m createNudgeCall [33m=[39m mockQuery[33m.[39mmock[33m.[39mcalls[[34m2[39m][33m;[39m
+packages/orchestrator test:     [90m806|[39m         [34mexpect[39m(createNudgeCall[[34m0[39m])[33m.[39m[34mtoContain[39m([32m"INSERT INTO nudges"[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                [31m^[39m
+packages/orchestrator test:     [90m807|[39m         [90m// Message should contain person name and event type[39m
+packages/orchestrator test:     [90m808|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events_nudges.test.ts[2m > [22mLife Events Automatic Nudge Creation[2m > [22mcreate_life_event with automatic nudge creation[2m > [22mNudge message format[2m > [22mshould format anniversary nudge message with person name and event type
+packages/orchestrator test: [31m[1mTypeError[22m: Cannot read properties of undefined (reading '0')[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events_nudges.test.ts:[2m885:16[22m[39m
+packages/orchestrator test:     [90m883|[39m         [90m// Verify the nudge was created with proper message format[39m
+packages/orchestrator test:     [90m884|[39m         [35mconst[39m createNudgeCall [33m=[39m mockQuery[33m.[39mmock[33m.[39mcalls[[34m2[39m][33m;[39m
+packages/orchestrator test:     [90m885|[39m         [34mexpect[39m(createNudgeCall[[34m0[39m])[33m.[39m[34mtoContain[39m([32m"INSERT INTO nudges"[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                [31m^[39m
+packages/orchestrator test:     [90m886|[39m         [90m// Message should contain person name and event type[39m
+packages/orchestrator test:     [90m887|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events_nudges.test.ts[2m > [22mLife Events Automatic Nudge Creation[2m > [22mcreate_life_event with automatic nudge creation[2m > [22mCase-insensitive event type matching[2m > [22mshould recognize 'Birthday' (capitalized) as recurring event type
+packages/orchestrator test: [31m[1mAssertionError[22m: expected "vi.fn()" to be called 3 times, but got 2 times[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events_nudges.test.ts:[2m1026:27[22m[39m
+packages/orchestrator test:     [90m1024|[39m
+packages/orchestrator test:     [90m1025|[39m         // Verify nudge was created (3 calls: find person, create even…
+packages/orchestrator test:     [90m1026|[39m         [34mexpect[39m(mockQuery)[33m.[39m[34mtoHaveBeenCalledTimes[39m([34m3[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                           [31m^[39m
+packages/orchestrator test:     [90m1027|[39m       })[33m;[39m
+packages/orchestrator test:     [90m1028|[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/life_events_nudges.test.ts[2m > [22mLife Events Automatic Nudge Creation[2m > [22mcreate_life_event with automatic nudge creation[2m > [22mCase-insensitive event type matching[2m > [22mshould recognize 'ANNIVERSARY' (uppercase) as recurring event type
+packages/orchestrator test: [31m[1mAssertionError[22m: expected "vi.fn()" to be called 3 times, but got 2 times[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/life_events_nudges.test.ts:[2m1104:27[22m[39m
+packages/orchestrator test:     [90m1102|[39m
+packages/orchestrator test:     [90m1103|[39m         // Verify nudge was created (3 calls: find person, create even…
+packages/orchestrator test:     [90m1104|[39m         [34mexpect[39m(mockQuery)[33m.[39m[34mtoHaveBeenCalledTimes[39m([34m3[39m)[33m;[39m
+packages/orchestrator test:     [90m   |[39m                           [31m^[39m
+packages/orchestrator test:     [90m1105|[39m       })[33m;[39m
+packages/orchestrator test:     [90m1106|[39m     })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯[22m[39m
+packages/orchestrator test: [2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m23 passed[39m[22m[90m (24)[39m
+packages/orchestrator test: [2m      Tests [22m [1m[31m10 failed[39m[22m[2m | [22m[1m[32m610 passed[39m[22m[90m (620)[39m
+packages/orchestrator test: [2m   Start at [22m 06:40:38
+packages/orchestrator test: [2m   Duration [22m 6.42s[2m (transform 1.95s, setup 0ms, import 2.36s, tests 11.70s, environment 3ms)[22m
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events_nudges.test.ts,title=src/tools/__tests__/life_events_nudges.test.ts > Life Events Automatic Nudge Creation > create_life_event with automatic nudge creation > Birthday nudge creation > should create a nudge 7 days before birthday event_date,line=116,column=27::AssertionError: expected "vi.fn()" to be called 3 times, but got 2 times%0A ❯ src/tools/__tests__/life_events_nudges.test.ts:116:27%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events_nudges.test.ts,title=src/tools/__tests__/life_events_nudges.test.ts > Life Events Automatic Nudge Creation > create_life_event with automatic nudge creation > Birthday nudge creation > should calculate nudge trigger_at as 7 days before birthday,line=194,column=33::AssertionError: expected undefined to be defined%0A ❯ src/tools/__tests__/life_events_nudges.test.ts:194:33%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events_nudges.test.ts,title=src/tools/__tests__/life_events_nudges.test.ts > Life Events Automatic Nudge Creation > create_life_event with automatic nudge creation > Birthday nudge creation > should include person name in birthday nudge message,line=273,column=16::TypeError: Cannot read properties of undefined (reading '0')%0A ❯ src/tools/__tests__/life_events_nudges.test.ts:273:16%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events_nudges.test.ts,title=src/tools/__tests__/life_events_nudges.test.ts > Life Events Automatic Nudge Creation > create_life_event with automatic nudge creation > Anniversary nudge creation > should create a nudge 14 days before anniversary event_date,line=356,column=27::AssertionError: expected "vi.fn()" to be called 3 times, but got 2 times%0A ❯ src/tools/__tests__/life_events_nudges.test.ts:356:27%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events_nudges.test.ts,title=src/tools/__tests__/life_events_nudges.test.ts > Life Events Automatic Nudge Creation > create_life_event with automatic nudge creation > Anniversary nudge creation > should calculate nudge trigger_at as 14 days before anniversary,line=434,column=33::AssertionError: expected undefined to be defined%0A ❯ src/tools/__tests__/life_events_nudges.test.ts:434:33%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events_nudges.test.ts,title=src/tools/__tests__/life_events_nudges.test.ts > Life Events Automatic Nudge Creation > create_life_event with automatic nudge creation > Anniversary nudge creation > should include person name and event type in anniversary nudge message,line=513,column=33::AssertionError: expected undefined to be defined%0A ❯ src/tools/__tests__/life_events_nudges.test.ts:513:33%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events_nudges.test.ts,title=src/tools/__tests__/life_events_nudges.test.ts > Life Events Automatic Nudge Creation > create_life_event with automatic nudge creation > Nudge message format > should format birthday nudge message with person name and event type,line=806,column=16::TypeError: Cannot read properties of undefined (reading '0')%0A ❯ src/tools/__tests__/life_events_nudges.test.ts:806:16%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events_nudges.test.ts,title=src/tools/__tests__/life_events_nudges.test.ts > Life Events Automatic Nudge Creation > create_life_event with automatic nudge creation > Nudge message format > should format anniversary nudge message with person name and event type,line=885,column=16::TypeError: Cannot read properties of undefined (reading '0')%0A ❯ src/tools/__tests__/life_events_nudges.test.ts:885:16%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events_nudges.test.ts,title=src/tools/__tests__/life_events_nudges.test.ts > Life Events Automatic Nudge Creation > create_life_event with automatic nudge creation > Case-insensitive event type matching > should recognize 'Birthday' (capitalized) as recurring event type,line=1026,column=27::AssertionError: expected "vi.fn()" to be called 3 times, but got 2 times%0A ❯ src/tools/__tests__/life_events_nudges.test.ts:1026:27%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/life_events_nudges.test.ts,title=src/tools/__tests__/life_events_nudges.test.ts > Life Events Automatic Nudge Creation > create_life_event with automatic nudge creation > Case-insensitive event type matching > should recognize 'ANNIVERSARY' (uppercase) as recurring event type,line=1104,column=27::AssertionError: expected "vi.fn()" to be called 3 times, but got 2 times%0A ❯ src/tools/__tests__/life_events_nudges.test.ts:1104:27%0A%0A
+packages/orchestrator test: Failed
+/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/orchestrator@0.0.1 test: `vitest run --config vitest.config.ts`
+Exit status 1
+ ELIFECYCLE  Test failed. See above for more details.

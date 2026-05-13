@@ -309,6 +309,91 @@ async function getUpcomingLifeEvents(input: string): Promise<string> {
 }
 
 /**
+ * Creates a nudge message for a life event.
+ */
+function createNudgeMessage(
+  personName: string,
+  eventType: string,
+  daysBeforeEvent: number,
+): string {
+  return `${personName}'s ${eventType} is coming up in ${daysBeforeEvent} days`;
+}
+
+/**
+ * Calculates the trigger date for a nudge based on event type.
+ */
+function calculateNudgeTriggerDate(eventDate: string, eventType: string): string {
+  const eventDateObj = new Date(eventDate);
+  let daysBeforeEvent: number;
+
+  // Determine days before event based on event type
+  if (eventType.toLowerCase() === "birthday") {
+    daysBeforeEvent = 7;
+  } else if (eventType.toLowerCase() === "anniversary") {
+    daysBeforeEvent = 14;
+  } else {
+    // Should not happen for recurring events, but fallback
+    daysBeforeEvent = 7;
+  }
+
+  // Calculate trigger date by subtracting days
+  const triggerDate = new Date(eventDateObj);
+  triggerDate.setDate(triggerDate.getDate() - daysBeforeEvent);
+
+  // Set time to 9:00 AM for consistent nudge timing
+  triggerDate.setHours(9, 0, 0, 0);
+
+  return triggerDate.toISOString();
+}
+
+/**
+ * Creates an automatic nudge for a recurring life event.
+ */
+async function createAutomaticNudge(
+  personId: number,
+  personName: string,
+  lifeEventId: string,
+  eventType: string,
+  eventDate: string,
+): Promise<void> {
+  const log = logger.child({ tool: "create_life_event", action: "create_automatic_nudge" });
+
+  try {
+    // Calculate trigger date and message
+    const triggerAt = calculateNudgeTriggerDate(eventDate, eventType);
+    const daysBeforeEvent = eventType.toLowerCase() === "birthday" ? 7 : 14;
+    const message = createNudgeMessage(personName, eventType, daysBeforeEvent);
+
+    // Create the nudge record
+    await pool.query(
+      `INSERT INTO nudges (person_id, life_event_id, message, trigger_at, status)
+       VALUES ($1, $2, $3, $4, 'pending')`,
+      [personId, Number.parseInt(lifeEventId, 10), message, triggerAt],
+    );
+
+    log.info(
+      {
+        person_id: personId,
+        life_event_id: lifeEventId,
+        trigger_at: triggerAt,
+        event_type: eventType,
+      },
+      "Automatic nudge created",
+    );
+  } catch (err) {
+    // Log error but don't fail the life event creation
+    log.error(
+      {
+        err: String(err),
+        person_id: personId,
+        life_event_id: lifeEventId,
+      },
+      "Failed to create automatic nudge",
+    );
+  }
+}
+
+/**
  * Creates a new life event record.
  */
 async function createLifeEvent(input: string): Promise<string> {
@@ -346,6 +431,17 @@ async function createLifeEvent(input: string): Promise<string> {
 
     const lifeEvent = rowToLifeEventInfo(result.rows[0]);
     log.info({ person_id: person.id, life_event_id: lifeEvent.id }, "Life event created");
+
+    // Create automatic nudge for recurring events (birthdays and anniversaries)
+    if (isRecurring) {
+      await createAutomaticNudge(
+        person.id,
+        person.name,
+        lifeEvent.id,
+        event_type.trim(),
+        event_date,
+      );
+    }
 
     return JSON.stringify({
       success: true,
