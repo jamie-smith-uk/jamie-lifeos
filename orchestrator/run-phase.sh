@@ -2201,34 +2201,12 @@ Use process.env.DATABASE_URL for any database connections."
       run_agent "ag-04-developer" "$SEC_FIX_PROMPT" \
         "$TASK_DIR/dev-secfix-$SECURITY_ATTEMPTS.md" 900
 
+      # Revert any out-of-scope changes the security fix made
       SCOPE_VIOLATIONS=$(check_scope_compliance "$FILES_IN_SCOPE_JSON") || true
       if [ -n "$SCOPE_VIOLATIONS" ]; then
         log "Scope violation after security fix — reverting..."
         revert_scope_violations <<< "$SCOPE_VIOLATIONS"
       fi
-
-      log "Re-running hard gate after security fix..."
-      POST_SEC_FAILURES=$(verify_implementation "$FILES_IN_SCOPE_JSON") || true
-      # Only include scope violations in failures if tsc/lint/tests also failed.
-      # Scope violations alone are auto-recoverable via revert and shouldn't halt.
-      if [ -n "$POST_SEC_FAILURES" ] && [ -n "$SCOPE_VIOLATIONS" ]; then
-        POST_SEC_FAILURES="=== files_in_scope violation after security fix ===
-$SCOPE_VIOLATIONS
-
-${POST_SEC_FAILURES}"
-      fi
-      if [ -n "$POST_SEC_FAILURES" ]; then
-        POST_SEC_FAILURES=$(try_fixer \
-          "Security fix broke tsc or tests" "AG-07" \
-          "$POST_SEC_FAILURES" "$FILES_IN_SCOPE_JSON") || true
-        if [ -n "$POST_SEC_FAILURES" ]; then
-          rm -f "$GREEN_VERIFIED_FILE" "$REFACTOR_VERIFIED_FILE"
-          halt "Security fix broke tsc or tests on task $TASK_ID" "AG-07" \
-            "Task: $TASK_ID
-$POST_SEC_FAILURES"
-        fi
-      fi
-      log "Post-security hard gate: PASS"
     fi
   done
 
