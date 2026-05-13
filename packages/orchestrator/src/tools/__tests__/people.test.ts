@@ -1064,4 +1064,872 @@ describe("People Tools", () => {
       });
     });
   });
+
+  describe("get_person", () => {
+    describe("Input validation", () => {
+      it("should accept person name as input", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              name: "Alice Johnson",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: "Loves hiking",
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock getting life events
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          name: "Alice Johnson",
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("success", true);
+        expect(parsed).toHaveProperty("person");
+      });
+
+      it("should return error when name is missing", async () => {
+        const input = JSON.stringify({});
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("error");
+        expect(parsed.error).toContain("name");
+      });
+
+      it("should return error when name is empty string", async () => {
+        const input = JSON.stringify({
+          name: "",
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("error");
+      });
+
+      it("should return error when name is not a string", async () => {
+        const input = JSON.stringify({
+          name: 123,
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("error");
+      });
+    });
+
+    describe("Life events inclusion", () => {
+      it("should include life_events array in response", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              name: "Alice Johnson",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: "Loves hiking",
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock getting life events
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: "Alice's birthday",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          name: "Alice Johnson",
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("success", true);
+        expect(parsed.person).toHaveProperty("life_events");
+        expect(Array.isArray(parsed.person.life_events)).toBe(true);
+      });
+
+      it("should return empty life_events array when person has no events", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 2,
+              name: "Bob Smith",
+              relationship_type: "colleague",
+              how_known: "work",
+              notes: null,
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock getting life events (empty)
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          name: "Bob Smith",
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed.person.life_events).toEqual([]);
+      });
+
+      it("should include multiple life events in response", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 3,
+              name: "Carol Davis",
+              relationship_type: "family",
+              how_known: "sister",
+              notes: "Close sister",
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock getting multiple life events
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 3,
+              event_type: "birthday",
+              event_date: "1992-03-20",
+              is_recurring: true,
+              notes: "Carol's birthday",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+            {
+              id: 2,
+              person_id: 3,
+              event_type: "anniversary",
+              event_date: "2015-06-15",
+              is_recurring: true,
+              notes: "Carol's wedding anniversary",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+            {
+              id: 3,
+              person_id: 3,
+              event_type: "promotion",
+              event_date: "2026-05-10",
+              is_recurring: false,
+              notes: "Got promoted at work",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+          ],
+          rowCount: 3,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          name: "Carol Davis",
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed.person.life_events).toHaveLength(3);
+      });
+    });
+
+    describe("Life event fields", () => {
+      it("should include event_type in life events", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              name: "Alice Johnson",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: "Loves hiking",
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock getting life events
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: "Alice's birthday",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          name: "Alice Johnson",
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed.person.life_events[0]).toHaveProperty("event_type", "birthday");
+      });
+
+      it("should include event_date in life events", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              name: "Alice Johnson",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: "Loves hiking",
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock getting life events
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: "Alice's birthday",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          name: "Alice Johnson",
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed.person.life_events[0]).toHaveProperty("event_date", "1990-05-15");
+      });
+
+      it("should include is_recurring in life events", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              name: "Alice Johnson",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: "Loves hiking",
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock getting life events with both recurring and non-recurring
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: "Alice's birthday",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+            {
+              id: 2,
+              person_id: 1,
+              event_type: "graduation",
+              event_date: "2012-06-01",
+              is_recurring: false,
+              notes: "College graduation",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+          ],
+          rowCount: 2,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          name: "Alice Johnson",
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed.person.life_events[0]).toHaveProperty("is_recurring", true);
+        expect(parsed.person.life_events[1]).toHaveProperty("is_recurring", false);
+      });
+
+      it("should include notes in life events", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              name: "Alice Johnson",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: "Loves hiking",
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock getting life events
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: "Alice's birthday - loves chocolate cake",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          name: "Alice Johnson",
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed.person.life_events[0]).toHaveProperty(
+          "notes",
+          "Alice's birthday - loves chocolate cake",
+        );
+      });
+
+      it("should handle life events with null notes", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              name: "Alice Johnson",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: "Loves hiking",
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock getting life events with null notes
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: null,
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          name: "Alice Johnson",
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        // When notes is null, it should be undefined in the response
+        expect(parsed.person.life_events[0].notes).toBeUndefined();
+      });
+    });
+
+    describe("Database query efficiency", () => {
+      it("should query life_events table using person_id", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 42,
+              name: "Test Person",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: null,
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock getting life events
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          name: "Test Person",
+        });
+
+        await peopleModule.executePeopleTool("get_person", input);
+
+        // Verify that the second query (life events) uses person_id
+        const secondCall = mockQuery.mock.calls[1];
+        expect(secondCall[0]).toContain("WHERE person_id = $1");
+        expect(secondCall[1]).toEqual([42]);
+      });
+
+      it("should order life events by event_date", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              name: "Alice Johnson",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: "Loves hiking",
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock getting life events
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          name: "Alice Johnson",
+        });
+
+        await peopleModule.executePeopleTool("get_person", input);
+
+        // Verify that the second query orders by event_date
+        const secondCall = mockQuery.mock.calls[1];
+        expect(secondCall[0]).toContain("ORDER BY event_date");
+      });
+    });
+
+    describe("Fuzzy name matching", () => {
+      it("should find person using fuzzy matching with partial name", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person with fuzzy match
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 5,
+              name: "Alice Johnson",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: "Loves hiking",
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock getting life events
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          name: "alice",
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("success", true);
+        expect(parsed.person.name).toBe("Alice Johnson");
+      });
+
+      it("should return error when person not found", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding no person
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          name: "NonexistentPerson",
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("success", false);
+        expect(parsed).toHaveProperty("message");
+        expect(parsed.message).toContain("No person found");
+      });
+    });
+
+    describe("Error handling", () => {
+      it("should return error when database query fails", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock database error
+        mockQuery.mockRejectedValueOnce(new Error("Database connection failed"));
+
+        const input = JSON.stringify({
+          name: "Alice Johnson",
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("error");
+        expect(parsed.error).toContain("get_person failed");
+      });
+
+      it("should return error when JSON parsing fails", async () => {
+        const result = await peopleModule.executePeopleTool("get_person", "invalid json");
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("error");
+      });
+
+      it("should return error when name exceeds max length", async () => {
+        const longName = "a".repeat(256);
+        const input = JSON.stringify({
+          name: longName,
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("error");
+        expect(parsed.error).toContain("exceeds maximum length");
+      });
+    });
+
+    describe("Response format", () => {
+      it("should return success response with person object", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              name: "Alice Johnson",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: "Loves hiking",
+              last_interaction_at: new Date("2026-05-10T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock getting life events
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          name: "Alice Johnson",
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed).toHaveProperty("success", true);
+        expect(parsed.person).toHaveProperty("id");
+        expect(parsed.person).toHaveProperty("name");
+        expect(parsed.person).toHaveProperty("relationship_type");
+        expect(parsed.person).toHaveProperty("how_known");
+        expect(parsed.person).toHaveProperty("notes");
+        expect(parsed.person).toHaveProperty("last_interaction_at");
+        expect(parsed.person).toHaveProperty("life_events");
+      });
+
+      it("should convert timestamps to ISO strings", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              name: "Alice Johnson",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: "Loves hiking",
+              last_interaction_at: new Date("2026-05-10T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock getting life events
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: "Alice's birthday",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          name: "Alice Johnson",
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(typeof parsed.person.last_interaction_at).toBe("string");
+        expect(parsed.person.last_interaction_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+        expect(typeof parsed.person.life_events[0].created_at).toBe("string");
+        expect(parsed.person.life_events[0].created_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+      });
+
+      it("should convert numeric IDs to strings", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 42,
+              name: "Alice Johnson",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: "Loves hiking",
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock getting life events
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 99,
+              person_id: 42,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: "Alice's birthday",
+              created_at: new Date("2026-01-01T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          name: "Alice Johnson",
+        });
+
+        const result = await peopleModule.executePeopleTool("get_person", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed.person.id).toBe("42");
+        expect(typeof parsed.person.id).toBe("string");
+        expect(parsed.person.life_events[0].id).toBe("99");
+        expect(typeof parsed.person.life_events[0].id).toBe("string");
+      });
+    });
+  });
 });

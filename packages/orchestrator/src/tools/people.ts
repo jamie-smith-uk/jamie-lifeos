@@ -250,26 +250,15 @@ async function getPerson(input: string): Promise<string> {
       return JSON.stringify({ error: `get_person: ${validationError}` });
     }
 
-    const fuzzyName = buildFuzzyNameQuery(name);
-    const result = await pool.query(
-      `SELECT id, name, relationship_type, how_known, notes, last_interaction_at
-       FROM people
-       WHERE name ILIKE $1
-       ORDER BY 
-         CASE WHEN LOWER(name) = LOWER($2) THEN 1 ELSE 2 END,
-         name
-       LIMIT 1`,
-      [fuzzyName, name.trim()],
-    );
-
-    if (result.rows.length === 0) {
+    // Find the person using fuzzy matching
+    const personRow = await findPersonByNameForUpdate(name);
+    if (!personRow) {
       return JSON.stringify({
         success: false,
         message: `No person found matching "${name}"`,
       });
     }
 
-    const personRow = result.rows[0];
     const person = rowToPersonInfo(personRow);
 
     // Get life events for this person
@@ -282,9 +271,7 @@ async function getPerson(input: string): Promise<string> {
     );
 
     // Process life events
-    const lifeEvents: LifeEventInfo[] = lifeEventsResult.rows.map((row) => {
-      return rowToLifeEventInfo(row);
-    });
+    const lifeEvents: LifeEventInfo[] = lifeEventsResult.rows.map(rowToLifeEventInfo);
 
     // Add life events to person object
     person.life_events = lifeEvents;

@@ -149,3 +149,10 @@
 ⚠ task-8: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-9a — Update get_person to include life events
+
+**Files:** packages/orchestrator/src/tools/people.ts
+
+⚠ task-9a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
