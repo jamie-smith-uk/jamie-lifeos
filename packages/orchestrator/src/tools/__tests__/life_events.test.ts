@@ -1788,5 +1788,561 @@ describe("Life Events Tools", () => {
         expect(parsed.error).toContain("event_date");
       });
     });
+
+    describe("Automatic nudge creation", () => {
+      it("should create nudge for birthday with correct trigger date (7 days before)", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              name: "Alice Johnson",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: null,
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock creating life event
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: null,
+              created_at: new Date("2026-05-12T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock creating nudge
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          person_name: "Alice Johnson",
+          event_type: "birthday",
+          event_date: "2026-05-15",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed.success).toBe(true);
+
+        // Verify nudge creation was called with correct parameters
+        expect(mockQuery).toHaveBeenCalledTimes(3);
+        const nudgeCall = mockQuery.mock.calls[2];
+        expect(nudgeCall[0]).toContain("INSERT INTO nudges");
+        expect(nudgeCall[1][0]).toBe(1); // person_id
+        expect(nudgeCall[1][1]).toBe(1); // life_event_id
+        expect(nudgeCall[1][2]).toBe("Alice Johnson's birthday is coming up in 7 days"); // message
+
+        // Verify trigger date is 7 days before event at 9:00 AM
+        const triggerAt = new Date(nudgeCall[1][3]);
+        const eventDate = new Date("2026-05-15");
+        const expectedTriggerDate = new Date(eventDate);
+        expectedTriggerDate.setDate(expectedTriggerDate.getDate() - 7);
+        expectedTriggerDate.setHours(9, 0, 0, 0);
+
+        expect(triggerAt.toISOString()).toBe(expectedTriggerDate.toISOString());
+
+        // Verify status is hardcoded as 'pending' in the SQL query
+        expect(nudgeCall[0]).toContain("'pending'");
+      });
+
+      it("should create nudge for anniversary with correct trigger date (14 days before)", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 2,
+              name: "Bob Smith",
+              relationship_type: "spouse",
+              how_known: "married",
+              notes: null,
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock creating life event
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 2,
+              person_id: 2,
+              event_type: "anniversary",
+              event_date: "2020-07-10",
+              is_recurring: true,
+              notes: null,
+              created_at: new Date("2026-05-12T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock creating nudge
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          person_name: "Bob Smith",
+          event_type: "anniversary",
+          event_date: "2026-07-10",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed.success).toBe(true);
+
+        // Verify nudge creation was called with correct parameters
+        expect(mockQuery).toHaveBeenCalledTimes(3);
+        const nudgeCall = mockQuery.mock.calls[2];
+        expect(nudgeCall[0]).toContain("INSERT INTO nudges");
+        expect(nudgeCall[1][0]).toBe(2); // person_id
+        expect(nudgeCall[1][1]).toBe(2); // life_event_id
+        expect(nudgeCall[1][2]).toBe("Bob Smith's anniversary is coming up in 14 days"); // message
+
+        // Verify trigger date is 14 days before event at 9:00 AM
+        const triggerAt = new Date(nudgeCall[1][3]);
+        const eventDate = new Date("2026-07-10");
+        const expectedTriggerDate = new Date(eventDate);
+        expectedTriggerDate.setDate(expectedTriggerDate.getDate() - 14);
+        expectedTriggerDate.setHours(9, 0, 0, 0);
+
+        expect(triggerAt.toISOString()).toBe(expectedTriggerDate.toISOString());
+
+        // Verify status is hardcoded as 'pending' in the SQL query
+        expect(nudgeCall[0]).toContain("'pending'");
+      });
+
+      it("should format nudge messages correctly for different event types", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Test birthday message format
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              name: "Alice Johnson",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: null,
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: null,
+              created_at: new Date("2026-05-12T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          person_name: "Alice Johnson",
+          event_type: "birthday",
+          event_date: "2026-05-15",
+        });
+
+        await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
+
+        // Verify message format
+        const nudgeCall = mockQuery.mock.calls[2];
+        expect(nudgeCall[1][2]).toBe("Alice Johnson's birthday is coming up in 7 days");
+      });
+
+      it("should not create nudge for non-recurring events", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 3,
+              name: "Charlie Brown",
+              relationship_type: "friend",
+              how_known: "work",
+              notes: null,
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock creating life event (non-recurring)
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 3,
+              person_id: 3,
+              event_type: "graduation",
+              event_date: "2025-06-15",
+              is_recurring: false,
+              notes: null,
+              created_at: new Date("2026-05-12T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          person_name: "Charlie Brown",
+          event_type: "graduation",
+          event_date: "2025-06-15",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed.success).toBe(true);
+
+        // Verify only 2 queries were made (person lookup and life event creation, no nudge)
+        expect(mockQuery).toHaveBeenCalledTimes(2);
+      });
+
+      it("should continue successfully if nudge creation fails", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              name: "Alice Johnson",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: null,
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock creating life event
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: null,
+              created_at: new Date("2026-05-12T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock nudge creation failure
+        mockQuery.mockRejectedValueOnce(new Error("Nudge creation failed"));
+
+        const input = JSON.stringify({
+          person_name: "Alice Johnson",
+          event_type: "birthday",
+          event_date: "2026-05-15",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
+        const parsed = JSON.parse(result);
+
+        // Life event creation should still succeed despite nudge failure
+        expect(parsed.success).toBe(true);
+        expect(parsed.life_event).toBeDefined();
+        expect(parsed.message).toBe("Life event created successfully");
+      });
+
+      it("should handle case-insensitive event types for nudge creation", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              name: "Alice Johnson",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: null,
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock creating life event with uppercase event type
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "BIRTHDAY",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: null,
+              created_at: new Date("2026-05-12T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock creating nudge
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          person_name: "Alice Johnson",
+          event_type: "BIRTHDAY",
+          event_date: "2026-05-15",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed.success).toBe(true);
+
+        // Verify nudge was created with correct trigger date (7 days for birthday)
+        expect(mockQuery).toHaveBeenCalledTimes(3);
+        const nudgeCall = mockQuery.mock.calls[2];
+
+        // Verify trigger date calculation works with uppercase event type
+        const triggerAt = new Date(nudgeCall[1][3]);
+        const eventDate = new Date("2026-05-15");
+        const expectedTriggerDate = new Date(eventDate);
+        expectedTriggerDate.setDate(expectedTriggerDate.getDate() - 7); // 7 days for birthday
+        expectedTriggerDate.setHours(9, 0, 0, 0);
+
+        expect(triggerAt.toISOString()).toBe(expectedTriggerDate.toISOString());
+      });
+
+      it("should calculate correct trigger dates for events in different months", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 2,
+              name: "Bob Smith",
+              relationship_type: "spouse",
+              how_known: "married",
+              notes: null,
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock creating life event for anniversary on January 1st
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 2,
+              person_id: 2,
+              event_type: "anniversary",
+              event_date: "2020-01-01",
+              is_recurring: true,
+              notes: null,
+              created_at: new Date("2026-05-12T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock creating nudge
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          person_name: "Bob Smith",
+          event_type: "anniversary",
+          event_date: "2026-01-01",
+        });
+
+        const result = await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
+        const parsed = JSON.parse(result);
+
+        expect(parsed.success).toBe(true);
+
+        // Verify trigger date calculation for cross-month boundary
+        const nudgeCall = mockQuery.mock.calls[2];
+        const triggerAt = new Date(nudgeCall[1][3]);
+
+        // 14 days before January 1st should be December 18th of previous year
+        const expectedTriggerDate = new Date("2025-12-18T09:00:00.000Z");
+
+        expect(triggerAt.toISOString()).toBe(expectedTriggerDate.toISOString());
+      });
+
+      it("should set nudge trigger time to 9:00 AM consistently", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock finding the person
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              name: "Alice Johnson",
+              relationship_type: "friend",
+              how_known: "college",
+              notes: null,
+              last_interaction_at: null,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock creating life event
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              person_id: 1,
+              event_type: "birthday",
+              event_date: "1990-05-15",
+              is_recurring: true,
+              notes: null,
+              created_at: new Date("2026-05-12T10:00:00Z"),
+            },
+          ],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock creating nudge
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        const input = JSON.stringify({
+          person_name: "Alice Johnson",
+          event_type: "birthday",
+          event_date: "2026-05-15",
+        });
+
+        await lifeEventsModule.executeLifeEventsTool("create_life_event", input);
+
+        // Verify trigger time is set to 9:00 AM
+        const nudgeCall = mockQuery.mock.calls[2];
+        const triggerAt = new Date(nudgeCall[1][3]);
+
+        expect(triggerAt.getUTCHours()).toBe(9);
+        expect(triggerAt.getUTCMinutes()).toBe(0);
+        expect(triggerAt.getUTCSeconds()).toBe(0);
+        expect(triggerAt.getUTCMilliseconds()).toBe(0);
+      });
+    });
   });
 });
