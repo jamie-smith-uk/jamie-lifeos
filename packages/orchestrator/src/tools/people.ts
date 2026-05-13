@@ -14,6 +14,16 @@ import { logger, pool } from "@lifeos/shared";
 // Types
 // ---------------------------------------------------------------------------
 
+interface LifeEventInfo {
+  id: string;
+  person_id: number;
+  event_type: string;
+  event_date: string;
+  is_recurring: boolean;
+  notes?: string;
+  created_at: string;
+}
+
 interface PersonInfo {
   id?: string;
   name: string;
@@ -21,6 +31,7 @@ interface PersonInfo {
   how_known?: string;
   notes?: string;
   last_interaction_at?: string;
+  life_events?: LifeEventInfo[];
 }
 
 // ---------------------------------------------------------------------------
@@ -159,6 +170,29 @@ function mergeNotes(existingNotes: string | null, newNotes: string | undefined):
   return trimmedNewNotes;
 }
 
+/**
+ * Converts a database row to a LifeEventInfo object.
+ */
+function rowToLifeEventInfo(row: {
+  id: number;
+  person_id: number;
+  event_type: string;
+  event_date: string;
+  is_recurring: boolean;
+  notes?: string;
+  created_at: Date;
+}): LifeEventInfo {
+  return {
+    id: String(row.id),
+    person_id: row.person_id,
+    event_type: row.event_type,
+    event_date: row.event_date,
+    is_recurring: row.is_recurring,
+    notes: row.notes || undefined,
+    created_at: row.created_at.toISOString(),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Tool Functions
 // ---------------------------------------------------------------------------
@@ -235,8 +269,27 @@ async function getPerson(input: string): Promise<string> {
       });
     }
 
-    const person = rowToPersonInfo(result.rows[0]);
-    log.info({ person_id: person.id }, "Person retrieved");
+    const personRow = result.rows[0];
+    const person = rowToPersonInfo(personRow);
+
+    // Get life events for this person
+    const lifeEventsResult = await pool.query(
+      `SELECT id, person_id, event_type, event_date, is_recurring, notes, created_at
+       FROM life_events
+       WHERE person_id = $1
+       ORDER BY event_date`,
+      [personRow.id],
+    );
+
+    // Process life events
+    const lifeEvents: LifeEventInfo[] = lifeEventsResult.rows.map((row) => {
+      return rowToLifeEventInfo(row);
+    });
+
+    // Add life events to person object
+    person.life_events = lifeEvents;
+
+    log.info({ person_id: person.id, life_events_count: lifeEvents.length }, "Person retrieved");
 
     return JSON.stringify({
       success: true,
