@@ -192,3 +192,10 @@
 ⚠ task-11a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-11b — Add tests for automatic nudge creation
+
+**Files:** packages/orchestrator/src/tools/__tests__/life_events.test.ts, packages/orchestrator/vitest.config.ts, packages/orchestrator/tsconfig.json
+
+⚠ task-11b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
