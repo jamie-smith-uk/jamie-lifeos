@@ -178,7 +178,7 @@ function handleQuery(text: string, values: unknown[]): { rows: StoredRow[]; rowC
       life_event_id: values[1] as number | null,
       message: values[2] as string,
       trigger_at: new Date(values[3] as string),
-      status: 'pending',
+      status: "pending",
       sent_at: null,
       dismissed_at: null,
       created_at: new Date(),
@@ -194,7 +194,7 @@ function handleQuery(text: string, values: unknown[]): { rows: StoredRow[]; rowC
       life_event_id: null,
       message: "Test message",
       trigger_at: new Date(),
-      status: 'dismissed',
+      status: "dismissed",
       sent_at: null,
       dismissed_at: new Date(),
       created_at: new Date(),
@@ -590,12 +590,12 @@ describe("Task-7b: Nudges tool definitions and routing", () => {
       });
 
       vi.resetModules();
-      
+
       // Create fresh mock after resetModules
       const freshExecuteNudgesToolMock = vi.fn(async () => {
         return JSON.stringify({ success: true, message: "Nudge operation completed" });
       });
-      
+
       vi.doMock("@lifeos/shared", () => ({
         pool: {
           query: vi.fn((text: string, values?: unknown[]) => {
@@ -690,12 +690,12 @@ describe("Task-7b: Nudges tool definitions and routing", () => {
       });
 
       vi.resetModules();
-      
+
       // Create fresh mock after resetModules
       const freshExecuteNudgesToolMock2 = vi.fn(async () => {
         return JSON.stringify({ success: true, message: "Nudge operation completed" });
       });
-      
+
       vi.doMock("@lifeos/shared", () => ({
         pool: {
           query: vi.fn((text: string, values?: unknown[]) => {
@@ -798,12 +798,12 @@ describe("Task-7b: Nudges tool definitions and routing", () => {
       });
 
       vi.resetModules();
-      
+
       // Create fresh mock after resetModules
       const freshExecuteNudgesToolMock3 = vi.fn(async () => {
         return JSON.stringify({ success: true, message: "Nudge operation completed" });
       });
-      
+
       vi.doMock("@lifeos/shared", () => ({
         pool: {
           query: vi.fn((text: string, values?: unknown[]) => {
