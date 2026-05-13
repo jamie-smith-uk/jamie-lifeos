@@ -734,7 +734,8 @@ function isUntrustedTool(toolName: string): boolean {
     TODOIST_TOOL_NAMES.has(toolName) ||
     CALENDAR_TOOL_NAMES.has(toolName) ||
     LIFE_EVENTS_TOOL_NAMES.has(toolName) ||
-    NUDGES_TOOL_NAMES.has(toolName)
+    NUDGES_TOOL_NAMES.has(toolName) ||
+    PEOPLE_TOOL_NAMES.has(toolName)
   );
 }
 
