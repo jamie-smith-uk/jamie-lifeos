@@ -1,0 +1,9 @@
+{
+  "task_id": "task-11a",
+  "files_checked": [
+    "packages/orchestrator/src/tools/life_events.ts"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 0,
+  "coverage_pct": null
+}

@@ -185,3 +185,10 @@
 - **Error handling in scheduled jobs**: Scheduled jobs must never throw unhandled exceptions as this could crash the scheduler. All operations are wrapped in try-catch blocks with appropriate error logging, allowing the scheduler to continue running even if individual operations fail.
 
 ---
+## task-11a — Add automatic nudge creation to create_life_event
+
+**Files:** packages/orchestrator/src/tools/life_events.ts
+
+⚠ task-11a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
