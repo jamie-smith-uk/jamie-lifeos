@@ -113,6 +113,49 @@ Rules:
 - `vi.resetModules()` must come BEFORE `vi.doMock` so stale cached modules are cleared
 - Never use `vi.mock` (top-level hoisted) for `@lifeos/shared` — it runs before env is set up
 
+### Routing tests — re-apply ALL mocks after vi.resetModules()
+
+When an `it` block needs to change the Anthropic mock (e.g. to simulate a `tool_use` response
+that triggers a specific tool), it must call `vi.resetModules()` then re-apply **every** mock
+before importing agent.js. If you call `vi.resetModules()` inside an `it` block without
+re-applying all mocks, the module cache is cleared and subsequent imports get the real
+modules, not the test doubles — making mock assertions silently fail.
+
+**ALWAYS** extract the full mock setup into a helper function and call it in both `beforeEach`
+and any `it` block that calls `vi.resetModules()`:
+
+```ts
+function applyAllMocks(
+  myMock: ReturnType<typeof vi.fn>,
+  anthropicCreate: ReturnType<typeof vi.fn>,
+): void {
+  vi.doMock("@lifeos/shared", () => ({ /* ... */ }));
+  vi.doMock("@anthropic-ai/sdk", () => ({ default: vi.fn(() => ({ messages: { create: anthropicCreate } })) }));
+  vi.doMock("../tools/people.js", () => ({ executePeopleTool: myMock }));
+  // ... every other dependency agent.ts imports
+}
+
+beforeEach(async () => {
+  vi.resetModules();
+  applyAllMocks(myMock, defaultCreate);
+  agent = await import("../agent.js");
+});
+
+it("routing test", async () => {
+  const freshMock = vi.fn(async () => "result");
+  const toolUseCreate = vi.fn(async () => ({ stop_reason: "tool_use", content: [{ type: "tool_use", name: "my_tool", input: {} }] }));
+  vi.resetModules();
+  applyAllMocks(freshMock, toolUseCreate); // ALL mocks re-applied
+  const mod = await import("../agent.js");
+  await mod.runAgent({ chat_id: 1, text: "test" });
+  expect(freshMock).toHaveBeenCalled();
+});
+```
+
+**Never** call `vi.resetModules()` inside an `it` block and then only re-mock a subset of
+dependencies — the un-mocked modules will be the real implementations and your mock
+assertions will fail.
+
 ### Determinism
 - Tests must be deterministic — no tests that depend on live external services
 - Mock all external services — do not make real API calls in tests
