@@ -170,3 +170,18 @@
 ⚠ task-10a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-10b — Add scheduler tests and logging
+
+**Files:** packages/orchestrator/src/__tests__/scheduler.test.ts, packages/orchestrator/vitest.config.ts, packages/orchestrator/tsconfig.json
+
+- **Scheduler module pattern**: The scheduler uses `node-cron` to schedule periodic jobs. The `startScheduler()` function initializes all cron jobs and should be called once during application startup. Each job uses a logger child with appropriate context for tracking.
+
+- **Nudge rate limiting implementation**: The nudge evaluator enforces a maximum of 3 nudges per hour by querying for nudges sent in the last 60 minutes and limiting processing to remaining slots. This prevents spam while ensuring timely delivery of important nudges.
+
+- **Comprehensive logging strategy**: All scheduler operations use structured logging with the `logger.child({ service: "scheduler" })` pattern. Each operation logs start, progress, completion, and errors with relevant metadata (counts, IDs, error details).
+
+- **Database query patterns for scheduler**: All scheduler database operations use parameterized queries through `pool.query()` from `@lifeos/shared`. The nudge evaluator uses two main queries: one to fetch pending nudges past their trigger time, and another to count recently sent nudges for rate limiting.
+
+- **Error handling in scheduled jobs**: Scheduled jobs must never throw unhandled exceptions as this could crash the scheduler. All operations are wrapped in try-catch blocks with appropriate error logging, allowing the scheduler to continue running even if individual operations fail.
+
+---
