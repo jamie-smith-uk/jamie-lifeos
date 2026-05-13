@@ -75,7 +75,7 @@ EOF
 # try_fixer REASON FAILING_AGENT FAILURE_OUTPUT FILES_IN_SCOPE_JSON
 # Invokes the Fixer agent (up to 2 attempts) and re-runs verify_implementation.
 # Outputs remaining failures to stdout (empty = fixed).
-# Uses $TASK_DIR, $TASK_ID, $PHASE, $TASK_SPEC from outer scope.
+# Uses $TASK_DIR, $TASK_ID, $PHASE, $TASK_SPEC, $PIPELINE_DIR, $REPO_ROOT from outer scope.
 try_fixer() {
   local reason="$1" failing_agent="$2" failure_output="$3" files_json="$4"
   local max_fixer_attempts=2
@@ -87,27 +87,72 @@ try_fixer() {
     local fixer_out="$TASK_DIR/fixer-output-$n.md"
     rm -f "$TASK_DIR/fixer-report.md"
 
+    # Collect all available context from the pipeline directory for this task
+    local gate_failures_history=""
+    for gf in "$TASK_DIR"/gate-failures-*.txt; do
+      [ -f "$gf" ] && gate_failures_history+="
+=== $(basename "$gf") ===
+$(cat "$gf")
+"
+    done
+
     local fixer_prompt
-    fixer_prompt="GATE FAILURE [attempt $n/$max_fixer_attempts]
+    fixer_prompt="GATE FAILURE — Fixer invoked [attempt $n/$max_fixer_attempts]
+
+## Situation
 Phase: $PHASE
 Task: $TASK_ID
 Failing agent: $failing_agent
 Reason: $reason
 
+## What failed (exact output)
 <failure-output>
 ${failure_output}
 </failure-output>
 
-Task spec:
+## Task specification
 ${TASK_SPEC:-}
 
-Files in scope for this task:
+## Files in scope for this task
 $(python3 -c "import json,sys; print('\n'.join('  - '+f for f in json.loads(sys.argv[1])))" "$files_json" 2>/dev/null || echo "  (error reading scope)")
 
-Repo root: $REPO_ROOT
-Pipeline dir: $TASK_DIR
+## Prior gate failure history (all attempts before fixer was called)
+${gate_failures_history:-(none recorded)}
 
-Diagnose the root cause, fix it, run all four validation commands, then write fixer-report.md to $TASK_DIR/. Follow your system prompt exactly."
+## Context from completed tasks in this phase
+$(cat "$PIPELINE_DIR/context.md" 2>/dev/null || echo "(context.md not yet written)")
+
+## Key reference files — read these before diagnosing
+The following files contain the full design context. Read them all:
+
+- Architecture + schema: $REPO_ROOT/docs/architecture.md
+- Security rules: $REPO_ROOT/.opencode/agents/security-rules.md
+- Phase manifest: $PIPELINE_DIR/task-manifest.json
+- Architect analysis: $PIPELINE_DIR/ag01-output.md
+- Reviewer summary: $PIPELINE_DIR/reviewer-summary.md
+- Tester output (why tests were written this way): $TASK_DIR/tester-red-output.md
+- Developer self-assessment (what dev thought they built): $TASK_DIR/self-assessment.md
+- RED phase test run (tests before implementation): $TASK_DIR/test-red-output.txt
+- Developer output logs: $TASK_DIR/dev-output-*.md (if any)
+- Security agent output: $TASK_DIR/sec-output-*.md (if any)
+- Refactor agent output: $TASK_DIR/refactor-output.md (if any)
+- All test files in scope packages (read the actual test files on disk)
+- All implementation files in scope (read the actual source files on disk)
+
+## Paths
+Repo root: $REPO_ROOT
+Pipeline phase dir: $PIPELINE_DIR
+Task pipeline dir: $TASK_DIR
+
+## Your job
+1. Read ALL the reference files listed above
+2. Read the actual source and test files for this task
+3. Diagnose the root cause of the failure
+4. Fix the right file(s)
+5. Run all four validation commands (tsc, biome --write, biome check, pnpm test)
+6. Write fixer-report.md to $TASK_DIR/
+
+Follow your system prompt exactly."
 
     run_agent "ag-fixer" "$fixer_prompt" "$fixer_out" 900 || true
 
