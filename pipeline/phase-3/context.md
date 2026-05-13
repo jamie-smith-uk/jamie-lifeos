@@ -156,3 +156,10 @@
 ⚠ task-9a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-9b — Add tests for get_person with life events
+
+**Files:** packages/orchestrator/src/tools/__tests__/people.test.ts, packages/orchestrator/vitest.config.ts, packages/orchestrator/tsconfig.json
+
+⚠ task-9b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
