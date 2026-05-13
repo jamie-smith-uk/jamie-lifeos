@@ -9,6 +9,7 @@ export default defineConfig({
       "src/tools/__tests__/people.test.ts",
       "src/tools/__tests__/life_events.test.ts",
       "src/tools/__tests__/nudges.test.ts",
+      "src/__tests__/scheduler.test.ts",
     ],
     isolate: true,
     pool: "forks",

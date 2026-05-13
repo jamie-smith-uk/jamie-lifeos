@@ -496,4 +496,410 @@ describe("Scheduler", () => {
       expect(sentNudgesCheck).toBeDefined();
     });
   });
+
+  describe("Logging and monitoring", () => {
+    let mockLoggerChild: ReturnType<typeof vi.fn>;
+    let mockLoggerInfo: ReturnType<typeof vi.fn>;
+    let mockLoggerError: ReturnType<typeof vi.fn>;
+
+    beforeEach(async () => {
+      vi.resetModules();
+
+      mockCronSchedule = vi.fn(() => ({
+        start: vi.fn(),
+        stop: vi.fn(),
+      }));
+
+      mockPoolQuery = vi.fn();
+      mockLoggerInfo = vi.fn();
+      mockLoggerError = vi.fn();
+      mockLoggerChild = vi.fn(() => ({
+        info: mockLoggerInfo,
+        error: mockLoggerError,
+        warn: vi.fn(),
+      }));
+
+      vi.doMock("node-cron", () => ({
+        schedule: mockCronSchedule,
+      }));
+
+      vi.doMock("@lifeos/shared", () => ({
+        pool: {
+          query: mockPoolQuery,
+        },
+        logger: {
+          child: mockLoggerChild,
+          info: vi.fn(),
+          error: vi.fn(),
+          warn: vi.fn(),
+        },
+      }));
+
+      schedulerModule = await import("../scheduler.js");
+    });
+
+    it("should log scheduler initialization", async () => {
+      await schedulerModule.startScheduler();
+
+      // Verify logger.child was called with service context
+      expect(mockLoggerChild).toHaveBeenCalledWith({ service: "scheduler" });
+    });
+
+    it("should log when nudge evaluation starts", async () => {
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [],
+        rowCount: 0,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        await callback();
+      }
+
+      // Verify that info logging was called with "Starting nudge evaluation"
+      expect(mockLoggerInfo).toHaveBeenCalledWith("Starting nudge evaluation");
+    });
+
+    it("should log when no pending nudges are found", async () => {
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [],
+        rowCount: 0,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        await callback();
+      }
+
+      // Verify that info logging was called with "No pending nudges found"
+      expect(mockLoggerInfo).toHaveBeenCalledWith("No pending nudges found");
+    });
+
+    it("should log when rate limit is reached", async () => {
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 1,
+            person_id: 1,
+            life_event_id: null,
+            message: "Test nudge",
+            trigger_at: new Date("2026-05-13T10:00:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+        ],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock that 3 nudges were already sent in the last hour
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ count: 3 }],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        await callback();
+      }
+
+      // Verify that rate limit log was called
+      expect(mockLoggerInfo).toHaveBeenCalledWith(
+        "Rate limit reached: 3 nudges already sent in the last hour",
+      );
+    });
+
+    it("should log each nudge being marked as sent", async () => {
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 1,
+            person_id: 1,
+            life_event_id: null,
+            message: "Test nudge",
+            trigger_at: new Date("2026-05-13T10:00:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+        ],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock count of recently sent nudges
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ count: 0 }],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock update response
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ id: 1 }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        await callback();
+      }
+
+      // Verify that nudge sent log was called with nudge_id
+      expect(mockLoggerInfo).toHaveBeenCalledWith({ nudge_id: 1 }, "Nudge marked as sent");
+    });
+
+    it("should log nudge evaluation completion", async () => {
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 1,
+            person_id: 1,
+            life_event_id: null,
+            message: "Test nudge",
+            trigger_at: new Date("2026-05-13T10:00:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+        ],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock count of recently sent nudges
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ count: 0 }],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock update response
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ id: 1 }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        await callback();
+      }
+
+      // Verify that completion log was called
+      expect(mockLoggerInfo).toHaveBeenCalledWith({ processed: 1 }, "Nudge evaluation completed");
+    });
+
+    it("should log errors during nudge evaluation", async () => {
+      mockPoolQuery.mockRejectedValueOnce(new Error("Database error"));
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        await callback();
+      }
+
+      // Verify that error logging was called
+      expect(mockLoggerError).toHaveBeenCalled();
+
+      // Check that error log contains "Nudge evaluation failed"
+      const failedCall = mockLoggerError.mock.calls.find((call) =>
+        String(call[call.length - 1]).includes("Nudge evaluation failed"),
+      );
+      expect(failedCall).toBeDefined();
+    });
+
+    it("should log errors when updating nudge status fails", async () => {
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 1,
+            person_id: 1,
+            life_event_id: null,
+            message: "Test nudge",
+            trigger_at: new Date("2026-05-13T10:00:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+        ],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock count of recently sent nudges
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ count: 0 }],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock update failure
+      mockPoolQuery.mockRejectedValueOnce(new Error("Update failed"));
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        await callback();
+      }
+
+      // Verify that error logging was called for update failure
+      expect(mockLoggerError).toHaveBeenCalled();
+
+      // Check that error log contains "Failed to update nudge status"
+      const updateErrorCall = mockLoggerError.mock.calls.find((call) =>
+        String(call[call.length - 1]).includes("Failed to update nudge status"),
+      );
+      expect(updateErrorCall).toBeDefined();
+    });
+
+    it("should log processing count and remaining slots", async () => {
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 1,
+            person_id: 1,
+            life_event_id: null,
+            message: "Nudge 1",
+            trigger_at: new Date("2026-05-13T10:00:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+          {
+            id: 2,
+            person_id: 2,
+            life_event_id: null,
+            message: "Nudge 2",
+            trigger_at: new Date("2026-05-13T10:05:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+        ],
+        rowCount: 2,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock count of recently sent nudges (1 already sent)
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ count: 1 }],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock update responses
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ id: 1 }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ id: 2 }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        await callback();
+      }
+
+      // Verify that processing log includes count and remaining slots
+      expect(mockLoggerInfo).toHaveBeenCalledWith(
+        { count: 2, remainingSlots: 2 },
+        "Processing pending nudges",
+      );
+    });
+  });
 });
