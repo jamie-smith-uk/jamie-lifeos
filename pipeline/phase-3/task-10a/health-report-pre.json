@@ -1,0 +1,9 @@
+{
+  "task_id": "task-10a",
+  "files_checked": [
+    "packages/orchestrator/src/scheduler.ts"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 0,
+  "coverage_pct": null
+}

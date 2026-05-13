@@ -163,3 +163,10 @@
 ⚠ task-9b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-10a — Create scheduler module with nudge evaluator
+
+**Files:** packages/orchestrator/src/scheduler.ts
+
+⚠ task-10a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
