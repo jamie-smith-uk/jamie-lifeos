@@ -1,0 +1,9 @@
+{
+  "task_id": "task-1a",
+  "files_checked": [
+    "migrations/005_strava_credentials.sql"
+  ],
+  "complex_functions": [],
+  "duplication_pct": null,
+  "coverage_pct": null
+}

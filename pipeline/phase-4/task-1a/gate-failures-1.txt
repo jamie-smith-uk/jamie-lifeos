@@ -1,0 +1,11 @@
+=== files_in_scope violation (changes reverted) ===
+The following files were modified or created outside files_in_scope and have been automatically reverted.
+Do NOT re-create or modify them — only write to files listed in files_in_scope:
+pnpm-lock.yaml
+pnpm-workspace.yaml
+migrations/package.json
+migrations/vitest.config.ts
+=== No in-scope files were modified ===
+All of your changes were in files outside files_in_scope and have been reverted.
+You MUST write implementation code to the files listed in files_in_scope.
+Do not create new files — modify only the files already listed there.
