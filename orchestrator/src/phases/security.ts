@@ -5,8 +5,6 @@ import { runAgent } from "../agent.js";
 import { halt } from "../halt.js";
 import {
   reportPasses,
-  checkScopeCompliance,
-  revertScopeViolations,
   getAffectedPkgFilter,
   getExpandedFileList,
 } from "../gates.js";
@@ -45,7 +43,6 @@ export function runSecurityPhase(
   let securityPassed = false;
   let securityAttempts = readSecurityAttempts(secAttemptsFile);
   const securityStart = Math.floor(Date.now() / 1000);
-  let previousScopeViolations = "";
 
   // ── Mutation testing (before security agent, for security-sensitive tasks) ──
   if (task.security_sensitive) {
@@ -126,11 +123,6 @@ Return PASS or FAIL with specific findings.`;
         ? fs.readFileSync(secReport, "utf8")
         : "(security-report.md not found)";
 
-      // Warn if previous attempt's changes were all reverted (doom-loop prevention)
-      const scopeWarning = previousScopeViolations
-        ? `\n## CRITICAL: Your previous fix attempt was rejected\n\nYou modified files outside files_in_scope and every change was automatically reverted:\n${previousScopeViolations}\nThose files remain unchanged. You MUST find a solution that works entirely within the files listed above. Do NOT add packages, do NOT create files in other packages, do NOT modify package.json or pnpm-lock.yaml.\n`
-        : "";
-
       const secFixPrompt = `You are AG-04 Developer for Life OS.
 
 The Security Agent has rejected task ${task.id}. Fix every finding below, then run all
@@ -143,10 +135,7 @@ ${secFindings}
 Task spec for context:
 ${taskSpec}${contextSection}
 
-Files in scope (only modify these):
-${filesBulletList}
-${scopeWarning}
-Do not modify test files.
+You may modify any file necessary to fix the security findings. Do not modify test files.
 
 ## Validation commands — run all four before marking done
 \`\`\`bash
@@ -165,16 +154,6 @@ Use process.env.DATABASE_URL for any database connections.`;
         900,
         cfg.pipelineDir,
       );
-
-      // Revert any out-of-scope changes and remember them for the next prompt
-      const scopeViolations = checkScopeCompliance(filesInScopeJson, cfg.repoRoot);
-      if (scopeViolations) {
-        log("Scope violation after security fix — reverting...");
-        revertScopeViolations(scopeViolations, cfg.repoRoot);
-        previousScopeViolations = scopeViolations;
-      } else {
-        previousScopeViolations = "";
-      }
     }
   }
 
@@ -184,10 +163,6 @@ Use process.env.DATABASE_URL for any database connections.`;
       ? fs.readFileSync(secReport, "utf8")
       : "(no security report)";
 
-    const fixerContext = previousScopeViolations
-      ? `${lastFindings}\n\nNote: Previous fix attempts modified out-of-scope files which were reverted:\n${previousScopeViolations}\nThe fix must stay within files_in_scope.`
-      : lastFindings;
-
     log("Security exhausted — invoking Fixer...");
     const fixerFailures = tryFixer(
       cfg,
@@ -195,7 +170,7 @@ Use process.env.DATABASE_URL for any database connections.`;
       taskDir,
       "Security could not be resolved after 3 developer attempts",
       "AG-07",
-      fixerContext,
+      lastFindings,
       filesInScopeJson,
     );
 

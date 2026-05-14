@@ -685,8 +685,6 @@ Apply all security rules. Use process.env.DATABASE_URL for DB connections.`;
     let securityAttempts = readInt(secAttemptsFile);
     const secStart = Math.floor(Date.now() / 1000);
     const filesBulletList = task.files_in_scope.map((f) => `  - ${f}`).join("\n");
-    let previousScopeViolations = "";
-
     while (!securityPassed && securityAttempts < 3) {
       securityAttempts++;
       fs.writeFileSync(secAttemptsFile, String(securityAttempts));
@@ -711,34 +709,19 @@ Apply all security rules. Use process.env.DATABASE_URL for DB connections.`;
           ? fs.readFileSync(secReport, "utf8")
           : "(security-report.md not found)";
 
-        const scopeWarning = previousScopeViolations
-          ? `\n## CRITICAL: Your previous fix attempt was rejected\n\nYou modified files outside files_in_scope and every change was automatically reverted:\n${previousScopeViolations}\nYou MUST find a solution within the files listed above only.\n`
-          : "";
-
         runAgent("ag-04-developer",
-          `You are AG-04 Developer for Life OS.\n\nThe Security Agent has rejected this task. Fix every finding below, then run all validation commands before marking done.\n\n<security-findings>\n${secFindings}\n</security-findings>\n\nTask spec for context:\n${taskSpec}\n\nFiles in scope (only modify these):\n${filesBulletList}\n${scopeWarning}\nDo not modify test files.\n\n## Validation commands — run all four before marking done\n\`\`\`bash\npnpm exec tsc --noEmit\npnpm exec biome check --write ${filesExpanded}\npnpm exec biome check ${filesExpanded}\n${pkgTestCmd}\n\`\`\`\nUse process.env.DATABASE_URL for DB connections.`,
+          `You are AG-04 Developer for Life OS.\n\nThe Security Agent has rejected this task. Fix every finding below, then run all validation commands before marking done.\n\n<security-findings>\n${secFindings}\n</security-findings>\n\nTask spec for context:\n${taskSpec}\n\nYou may modify any file necessary to fix the security findings. Do not modify test files.\n\n## Validation commands — run all four before marking done\n\`\`\`bash\npnpm exec tsc --noEmit\npnpm exec biome check --write ${filesExpanded}\npnpm exec biome check ${filesExpanded}\n${pkgTestCmd}\n\`\`\`\nUse process.env.DATABASE_URL for DB connections.`,
           path.join(taskDir, `dev-secfix-${securityAttempts}.md`), 900, taskDir);
-
-        const scopeViolations = checkScopeCompliance(filesInScopeJson, repoRoot);
-        if (scopeViolations) {
-          revertScopeViolations(scopeViolations, repoRoot);
-          previousScopeViolations = scopeViolations;
-        } else {
-          previousScopeViolations = "";
-        }
       }
     }
 
     if (!securityPassed) {
       const lastFindings = fs.existsSync(secReport) ? fs.readFileSync(secReport, "utf8") : "(no report)";
-      const fixerContext = previousScopeViolations
-        ? `${lastFindings}\n\nNote: Previous fix attempts modified out-of-scope files which were reverted:\n${previousScopeViolations}\nThe fix must stay within files_in_scope.`
-        : lastFindings;
 
       log("Security exhausted — invoking Fixer...");
       const fixerFailures = tryFixer(cfg, task, taskDir,
         "Security could not be resolved after 3 developer attempts",
-        "AG-07", fixerContext, filesInScopeJson);
+        "AG-07", lastFindings, filesInScopeJson);
 
       if (fixerFailures) {
         halt("Security failed after 3 attempts + Fixer", "AG-07",
