@@ -84,3 +84,20 @@
 ⚠ task-5a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-5b — Implement token exchange and credential storage in OAuth callback
+
+**Files:** packages/bot/src/index.ts, packages/bot/src/__tests__/index.test.ts
+
+- **OAuth callback pattern**: The `/oauth/callback` endpoint is implemented in the HTTP server created in `packages/bot/src/index.ts`. It validates state tokens, exchanges authorization codes for tokens, stores credentials, and sends confirmation messages.
+
+- **Database credential storage**: Use the `storeStravaCredentials()` function pattern for storing OAuth credentials - it implements UPSERT logic with `ON CONFLICT (athlete_id) DO UPDATE` to handle both new and existing athletes gracefully.
+
+- **Strava API integration**: Token exchange requests to `https://www.strava.com/oauth/token` must use `application/x-www-form-urlencoded` content type with client_id, client_secret, code, and grant_type parameters.
+
+- **Error handling in OAuth flows**: Always return appropriate HTTP status codes (400 for client errors like invalid authorization codes, 401 for authentication failures, 500 for server errors) and log errors with structured logging.
+
+- **Telegram confirmation pattern**: Use `bot.sendMessage()` to send confirmation messages to the authorized chat ID. Wrap in try-catch and log errors but don't fail the main flow if message sending fails.
+
+- **PII logging security**: Never log personally identifiable information like names, emails, or phone numbers. Use IDs instead (e.g., `athlete_id` instead of `athlete_name`) when logging for debugging purposes.
+
+---

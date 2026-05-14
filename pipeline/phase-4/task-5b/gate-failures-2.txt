@@ -1,0 +1,331 @@
+=== pnpm test ===
+
+> @lifeos/bot@0.0.1 test /home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot
+> vitest run --config vitest.config.ts
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot[39m
+
+ [32m✓[39m src/__tests__/dismiss-nudge-api.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 1138[2mms[22m[39m
+ [31m❯[39m src/__tests__/oauth-token-exchange.test.ts [2m([22m[2m16 tests[22m[2m | [22m[31m9 failed[39m[2m)[22m[33m 1283[2mms[22m[39m
+[31m     [31m×[31m makes a POST request to Strava token endpoint with authorization code[39m[32m 189[2mms[22m[39m
+     [32m✓[39m includes client_id, client_secret, and authorization code in token request[32m 67[2mms[22m[39m
+[31m     [31m×[31m extracts access_token and refresh_token from Strava response[39m[32m 67[2mms[22m[39m
+     [32m✓[39m handles Strava API errors gracefully[32m 66[2mms[22m[39m
+[31m     [31m×[31m uses POST method for token exchange request[39m[32m 67[2mms[22m[39m
+[31m     [31m×[31m inserts access_token, refresh_token, and athlete_id into strava_credentials[39m[32m 65[2mms[22m[39m
+[31m     [31m×[31m stores tokens with correct expiry timestamp[39m[32m 65[2mms[22m[39m
+     [32m✓[39m uses parameterized query to prevent SQL injection[32m 64[2mms[22m[39m
+     [32m✓[39m handles database insert errors gracefully[32m 64[2mms[22m[39m
+[31m     [31m×[31m stores athlete_id as BIGINT from Strava response[39m[32m 65[2mms[22m[39m
+[31m     [31m×[31m sends a Telegram message after successful token storage[39m[32m 65[2mms[22m[39m
+[31m     [31m×[31m includes athlete first and last name in confirmation message[39m[32m 64[2mms[22m[39m
+[31m     [31m×[31m sends message to the correct Telegram chat_id[39m[32m 64[2mms[22m[39m
+     [32m✓[39m handles message sending errors gracefully[32m 64[2mms[22m[39m
+     [32m✓[39m logs confirmation message sending[32m 134[2mms[22m[39m
+     [32m✓[39m includes success confirmation in response message[32m 111[2mms[22m[39m
+ [31m❯[39m src/__tests__/index.test.ts [2m([22m[2m50 tests[22m[2m | [22m[31m5 failed[39m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 1225[2mms[22m[39m
+     [32m✓[39m imports without throwing[32m 25[2mms[22m[39m
+     [32m✓[39m constructs TelegramBot with the configured token[32m 4[2mms[22m[39m
+     [32m✓[39m starts in polling mode when BOT_MODE=polling[32m 3[2mms[22m[39m
+     [2m[90m↓[39m[22m starts in webhook mode when BOT_MODE=webhook
+     [32m✓[39m registers at least one onText handler for all messages[32m 3[2mms[22m[39m
+     [32m✓[39m registers a callback_query event handler[32m 3[2mms[22m[39m
+[31m     [31m×[31m calls fetch with the /message path[39m[32m 64[2mms[22m[39m
+     [32m✓[39m uses the POST method[32m 39[2mms[22m[39m
+     [32m✓[39m sends application/json content-type[32m 32[2mms[22m[39m
+     [32m✓[39m includes chat_id, text, message_id and from_username in the body[32m 33[2mms[22m[39m
+     [32m✓[39m omits from_username when message has no from field[32m 32[2mms[22m[39m
+     [32m✓[39m calls fetch with the /callback path[32m 32[2mms[22m[39m
+     [32m✓[39m uses the POST method for /callback[32m 33[2mms[22m[39m
+     [32m✓[39m includes chat_id, callback_query_id, callback_data, message_id in body[32m 33[2mms[22m[39m
+[31m     [31m×[31m ignores callback_query with no associated message/chat (no fetch call)[39m[32m 32[2mms[22m[39m
+     [32m✓[39m sends error reply when fetch throws on /message[32m 32[2mms[22m[39m
+     [32m✓[39m error reply text contains 'Something went wrong' for /message[32m 32[2mms[22m[39m
+     [32m✓[39m sends error reply when orchestrator returns HTTP 500 on /message[32m 34[2mms[22m[39m
+     [32m✓[39m sends error reply when fetch throws on /callback[32m 32[2mms[22m[39m
+     [32m✓[39m error reply text contains 'Something went wrong' for /callback[32m 32[2mms[22m[39m
+     [32m✓[39m sends error reply when orchestrator returns HTTP 502 on /callback[32m 32[2mms[22m[39m
+     [32m✓[39m does not crash if sendMessage itself throws during error reply[32m 32[2mms[22m[39m
+     [32m✓[39m logs an error when orchestrator call fails for /message[32m 32[2mms[22m[39m
+     [32m✓[39m logs an error when orchestrator call fails for /callback[32m 32[2mms[22m[39m
+     [32m✓[39m returns true when chatId matches TELEGRAM_ALLOWED_CHAT_ID[32m 1[2mms[22m[39m
+     [32m✓[39m returns false when chatId does not match TELEGRAM_ALLOWED_CHAT_ID[32m 1[2mms[22m[39m
+     [32m✓[39m returns false for chat_id 0[32m 2[2mms[22m[39m
+     [32m✓[39m returns false for negative chat_id[32m 2[2mms[22m[39m
+[31m     [31m×[31m forwards text message from allowed chat_id to orchestrator[39m[32m 33[2mms[22m[39m
+     [32m✓[39m forwards callback_query from allowed chat_id to orchestrator[32m 32[2mms[22m[39m
+[31m     [31m×[31m does not call fetch for a text message from an unknown chat_id[39m[32m 33[2mms[22m[39m
+     [32m✓[39m does not send a reply to an unauthorised text sender[32m 36[2mms[22m[39m
+[31m     [31m×[31m does not call fetch for a callback_query from an unknown chat_id[39m[32m 33[2mms[22m[39m
+     [32m✓[39m does not send a reply to an unauthorised callback_query sender[32m 32[2mms[22m[39m
+     [32m✓[39m emits a WARN log with the offending chat_id for a text message[32m 34[2mms[22m[39m
+     [32m✓[39m emits a WARN log with the offending chat_id for a callback_query[32m 32[2mms[22m[39m
+     [32m✓[39m accepts a valid authorization code parameter[32m 20[2mms[22m[39m
+     [32m✓[39m validates state token against database before processing authorization code[32m 6[2mms[22m[39m
+     [32m✓[39m rejects callback with missing state parameter[32m 3[2mms[22m[39m
+     [32m✓[39m rejects callback with missing authorization code parameter[32m 3[2mms[22m[39m
+     [32m✓[39m rejects callback with empty state parameter[32m 3[2mms[22m[39m
+     [32m✓[39m rejects callback with empty authorization code parameter[32m 3[2mms[22m[39m
+     [32m✓[39m returns 401 when state token is not found in database[32m 3[2mms[22m[39m
+     [32m✓[39m returns 401 when state token has expired[32m 3[2mms[22m[39m
+     [32m✓[39m returns 400 when authorization code is invalid[32m 3[2mms[22m[39m
+     [32m✓[39m logs error when state token validation fails[32m 5[2mms[22m[39m
+     [32m✓[39m extracts authorization code from query parameters[32m 96[2mms[22m[39m
+     [32m✓[39m accepts authorization code with special characters[32m 50[2mms[22m[39m
+     [32m✓[39m accepts authorization code with alphanumeric characters[32m 4[2mms[22m[39m
+     [32m✓[39m passes authorization code to token exchange process[32m 88[2mms[22m[39m
+ [32m✓[39m src/__tests__/keyboard.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/__tests__/dismiss-nudge.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 854[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (5)[39m
+[2m      Tests [22m [1m[31m14 failed[39m[22m[2m | [22m[1m[32m133 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (148)[39m
+[2m   Start at [22m 09:07:35
+[2m   Duration [22m 2.49s[2m (transform 464ms, setup 0ms, import 580ms, tests 4.51s, environment 1ms)[22m
+
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/index.test.ts,title=src/__tests__/index.test.ts > AC-2%3A Incoming messages are forwarded via POST /message > calls fetch with the /message path,line=251,column=19::AssertionError: expected [ { …(2) }, { …(2) } ] to have a length of 1 but got 2%0A%0A- Expected%0A+ Received%0A%0A- 1%0A+ 2%0A%0A ❯ src/__tests__/index.test.ts:251:19%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/index.test.ts,title=src/__tests__/index.test.ts > AC-3%3A Callback queries are forwarded via POST /callback > ignores callback_query with no associated message/chat (no fetch call),line=406,column=19::AssertionError: expected [ { …(2) } ] to have a length of +0 but got 1%0A%0A- Expected%0A+ Received%0A%0A- 0%0A+ 1%0A%0A ❯ src/__tests__/index.test.ts:406:19%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/index.test.ts,title=src/__tests__/index.test.ts > T-06 AC-1%3A Message from TELEGRAM_ALLOWED_CHAT_ID is forwarded > forwards text message from allowed chat_id to orchestrator,line=636,column=19::AssertionError: expected [ { …(2) }, { …(2) } ] to have a length of 1 but got 2%0A%0A- Expected%0A+ Received%0A%0A- 1%0A+ 2%0A%0A ❯ src/__tests__/index.test.ts:636:19%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/index.test.ts,title=src/__tests__/index.test.ts > T-06 AC-2%3A Message from unauthorised chat_id is dropped with no reply > does not call fetch for a text message from an unknown chat_id,line=676,column=19::AssertionError: expected [ { …(2) } ] to have a length of +0 but got 1%0A%0A- Expected%0A+ Received%0A%0A- 0%0A+ 1%0A%0A ❯ src/__tests__/index.test.ts:676:19%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/index.test.ts,title=src/__tests__/index.test.ts > T-06 AC-2%3A Message from unauthorised chat_id is dropped with no reply > does not call fetch for a callback_query from an unknown chat_id,line=708,column=19::AssertionError: expected [ { …(2) } ] to have a length of +0 but got 1%0A%0A- Expected%0A+ Received%0A%0A- 0%0A+ 1%0A%0A ❯ src/__tests__/index.test.ts:708:19%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/oauth-token-exchange.test.ts,title=src/__tests__/oauth-token-exchange.test.ts > AC-1%3A Authorization code is exchanged for access and refresh tokens > makes a POST request to Strava token endpoint with authorization code,line=206,column=24::AssertionError: expected undefined to be defined%0A ❯ src/__tests__/oauth-token-exchange.test.ts:206:24%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/oauth-token-exchange.test.ts,title=src/__tests__/oauth-token-exchange.test.ts > AC-1%3A Authorization code is exchanged for access and refresh tokens > extracts access_token and refresh_token from Strava response,line=281,column=30::AssertionError: expected 500 to be less than 500%0A ❯ src/__tests__/oauth-token-exchange.test.ts:281:30%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/oauth-token-exchange.test.ts,title=src/__tests__/oauth-token-exchange.test.ts > AC-1%3A Authorization code is exchanged for access and refresh tokens > uses POST method for token exchange request,line=338,column=36::AssertionError: expected undefined to be 'POST' // Object.is equality%0A%0A- Expected:%0A"POST"%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/__tests__/oauth-token-exchange.test.ts:338:36%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/oauth-token-exchange.test.ts,title=src/__tests__/oauth-token-exchange.test.ts > AC-2%3A Tokens are stored in strava_credentials table with athlete_id > inserts access_token%2C refresh_token%2C and athlete_id into strava_credentials,line=385,column=24::AssertionError: expected undefined to be defined%0A ❯ src/__tests__/oauth-token-exchange.test.ts:385:24%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/oauth-token-exchange.test.ts,title=src/__tests__/oauth-token-exchange.test.ts > AC-2%3A Tokens are stored in strava_credentials table with athlete_id > stores tokens with correct expiry timestamp,line=428,column=24::AssertionError: expected undefined to be defined%0A ❯ src/__tests__/oauth-token-exchange.test.ts:428:24%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/oauth-token-exchange.test.ts,title=src/__tests__/oauth-token-exchange.test.ts > AC-2%3A Tokens are stored in strava_credentials table with athlete_id > stores athlete_id as BIGINT from Strava response,line=558,column=24::AssertionError: expected undefined to be defined%0A ❯ src/__tests__/oauth-token-exchange.test.ts:558:24%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/oauth-token-exchange.test.ts,title=src/__tests__/oauth-token-exchange.test.ts > AC-3%3A Telegram confirmation message sent with athlete name > sends a Telegram message after successful token storage,line=598,column=30::AssertionError: expected 500 to be less than 500%0A ❯ src/__tests__/oauth-token-exchange.test.ts:598:30%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/oauth-token-exchange.test.ts,title=src/__tests__/oauth-token-exchange.test.ts > AC-3%3A Telegram confirmation message sent with athlete name > includes athlete first and last name in confirmation message,line=632,column=30::AssertionError: expected 500 to be less than 500%0A ❯ src/__tests__/oauth-token-exchange.test.ts:632:30%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/oauth-token-exchange.test.ts,title=src/__tests__/oauth-token-exchange.test.ts > AC-3%3A Telegram confirmation message sent with athlete name > sends message to the correct Telegram chat_id,line=666,column=30::AssertionError: expected 500 to be less than 500%0A ❯ src/__tests__/oauth-token-exchange.test.ts:666:30%0A%0A
+/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/bot@0.0.1 test: `vitest run --config vitest.config.ts`
+Exit status 1
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 14 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/index.test.ts[2m > [22mAC-2: Incoming messages are forwarded via POST /message[2m > [22mcalls fetch with the /message path
+[31m[1mAssertionError[22m: expected [ { …(2) }, { …(2) } ] to have a length of 1 but got 2[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 2[39m
+
+[36m [2m❯[22m src/__tests__/index.test.ts:[2m251:19[22m[39m
+    [90m249|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+    [90m250|[39m
+    [90m251|[39m     [34mexpect[39m(calls)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+    [90m   |[39m                   [31m^[39m
+    [90m252|[39m     [34mexpect[39m(calls[[34m0[39m][33m?.[39murl)[33m.[39m[34mtoBe[39m([32m"http://localhost:3001/message"[39m)[33m;[39m
+    [90m253|[39m   })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/index.test.ts[2m > [22mAC-3: Callback queries are forwarded via POST /callback[2m > [22mignores callback_query with no associated message/chat (no fetch call)
+[31m[1mAssertionError[22m: expected [ { …(2) } ] to have a length of +0 but got 1[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 0[39m
+[31m+ 1[39m
+
+[36m [2m❯[22m src/__tests__/index.test.ts:[2m406:19[22m[39m
+    [90m404|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+    [90m405|[39m
+    [90m406|[39m     [34mexpect[39m(calls)[33m.[39m[34mtoHaveLength[39m([34m0[39m)[33m;[39m
+    [90m   |[39m                   [31m^[39m
+    [90m407|[39m   })[33m;[39m
+    [90m408|[39m })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/index.test.ts[2m > [22mT-06 AC-1: Message from TELEGRAM_ALLOWED_CHAT_ID is forwarded[2m > [22mforwards text message from allowed chat_id to orchestrator
+[31m[1mAssertionError[22m: expected [ { …(2) }, { …(2) } ] to have a length of 1 but got 2[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 2[39m
+
+[36m [2m❯[22m src/__tests__/index.test.ts:[2m636:19[22m[39m
+    [90m634|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+    [90m635|[39m
+    [90m636|[39m     [34mexpect[39m(calls)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+    [90m   |[39m                   [31m^[39m
+    [90m637|[39m     [34mexpect[39m(calls[[34m0[39m][33m?.[39murl)[33m.[39m[34mtoContain[39m([32m"/message"[39m)[33m;[39m
+    [90m638|[39m   })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/index.test.ts[2m > [22mT-06 AC-2: Message from unauthorised chat_id is dropped with no reply[2m > [22mdoes not call fetch for a text message from an unknown chat_id
+[31m[1mAssertionError[22m: expected [ { …(2) } ] to have a length of +0 but got 1[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 0[39m
+[31m+ 1[39m
+
+[36m [2m❯[22m src/__tests__/index.test.ts:[2m676:19[22m[39m
+    [90m674|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+    [90m675|[39m
+    [90m676|[39m     [34mexpect[39m(calls)[33m.[39m[34mtoHaveLength[39m([34m0[39m)[33m;[39m
+    [90m   |[39m                   [31m^[39m
+    [90m677|[39m   })[33m;[39m
+    [90m678|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/index.test.ts[2m > [22mT-06 AC-2: Message from unauthorised chat_id is dropped with no reply[2m > [22mdoes not call fetch for a callback_query from an unknown chat_id
+[31m[1mAssertionError[22m: expected [ { …(2) } ] to have a length of +0 but got 1[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 0[39m
+[31m+ 1[39m
+
+[36m [2m❯[22m src/__tests__/index.test.ts:[2m708:19[22m[39m
+    [90m706|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+    [90m707|[39m
+    [90m708|[39m     [34mexpect[39m(calls)[33m.[39m[34mtoHaveLength[39m([34m0[39m)[33m;[39m
+    [90m   |[39m                   [31m^[39m
+    [90m709|[39m   })[33m;[39m
+    [90m710|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/oauth-token-exchange.test.ts[2m > [22mAC-1: Authorization code is exchanged for access and refresh tokens[2m > [22mmakes a POST request to Strava token endpoint with authorization code
+[31m[1mAssertionError[22m: expected undefined to be defined[39m
+[36m [2m❯[22m src/__tests__/oauth-token-exchange.test.ts:[2m206:24[22m[39m
+    [90m204|[39m     [90m// Verify that a request was made to Strava API[39m
+    [90m205|[39m     const stravaCall = stravaApiCalls.find((call) => call.url.includes…
+    [90m206|[39m     [34mexpect[39m(stravaCall)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+    [90m   |[39m                        [31m^[39m
+    [90m207|[39m   })[33m;[39m
+    [90m208|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/oauth-token-exchange.test.ts[2m > [22mAC-1: Authorization code is exchanged for access and refresh tokens[2m > [22mextracts access_token and refresh_token from Strava response
+[31m[1mAssertionError[22m: expected 500 to be less than 500[39m
+[36m [2m❯[22m src/__tests__/oauth-token-exchange.test.ts:[2m281:30[22m[39m
+    [90m279|[39m
+    [90m280|[39m     [90m// Verify response is successful[39m
+    [90m281|[39m     [34mexpect[39m(_response[33m.[39mstatus)[33m.[39m[34mtoBeLessThan[39m([34m500[39m)[33m;[39m
+    [90m   |[39m                              [31m^[39m
+    [90m282|[39m   })[33m;[39m
+    [90m283|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/oauth-token-exchange.test.ts[2m > [22mAC-1: Authorization code is exchanged for access and refresh tokens[2m > [22muses POST method for token exchange request
+[31m[1mAssertionError[22m: expected undefined to be 'POST' // Object.is equality[39m
+
+[32m- Expected:[39m
+"POST"
+
+[31m+ Received:[39m
+undefined
+
+[36m [2m❯[22m src/__tests__/oauth-token-exchange.test.ts:[2m338:36[22m[39m
+    [90m336|[39m
+    [90m337|[39m     const tokenCall = stravaApiCalls.find((call) => call.url.includes(…
+    [90m338|[39m     [34mexpect[39m(tokenCall[33m?.[39minit[33m.[39mmethod)[33m.[39m[34mtoBe[39m([32m"POST"[39m)[33m;[39m
+    [90m   |[39m                                    [31m^[39m
+    [90m339|[39m   })[33m;[39m
+    [90m340|[39m })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/oauth-token-exchange.test.ts[2m > [22mAC-2: Tokens are stored in strava_credentials table with athlete_id[2m > [22minserts access_token, refresh_token, and athlete_id into strava_credentials
+[31m[1mAssertionError[22m: expected undefined to be defined[39m
+[36m [2m❯[22m src/__tests__/oauth-token-exchange.test.ts:[2m385:24[22m[39m
+    [90m383|[39m     )[33m;[39m
+    [90m384|[39m
+    [90m385|[39m     [34mexpect[39m(insertCall)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+    [90m   |[39m                        [31m^[39m
+    [90m386|[39m   })[33m;[39m
+    [90m387|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/oauth-token-exchange.test.ts[2m > [22mAC-2: Tokens are stored in strava_credentials table with athlete_id[2m > [22mstores tokens with correct expiry timestamp
+[31m[1mAssertionError[22m: expected undefined to be defined[39m
+[36m [2m❯[22m src/__tests__/oauth-token-exchange.test.ts:[2m428:24[22m[39m
+    [90m426|[39m     )[33m;[39m
+    [90m427|[39m
+    [90m428|[39m     [34mexpect[39m(insertCall)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+    [90m   |[39m                        [31m^[39m
+    [90m429|[39m   })[33m;[39m
+    [90m430|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/oauth-token-exchange.test.ts[2m > [22mAC-2: Tokens are stored in strava_credentials table with athlete_id[2m > [22mstores athlete_id as BIGINT from Strava response
+[31m[1mAssertionError[22m: expected undefined to be defined[39m
+[36m [2m❯[22m src/__tests__/oauth-token-exchange.test.ts:[2m558:24[22m[39m
+    [90m556|[39m     )[33m;[39m
+    [90m557|[39m
+    [90m558|[39m     [34mexpect[39m(insertCall)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+    [90m   |[39m                        [31m^[39m
+    [90m559|[39m   })[33m;[39m
+    [90m560|[39m })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/oauth-token-exchange.test.ts[2m > [22mAC-3: Telegram confirmation message sent with athlete name[2m > [22msends a Telegram message after successful token storage
+[31m[1mAssertionError[22m: expected 500 to be less than 500[39m
+[36m [2m❯[22m src/__tests__/oauth-token-exchange.test.ts:[2m598:30[22m[39m
+    [90m596|[39m
+    [90m597|[39m     [90m// Verify response is successful[39m
+    [90m598|[39m     [34mexpect[39m(_response[33m.[39mstatus)[33m.[39m[34mtoBeLessThan[39m([34m500[39m)[33m;[39m
+    [90m   |[39m                              [31m^[39m
+    [90m599|[39m   })[33m;[39m
+    [90m600|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/oauth-token-exchange.test.ts[2m > [22mAC-3: Telegram confirmation message sent with athlete name[2m > [22mincludes athlete first and last name in confirmation message
+[31m[1mAssertionError[22m: expected 500 to be less than 500[39m
+[36m [2m❯[22m src/__tests__/oauth-token-exchange.test.ts:[2m632:30[22m[39m
+    [90m630|[39m
+    [90m631|[39m     [90m// Verify response is successful[39m
+    [90m632|[39m     [34mexpect[39m(_response[33m.[39mstatus)[33m.[39m[34mtoBeLessThan[39m([34m500[39m)[33m;[39m
+    [90m   |[39m                              [31m^[39m
+    [90m633|[39m   })[33m;[39m
+    [90m634|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/oauth-token-exchange.test.ts[2m > [22mAC-3: Telegram confirmation message sent with athlete name[2m > [22msends message to the correct Telegram chat_id
+[31m[1mAssertionError[22m: expected 500 to be less than 500[39m
+[36m [2m❯[22m src/__tests__/oauth-token-exchange.test.ts:[2m666:30[22m[39m
+    [90m664|[39m
+    [90m665|[39m     [90m// Verify response is successful[39m
+    [90m666|[39m     [34mexpect[39m(_response[33m.[39mstatus)[33m.[39m[34mtoBeLessThan[39m([34m500[39m)[33m;[39m
+    [90m   |[39m                              [31m^[39m
+    [90m667|[39m   })[33m;[39m
+    [90m668|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯[22m[39m
+
+
+

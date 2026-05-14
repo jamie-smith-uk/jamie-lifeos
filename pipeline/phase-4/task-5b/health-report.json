@@ -1,0 +1,10 @@
+{
+  "task_id": "task-5b",
+  "files_checked": [
+    "packages/bot/src/index.ts",
+    "packages/bot/src/__tests__/index.test.ts"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 1.6,
+  "coverage_pct": null
+}
