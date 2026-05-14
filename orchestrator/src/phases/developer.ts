@@ -103,14 +103,31 @@ or the agent spent too long reading before writing. On your next attempt:
       continue;
     }
 
-    // Check for BLOCKED.md
+    // Check for BLOCKED.md — route through fixer before halting
     const blockedFile = path.join(taskDir, "BLOCKED.md");
     if (fs.existsSync(blockedFile)) {
-      halt(
-        `Developer blocked on ${task.id}`,
+      const blockedReason = fs.readFileSync(blockedFile, "utf8");
+      log(`Developer wrote BLOCKED.md — invoking fixer before halting`);
+      const fixerFailures = tryFixer(
+        cfg,
+        task,
+        taskDir,
+        `Developer blocked: ${blockedReason.slice(0, 200)}`,
         "AG-04",
-        fs.readFileSync(blockedFile, "utf8"),
+        blockedReason,
+        filesInScopeJson,
       );
+      if (fixerFailures) {
+        halt(
+          `Developer blocked on ${task.id} — fixer could not resolve`,
+          "AG-04",
+          blockedReason,
+        );
+      }
+      // Fixer resolved the blocker — clear BLOCKED.md and continue the gate
+      fs.unlinkSync(blockedFile);
+      gateFailures = fixerFailures;
+      continue;
     }
 
     // Remove common temp/debug patterns before scope check

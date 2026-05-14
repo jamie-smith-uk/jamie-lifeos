@@ -1749,7 +1749,18 @@ or the agent spent too long reading before writing. On your next attempt:
       fi
 
       if [ -f "$TASK_DIR/BLOCKED.md" ]; then
-        halt "Developer blocked on $TASK_ID" "AG-04" "$(cat "$TASK_DIR/BLOCKED.md")"
+        local _blocked_reason
+        _blocked_reason="$(cat "$TASK_DIR/BLOCKED.md")"
+        log "Developer wrote BLOCKED.md — invoking fixer before halting"
+        GATE_FAILURES=$(try_fixer \
+          "Developer blocked: $(echo "$_blocked_reason" | head -c 200)" "AG-04" \
+          "$_blocked_reason" "$FILES_IN_SCOPE_JSON") || true
+        if [ -n "$GATE_FAILURES" ]; then
+          halt "Developer blocked on $TASK_ID — fixer could not resolve" "AG-04" "$_blocked_reason"
+        fi
+        # Fixer resolved the blocker — clear BLOCKED.md and continue the gate
+        rm -f "$TASK_DIR/BLOCKED.md"
+        continue
       fi
 
       # Silently remove common temp/debug patterns before scope check so they
