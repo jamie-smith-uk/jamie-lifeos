@@ -55,3 +55,18 @@
 - **Testing approach**: Environment variable tests use module cache clearing (`vi.resetModules()`) and dynamic imports to test different environment configurations in isolation
 
 ---
+## task-4a — Create Strava tools module with OAuth URL generation
+
+**Files:** packages/orchestrator/src/tools/strava.ts, packages/orchestrator/src/tools/__tests__/strava.test.ts
+
+- **OAuth state management pattern**: Use the `strava_oauth_state` table (migration 007) for storing temporary OAuth state tokens with expiration. All OAuth flows should follow this pattern for CSRF protection.
+
+- **State token security**: Generate state tokens using `randomBytes(32).toString("hex")` for cryptographic security. Set 10-minute expiration and implement one-time use by deleting tokens after validation. **NEVER log state tokens** - they are sensitive authentication material.
+
+- **Strava OAuth configuration**: The OAuth URL uses `https://www.strava.com/oauth/authorize` endpoint with scope `activity:read_all`. Client ID and redirect URI come from environment variables `STRAVA_CLIENT_ID` and `STRAVA_REDIRECT_URI`.
+
+- **Error handling pattern**: All database operations in tools should use try-catch blocks with structured logging via `logger.child({ function: "function_name" })`. Log errors and re-throw to allow calling code to handle them.
+
+- **Database query pattern**: Use parameterized queries with the shared `pool` from `@lifeos/shared`. Always check `rowCount` for INSERT operations to ensure success before proceeding.
+
+---

@@ -44,7 +44,7 @@ export async function get_strava_oauth_url(_params: Record<string, unknown>): Pr
     authUrl.searchParams.set("scope", "activity:read_all");
     authUrl.searchParams.set("state", storedToken);
 
-    log.info({ state_token: storedToken }, "Generated Strava OAuth URL");
+    log.info("Generated Strava OAuth URL");
 
     return authUrl.toString();
   } catch (error) {
@@ -76,7 +76,7 @@ export async function validate_oauth_state(params: { state: string }): Promise<b
     const result = await pool.query(selectQuery, [state]);
 
     if (result.rowCount === 0) {
-      log.warn({ state }, "OAuth state token not found");
+      log.warn("OAuth state token not found");
       return false;
     }
 
@@ -85,7 +85,7 @@ export async function validate_oauth_state(params: { state: string }): Promise<b
 
     // Check if the token has expired
     if (tokenRecord.expires_at < now) {
-      log.warn({ state, expires_at: tokenRecord.expires_at }, "OAuth state token expired");
+      log.warn("OAuth state token expired");
 
       // Clean up expired token
       await pool.query("DELETE FROM strava_oauth_state WHERE id = $1", [tokenRecord.id]);
@@ -94,19 +94,14 @@ export async function validate_oauth_state(params: { state: string }): Promise<b
     }
 
     // Token is valid, delete it to prevent reuse
-    const deleteQuery = `
-      DELETE FROM strava_oauth_state
-      WHERE id = $1
-    `;
+    await pool.query("DELETE FROM strava_oauth_state WHERE id = $1", [tokenRecord.id]);
 
-    await pool.query(deleteQuery, [tokenRecord.id]);
-
-    log.info({ state }, "OAuth state token validated and consumed");
+    log.info("OAuth state token validated and consumed");
 
     return true;
   } catch (error) {
     log.error(
-      { error: error instanceof Error ? error.message : String(error), state },
+      { error: error instanceof Error ? error.message : String(error) },
       "Failed to validate OAuth state",
     );
     throw error;
