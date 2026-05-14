@@ -79,7 +79,7 @@ ${pkgTestCmd}
 \`\`\`
 Do not write refactor-report.md until all four pass.
 
-Write refactor-report.md to pipeline/phase-${cfg.phase}/${task.id}/
+Write refactor-report.md to ${taskDir}/
 Follow your system prompt exactly.`;
 
     runAgent(

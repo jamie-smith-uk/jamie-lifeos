@@ -45,7 +45,7 @@ export function runSecurityPhase(
   const securityStart = Math.floor(Date.now() / 1000);
 
   // ── Mutation testing (before security agent, for security-sensitive tasks) ──
-  if (task.security_sensitive) {
+  if (task.security_sensitive && !cfg.urgent) {
     const mutationReport = path.join(taskDir, "mutation-report.md");
     if (!fs.existsSync(mutationReport)) {
       const mutationStart = Math.floor(Date.now() / 1000);
@@ -83,7 +83,7 @@ Files to review (read every one before writing findings):
 ${filesBulletList}
 
 Apply every rule in .opencode/agents/security-rules.md to every file listed above.
-Write security-report.md to pipeline/phase-${cfg.phase}/${task.id}/
+Write security-report.md to ${taskDir}/
 Return PASS or FAIL with specific findings.`;
 
     runAgent(
@@ -186,7 +186,7 @@ Use process.env.DATABASE_URL for any database connections.`;
     log("Fixer resolved security findings — running final security check...");
     runAgent(
       "ag-07-security",
-      `You are AG-07 Security Agent for Life OS.\n\nReview the code written for task ${task.id} after a security fix.\nTask spec:\n${taskSpec}${contextSection}\n\nFiles to review:\n${filesBulletList}\n\nApply every rule in .opencode/agents/security-rules.md.\nWrite security-report.md to pipeline/phase-${cfg.phase}/${task.id}/\nReturn PASS or FAIL with specific findings.`,
+      `You are AG-07 Security Agent for Life OS.\n\nReview the code written for task ${task.id} after a security fix.\nTask spec:\n${taskSpec}${contextSection}\n\nFiles to review:\n${filesBulletList}\n\nApply every rule in .opencode/agents/security-rules.md.\nWrite security-report.md to ${taskDir}/\nReturn PASS or FAIL with specific findings.`,
       path.join(taskDir, "sec-output-fixer.md"),
       0,
       cfg.pipelineDir,

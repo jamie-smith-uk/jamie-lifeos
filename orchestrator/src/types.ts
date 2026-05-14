@@ -25,6 +25,8 @@ export interface PipelineConfig {
   phaseStartedAt: string;
   contextMaxChars: number;
   archDocMaxChars: number;
+  urgent?: boolean;              // skip refactor + mutation testing
+  noIntermediateCommit?: boolean; // skip WIP commit/push between GREEN and SECURITY
 }
 
 export interface GateResult {

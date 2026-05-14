@@ -41,7 +41,7 @@ ${taskSpec}
 
 Validate every migration file in files_in_scope.
 Run the migration and its rollback against the test database.
-Write migration-report.md to pipeline/phase-${cfg.phase}/${task.id}/
+Write migration-report.md to ${taskDir}/
 Follow your system prompt exactly.`;
 
   runAgent(

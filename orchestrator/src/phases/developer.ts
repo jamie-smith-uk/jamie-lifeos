@@ -48,7 +48,7 @@ export function runDeveloperPhase(
   const taskSpec = `<task-spec>\n${JSON.stringify(task, null, 2)}\n</task-spec>`;
 
   const baseDevPrompt = buildBaseDevPrompt(
-    cfg,
+    taskDir,
     task,
     taskSpec,
     contextSection,
@@ -200,8 +200,10 @@ or the agent spent too long reading before writing. On your next attempt:
         true,
       );
 
-      // Push developer's code immediately
-      pushDeveloperCode(cfg, task, taskDir, greenVerifiedFile);
+      // Push developer's code immediately (skipped in single-task mode)
+      if (!cfg.noIntermediateCommit) {
+        pushDeveloperCode(cfg, task, taskDir, greenVerifiedFile);
+      }
 
       log("GREEN phase: PASS");
     } else {
@@ -272,7 +274,7 @@ or the agent spent too long reading before writing. On your next attempt:
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function buildBaseDevPrompt(
-  cfg: PipelineConfig,
+  taskDir: string,
   task: Task,
   taskSpec: string,
   contextSection: string,
@@ -327,7 +329,7 @@ Step 2 (\`biome check --write\`) auto-fixes formatting. Step 3 confirms the resu
 You are not done until you have run all four and seen zero errors and all tests passing.
 Copy the terminal output of each command into self-assessment.md as proof.
 
-Write self-assessment.md to pipeline/phase-${cfg.phase}/${task.id}/
+Write self-assessment.md to ${taskDir}/
 Follow your system prompt exactly. Apply all security rules.
 Use process.env.DATABASE_URL for any database connections — do not read .env directly.`;
 }

@@ -7,9 +7,9 @@
  * warrant a full PRD phase. Uses the same quality gates as the phase pipeline.
  *
  * Usage:
- *   pnpm --filter @lifeos/orchestrator exec tsx src/run-task.ts backlog/fix.md
- *   pnpm --filter @lifeos/orchestrator exec tsx src/run-task.ts --quick "Fix the crash"
- *   pnpm --filter @lifeos/orchestrator exec tsx src/run-task.ts --help
+ *   pnpm exec tsx orchestrator/src/run-task.ts backlog/fix.md
+ *   pnpm exec tsx orchestrator/src/run-task.ts --quick "Fix the crash"
+ *   pnpm exec tsx orchestrator/src/run-task.ts --help
  */
 
 import fs from "node:fs";
@@ -19,27 +19,11 @@ import readline from "node:readline";
 import { spawnSync } from "node:child_process";
 
 import { loadEnv, log } from "./config.js";
-import { halt } from "./halt.js";
-import {
-  verifyImplementation,
-  checkScopeCompliance,
-  revertScopeViolations,
-  reportPasses,
-  getAffectedPkgFilter,
-  getExpandedFileList,
-} from "./gates.js";
-import { runAgent } from "./agent.js";
-import { tryFixer } from "./phases/fixer.js";
-import { runCodeHealthChecks, writeRefactorDelta } from "./checks/health.js";
-import { runMutationTests } from "./checks/mutation.js";
-import {
-  checkTesterTrajectory,
-  checkSecurityTrajectory,
-} from "./checks/trajectory.js";
-import {
-  recordTaskMetrics,
-  recordSecurityFindings,
-} from "./metrics.js";
+import { runTesterPhase } from "./phases/tester.js";
+import { runDeveloperPhase } from "./phases/developer.js";
+import { runMigrationPhase, hasMigration } from "./phases/migration.js";
+import { runRefactorPhase } from "./phases/refactor.js";
+import { runSecurityPhase } from "./phases/security.js";
 import type { PipelineConfig, Task } from "./types.js";
 
 // ── Arg parsing ───────────────────────────────────────────────────────────────
@@ -67,7 +51,7 @@ function parseArgs(): TaskRunnerOptions {
   };
 
   if (args.includes("--help") || args.includes("-h")) {
-    console.log(`Usage: tsx src/run-task.ts [OPTIONS] [task-file.md]
+    console.log(`Usage: tsx orchestrator/src/run-task.ts [OPTIONS] [task-file.md]
 
 Inputs (one required):
   task-file.md              Task file with YAML front matter (see backlog/)
@@ -248,44 +232,11 @@ async function promptReview(task: Task): Promise<boolean> {
   });
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function hasMigrationFiles(filesInScope: string[]): boolean {
-  return filesInScope.some(
-    (f) => f.toLowerCase().includes("migration") || f.startsWith("migrations/"),
-  );
-}
-
-function cleanTempFiles(repoRoot: string): void {
-  for (const pattern of ["debug-*.js","debug-*.ts","test-*.js","test-*.ts","*.debug.js","*.debug.ts","*.tmp","*.scratch.*"]) {
-    spawnSync("find", [repoRoot, "-maxdepth", "2", "-name", pattern,
-      "-not", "-path", "*/node_modules/*",
-      "-not", "-path", "*/__tests__/*",
-      "-not", "-path", "*/pipeline/*",
-      "-delete"], { encoding: "utf8" });
-  }
-}
-
-function autoFixBiome(repoRoot: string, filesInScope: string[]): void {
-  const existing = filesInScope.map((f) => path.join(repoRoot, f)).filter(fs.existsSync);
-  if (existing.length === 0) return;
-  spawnSync("pnpm", ["exec", "biome", "format", "--write", ...existing], {
-    cwd: repoRoot, encoding: "utf8",
-  });
-}
-
-function checkInScopeChanged(repoRoot: string, filesInScope: string[]): boolean {
-  const result = spawnSync("git", ["-C", repoRoot, "diff", "--name-only", "HEAD"], { encoding: "utf8" });
-  const changed = new Set((result.stdout ?? "").split("\n").filter(Boolean));
-  return filesInScope.some((f) => changed.has(f));
-}
-
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
   const opts = parseArgs();
 
-  // Derive repo root from this file: orchestrator/src/run-task.ts → ../../..
   const scriptDir = path.dirname(new URL(import.meta.url).pathname);
   const repoRoot = path.resolve(scriptDir, "../../..");
 
@@ -318,13 +269,6 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const filesInScopeJson = JSON.stringify(task.files_in_scope);
-  const affectedPkgs = getAffectedPkgFilter(filesInScopeJson);
-  const filesExpanded = getExpandedFileList(filesInScopeJson);
-  const pkgTestCmd = affectedPkgs ? `pnpm ${affectedPkgs} test` : "pnpm test";
-  const taskSpec = `<task-spec>\n${JSON.stringify(task, null, 2)}\n</task-spec>`;
-  const hasMigration = hasMigrationFiles(task.files_in_scope);
-
   // ── Task directory ──────────────────────────────────────────────────────────
   const slug = task.id.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
@@ -332,7 +276,6 @@ async function main(): Promise<void> {
   fs.mkdirSync(taskDir, { recursive: true });
   fs.writeFileSync(path.join(taskDir, "task.json"), JSON.stringify(task, null, 2));
 
-  // Minimal PipelineConfig for shared utilities
   const cfg: PipelineConfig = {
     phase: "tasks",
     repoRoot,
@@ -341,6 +284,8 @@ async function main(): Promise<void> {
     phaseStartedAt: new Date().toISOString(),
     contextMaxChars: 4000,
     archDocMaxChars: 6000,
+    urgent: opts.urgent,
+    noIntermediateCommit: true,
   };
 
   // ── Dry run ─────────────────────────────────────────────────────────────────
@@ -348,7 +293,7 @@ async function main(): Promise<void> {
     console.log("\nTask manifest:");
     console.log(JSON.stringify(task, null, 2));
     const pipeline = ["RED", "GREEN"];
-    if (hasMigration) pipeline.push("MIGRATION");
+    if (hasMigration(task.files_in_scope)) pipeline.push("MIGRATION");
     if (!opts.urgent) pipeline.push("REFACTOR");
     if (task.security_sensitive && !opts.urgent) pipeline.push("MUTATION");
     if (!opts.noSecurity) pipeline.push("SECURITY");
@@ -371,384 +316,12 @@ async function main(): Promise<void> {
     log("Approved — starting implementation...");
   }
 
-  // ── RED phase ───────────────────────────────────────────────────────────────
-  const testsWrittenFile = path.join(taskDir, "tests-written.txt");
-  if (!fs.existsSync(testsWrittenFile)) {
-    const redStart = Math.floor(Date.now() / 1000);
-    log("RED phase — Tester writing failing tests...");
-
-    const redPrompt = `You are AG-03 Tester for Life OS.
-RED phase of TDD — no implementation exists yet.
-Write the test suite for this task:
-${taskSpec}
-
-Time budget: complete the RED phase in under 5 minutes. Read only the files
-directly listed in files_in_scope and their immediate imports.
-
-Write test files to __tests__/ directories.
-After writing all tests, write 'tests-written' to: ${taskDir}/tests-written.txt
-Do NOT write implementation code. Do NOT write test-report.md.`;
-
-    runAgent("ag-03-tester", redPrompt, path.join(taskDir, "tester-red-output.md"), 0, taskDir);
-
-    if (!fs.existsSync(testsWrittenFile)) {
-      halt("Tester did not write tests", "AG-03", "tests-written.txt not found");
-    }
-
-    log("Confirming tests fail before implementation...");
-    const redResult = spawnSync("pnpm", ["test"], {
-      cwd: repoRoot, encoding: "utf8", maxBuffer: 20 * 1024 * 1024,
-    });
-    const redOutput = `${redResult.stdout ?? ""}${redResult.stderr ?? ""}`;
-    fs.writeFileSync(path.join(taskDir, "test-red-output.txt"), redOutput);
-
-    if (redResult.status === 0) {
-      log("WARNING: Tests pass before implementation — verify assertions are meaningful");
-    } else {
-      log("RED confirmed — tests fail as expected");
-    }
-
-    // Capture baseline failures so the hard gate can filter pre-existing failures
-    captureBaselineFailures(redOutput, path.join(taskDir, "baseline-failures.txt"));
-
-    // Detect broken test files (0 tests ran — likely a syntax/import error)
-    const newTestFilesResult = spawnSync("git", ["-C", repoRoot, "diff", "--name-only", "HEAD"], { encoding: "utf8" });
-    const newTestFiles = (newTestFilesResult.stdout ?? "").split("\n").filter((f) => f.endsWith(".test.ts"));
-    if (newTestFiles.length > 0) {
-      let zeroCount = 0;
-      let nonzeroCount = 0;
-      for (const tf of newTestFiles) {
-        const tfBase = path.basename(tf);
-        if (new RegExp(`${escapeRegex(tfBase)}.*\\(0 test\\)`).test(redOutput)) {
-          zeroCount++;
-        } else {
-          nonzeroCount++;
-        }
-      }
-      if (zeroCount > 0 && nonzeroCount === 0) {
-        log("ERROR: All new test files ran 0 tests — likely a load error (missing import, syntax error)");
-        const fixerFailures = tryFixer(cfg, task, taskDir,
-          "Tester produced broken test files (0 tests ran)", "AG-03",
-          `All new test files loaded with 0 tests. Check for missing 'import { describe, it, expect } from "vitest"'.`,
-          filesInScopeJson);
-        if (fixerFailures) {
-          halt("Tester produced broken test files (0 tests ran)", "AG-03",
-            "All new test files loaded with 0 tests. Fixer also failed.");
-        }
-      }
-    }
-
-    checkTesterTrajectory(repoRoot, taskDir, testsWrittenFile, task.acceptance_criteria.length);
-    recordTaskMetrics(taskDir, task.id, task.title, "red",
-      Math.floor(Date.now() / 1000) - redStart, 1, "pass", "tasks", cfg.phaseStartedAt);
-  } else {
-    log("RED already complete — skipping");
-  }
-
-  // ── GREEN phase ─────────────────────────────────────────────────────────────
-  const greenVerifiedFile = path.join(taskDir, "green-verified.txt");
-  if (!fs.existsSync(greenVerifiedFile)) {
-    const greenStart = Math.floor(Date.now() / 1000);
-    let devAttempts = 0;
-    let greenPassed = false;
-    let gateFailures = "";
-
-    const baseDevPrompt = `You are AG-04 Developer for Life OS.
-Implement this task to make the failing tests pass:
-${taskSpec}
-
-## Step 1 — Read the in-scope source files FIRST
-Read the current content of every file listed in files_in_scope before writing anything.
-
-## Step 2 — Read the tests
-Read every .test.ts file in the __tests__/ directories of the in-scope packages.
-
-## Biome lint rules — violations will fail the gate
-- **noExplicitAny** (error): Never use \`any\`. Define typed interfaces or use \`unknown\`.
-- **noExcessiveCognitiveComplexity** (error, max 10): Break complex logic into helpers.
-- **noConsole** (warning): Use the logger from \`packages/shared/src/logger.ts\`.
-- **Formatter**: Run \`biome check --write\` to auto-fix formatting.
-
-## Validation commands (run in order before marking done)
-\`\`\`bash
-pnpm exec tsc --noEmit
-pnpm exec biome check --write ${filesExpanded}
-pnpm exec biome check ${filesExpanded}
-${pkgTestCmd}
-\`\`\`
-
-Write self-assessment.md to ${taskDir}/
-Apply all security rules. Use process.env.DATABASE_URL for DB connections.`;
-
-    while (!greenPassed && devAttempts < 5) {
-      devAttempts++;
-      log(`GREEN phase — Developer attempt ${devAttempts}/5...`);
-
-      let devPrompt = baseDevPrompt;
-      if (gateFailures) {
-        const diffResult = spawnSync("git", ["-C", repoRoot, "diff", "HEAD", "--", ...task.files_in_scope],
-          { encoding: "utf8", maxBuffer: 8 * 1024 * 1024 });
-        const prevDiff = (diffResult.stdout ?? "").slice(0, 8000);
-        devPrompt += `\n\n## Previous attempt failed — fix every item below:\n\n<gate-failures>\n${gateFailures}\n</gate-failures>`;
-        if (prevDiff) {
-          devPrompt += `\n\n<previous-attempt-diff>\n${prevDiff}\n</previous-attempt-diff>`;
-        }
-      }
-
-      const devRc = runAgent("ag-04-developer", devPrompt, path.join(taskDir, `dev-output-${devAttempts}.md`), 1200, taskDir);
-
-      if (devRc === 124) {
-        log(`Developer attempt ${devAttempts} timed out after 20 minutes — counting as gate failure`);
-        gateFailures = `=== Developer attempt timed out ===\nThe agent did not complete within 20 minutes.\nOn your next attempt:\n- Write implementation code immediately — do not re-read files you already know\n- Focus only on files_in_scope; ignore everything else\n- Implement the minimum needed to make the failing tests pass`;
-        fs.writeFileSync(path.join(taskDir, `gate-failures-${devAttempts}.txt`), gateFailures);
-        continue;
-      }
-
-      // Route BLOCKED.md through fixer before halting
-      const blockedFile = path.join(taskDir, "BLOCKED.md");
-      if (fs.existsSync(blockedFile)) {
-        const blockedReason = fs.readFileSync(blockedFile, "utf8");
-        log("Developer wrote BLOCKED.md — invoking fixer before halting");
-        const fixerFailures = tryFixer(cfg, task, taskDir,
-          `Developer blocked: ${blockedReason.slice(0, 200)}`,
-          "AG-04", blockedReason, filesInScopeJson);
-        if (fixerFailures) {
-          halt(`Developer blocked on ${task.id} — fixer could not resolve`, "AG-04", blockedReason);
-        }
-        fs.unlinkSync(blockedFile);
-        gateFailures = fixerFailures;
-        continue;
-      }
-
-      cleanTempFiles(repoRoot);
-
-      log("Checking files_in_scope compliance...");
-      const scopeViolations = checkScopeCompliance(filesInScopeJson, repoRoot);
-      let scopeGate = "";
-      if (scopeViolations) {
-        log("Scope violation — reverting out-of-scope changes...");
-        revertScopeViolations(scopeViolations, repoRoot);
-        scopeGate = `=== files_in_scope violation (changes reverted) ===\n${scopeViolations}\nOnly write to files listed in files_in_scope.`;
-      }
-
-      autoFixBiome(repoRoot, task.files_in_scope);
-
-      log("Running hard gate (tsc + biome check + pnpm test)...");
-      const implFailures = verifyImplementation(filesInScopeJson, repoRoot, path.join(taskDir, "baseline-failures.txt"));
-
-      if (implFailures) {
-        gateFailures = scopeGate ? `${scopeGate}\n${implFailures}` : implFailures;
-      } else {
-        gateFailures = "";
-      }
-
-      // False-green guard: scope violations reverted but no in-scope files written
-      if (!gateFailures && scopeViolations && !checkInScopeChanged(repoRoot, task.files_in_scope)) {
-        gateFailures = `${scopeGate}\n=== No in-scope files were modified ===\nYou MUST write implementation code to the files listed in files_in_scope.`;
-      }
-
-      if (!gateFailures) {
-        greenPassed = true;
-        fs.writeFileSync(greenVerifiedFile, "green-verified");
-        fs.writeFileSync(path.join(taskDir, "test-report.md"),
-          `Title: Test Report — ${task.id} — PASS\n\nVerified by hard gate after Developer attempt ${devAttempts}.\n\n- tsc --noEmit: PASS\n- biome check: PASS\n- pnpm test: PASS\n`);
-        recordTaskMetrics(taskDir, task.id, task.title, "green",
-          Math.floor(Date.now() / 1000) - greenStart, devAttempts, "pass", "tasks", cfg.phaseStartedAt);
-        log("Code health (pre-refactor baseline):");
-        runCodeHealthChecks(repoRoot, taskDir, task.id, taskDir, filesInScopeJson, "pre-refactor", true);
-        log("GREEN phase: PASS");
-      } else {
-        log(`Hard gate: FAIL (attempt ${devAttempts}/5)`);
-        fs.writeFileSync(path.join(taskDir, `gate-failures-${devAttempts}.txt`), gateFailures);
-
-        if (devAttempts === 5) {
-          const allFailures = [
-            tryReadFile(path.join(taskDir, "gate-failures-1.txt")),
-            tryReadFile(path.join(taskDir, "gate-failures-5.txt")),
-          ].join("\n");
-          gateFailures = tryFixer(cfg, task, taskDir,
-            "Developer could not pass hard gate after 5 attempts",
-            "AG-04", allFailures, filesInScopeJson);
-          if (gateFailures) {
-            halt("Developer and Fixer could not pass hard gate", "AG-04",
-              `Task: ${task.id} — see ${taskDir}/fixer-output-*.md`);
-          }
-          greenPassed = true;
-          fs.writeFileSync(greenVerifiedFile, "green-verified");
-          fs.writeFileSync(path.join(taskDir, "test-report.md"),
-            `Title: Test Report — ${task.id} — PASS\n\nVerified by Fixer after Developer attempt ${devAttempts}.\n`);
-          recordTaskMetrics(taskDir, task.id, task.title, "green",
-            Math.floor(Date.now() / 1000) - greenStart, devAttempts, "pass", "tasks", cfg.phaseStartedAt);
-        }
-      }
-    }
-  } else {
-    log("GREEN already complete — skipping");
-    if (!fs.existsSync(path.join(taskDir, "test-report.md"))) {
-      fs.writeFileSync(path.join(taskDir, "test-report.md"),
-        `Title: Test Report — ${task.id} — PASS\n\nRestored on resume.\n`);
-    }
-  }
-
-  // ── MIGRATION phase (conditional) ───────────────────────────────────────────
-  const migrationVerifiedFile = path.join(taskDir, "migration-verified.txt");
-  if (hasMigration && !fs.existsSync(migrationVerifiedFile)) {
-    const migStart = Math.floor(Date.now() / 1000);
-    log("MIGRATION phase...");
-    runAgent("ag-05-migration",
-      `You are AG-05 Migration for Life OS.\nValidate migration files for: ${taskSpec}\nRun the migration and rollback. Write migration-report.md to ${taskDir}/`,
-      path.join(taskDir, "migration-output.md"), 0, taskDir);
-    const migReport = path.join(taskDir, "migration-report.md");
-    if (!fs.existsSync(migReport)) halt("Migration report not written", "AG-05", "");
-    if (!reportPasses(migReport)) halt("Migration failed", "AG-05", fs.readFileSync(migReport, "utf8"));
-    fs.writeFileSync(migrationVerifiedFile, "migration-verified");
-    recordTaskMetrics(taskDir, task.id, task.title, "migration",
-      Math.floor(Date.now() / 1000) - migStart, 1, "pass", "tasks", cfg.phaseStartedAt);
-    log("MIGRATION: PASS");
-  } else if (hasMigration) {
-    log("MIGRATION already complete — skipping");
-  }
-
-  // ── REFACTOR phase ──────────────────────────────────────────────────────────
-  const refactorVerifiedFile = path.join(taskDir, "refactor-verified.txt");
-  if (!opts.urgent && !fs.existsSync(refactorVerifiedFile)) {
-    const refStart = Math.floor(Date.now() / 1000);
-    log("REFACTOR phase...");
-
-    // Check if health metrics are already clean (skip agent if so)
-    const preHealthFile = path.join(taskDir, "health-report-pre.json");
-    let metricsClean = false;
-    if (fs.existsSync(preHealthFile)) {
-      try {
-        const health = JSON.parse(fs.readFileSync(preHealthFile, "utf8")) as {
-          complex_functions?: unknown[];
-          duplication_pct?: number;
-        };
-        const complexCount = health.complex_functions?.length ?? 99;
-        const dupPct = health.duplication_pct ?? 99;
-        metricsClean = complexCount < 5 && dupPct < 8.0;
-      } catch { /* ignore */ }
-    }
-
-    if (metricsClean) {
-      log("REFACTOR phase: metrics clean — skipping agent");
-      fs.writeFileSync(path.join(taskDir, "refactor-report.md"),
-        `# Refactor Report — ${task.id}\n\nSkipped: health metrics within thresholds.\n`);
-    } else {
-      const complexityBlock = buildComplexityBlock(taskDir);
-      const complexitySection = complexityBlock
-        ? `\n## Complexity violations to fix\n\n${complexityBlock}\n`
-        : "";
-      runAgent("ag-06-refactor",
-        `You are AG-06 Refactor for Life OS.\nImprove without changing behaviour: ${taskSpec}${complexitySection}\nFiles in scope: ${filesExpanded}\n\n## Required: run validation before writing the report\n\`\`\`bash\npnpm exec tsc --noEmit\npnpm exec biome check --write ${filesExpanded}\npnpm exec biome check ${filesExpanded}\n${pkgTestCmd}\n\`\`\`\nDo not write refactor-report.md until all four pass.\nWrite refactor-report.md to ${taskDir}/`,
-        path.join(taskDir, "refactor-output.md"), 0, taskDir);
-      if (!fs.existsSync(path.join(taskDir, "refactor-report.md"))) {
-        halt("Refactor report not written", "AG-06", "");
-      }
-    }
-
-    let refactorFailures = verifyImplementation(filesInScopeJson, repoRoot);
-    if (refactorFailures) {
-      refactorFailures = tryFixer(cfg, task, taskDir,
-        "Refactor broke tsc or tests", "AG-06", refactorFailures, filesInScopeJson);
-      if (refactorFailures) halt("Refactor broke tests and fixer could not recover", "AG-06", refactorFailures);
-    }
-
-    fs.writeFileSync(refactorVerifiedFile, "refactor-verified");
-    recordTaskMetrics(taskDir, task.id, task.title, "refactor",
-      Math.floor(Date.now() / 1000) - refStart, 1, "pass", "tasks", cfg.phaseStartedAt);
-    log("Code health (post-refactor):");
-    runCodeHealthChecks(repoRoot, taskDir, task.id, taskDir, filesInScopeJson, "", false);
-    writeRefactorDelta(taskDir, taskDir, task.id);
-    log("REFACTOR: PASS");
-  } else if (opts.urgent) {
-    log("REFACTOR skipped (--urgent)");
-  } else {
-    log("REFACTOR already complete — skipping");
-  }
-
-  // ── MUTATION TESTING ────────────────────────────────────────────────────────
-  if (task.security_sensitive && !opts.urgent && !fs.existsSync(path.join(taskDir, "mutation-report.md"))) {
-    const mutStart = Math.floor(Date.now() / 1000);
-    log("MUTATION TESTING...");
-    runMutationTests(repoRoot, task.id, taskDir, filesInScopeJson);
-    recordTaskMetrics(taskDir, task.id, task.title, "mutation",
-      Math.floor(Date.now() / 1000) - mutStart, 1, "pass", "tasks", cfg.phaseStartedAt);
-    log("Mutation testing complete");
-  }
-
-  // ── SECURITY phase ──────────────────────────────────────────────────────────
-  const secReport = path.join(taskDir, "security-report.md");
-  if (!opts.noSecurity && !(fs.existsSync(secReport) && reportPasses(secReport))) {
-    let securityPassed = false;
-    const secAttemptsFile = path.join(taskDir, "security-attempts.txt");
-    let securityAttempts = readInt(secAttemptsFile);
-    const secStart = Math.floor(Date.now() / 1000);
-    const filesBulletList = task.files_in_scope.map((f) => `  - ${f}`).join("\n");
-    while (!securityPassed && securityAttempts < 3) {
-      securityAttempts++;
-      fs.writeFileSync(secAttemptsFile, String(securityAttempts));
-      log(`Security attempt ${securityAttempts}/3...`);
-
-      runAgent("ag-07-security",
-        `You are AG-07 Security Agent for Life OS.\n\nReview the code written for this task.\nTask spec:\n${taskSpec}\n\nFiles to review (read every one before writing findings):\n${filesBulletList}\n\nApply every rule in .opencode/agents/security-rules.md to every file listed above.\nWrite security-report.md to ${taskDir}/\nReturn PASS or FAIL with specific findings.`,
-        path.join(taskDir, `sec-output-${securityAttempts}.md`), 0, taskDir);
-
-      if (fs.existsSync(secReport) && reportPasses(secReport)) {
-        securityPassed = true;
-        recordTaskMetrics(taskDir, task.id, task.title, "security",
-          Math.floor(Date.now() / 1000) - secStart, securityAttempts, "pass", "tasks", cfg.phaseStartedAt);
-        recordSecurityFindings(taskDir, task.id, taskDir);
-        checkSecurityTrajectory(repoRoot, taskDir);
-        log("Security: PASS");
-      } else {
-        log(`Security: FAIL (attempt ${securityAttempts}/3)`);
-        if (securityAttempts >= 3) break; // fixer runs below
-
-        const secFindings = fs.existsSync(secReport)
-          ? fs.readFileSync(secReport, "utf8")
-          : "(security-report.md not found)";
-
-        runAgent("ag-04-developer",
-          `You are AG-04 Developer for Life OS.\n\nThe Security Agent has rejected this task. Fix every finding below, then run all validation commands before marking done.\n\n<security-findings>\n${secFindings}\n</security-findings>\n\nTask spec for context:\n${taskSpec}\n\nYou may modify any file necessary to fix the security findings. Do not modify test files.\n\n## Validation commands — run all four before marking done\n\`\`\`bash\npnpm exec tsc --noEmit\npnpm exec biome check --write ${filesExpanded}\npnpm exec biome check ${filesExpanded}\n${pkgTestCmd}\n\`\`\`\nUse process.env.DATABASE_URL for DB connections.`,
-          path.join(taskDir, `dev-secfix-${securityAttempts}.md`), 900, taskDir);
-      }
-    }
-
-    if (!securityPassed) {
-      const lastFindings = fs.existsSync(secReport) ? fs.readFileSync(secReport, "utf8") : "(no report)";
-
-      log("Security exhausted — invoking Fixer...");
-      const fixerFailures = tryFixer(cfg, task, taskDir,
-        "Security could not be resolved after 3 developer attempts",
-        "AG-07", lastFindings, filesInScopeJson);
-
-      if (fixerFailures) {
-        halt("Security failed after 3 attempts + Fixer", "AG-07",
-          fs.existsSync(secReport) ? fs.readFileSync(secReport, "utf8") : "(no report)");
-      }
-
-      log("Fixer resolved security findings — running final security check...");
-      runAgent("ag-07-security",
-        `You are AG-07 Security Agent for Life OS.\n\nReview the code for this task after a security fix.\nTask spec:\n${taskSpec}\n\nFiles to review:\n${filesBulletList}\n\nApply every rule in .opencode/agents/security-rules.md.\nWrite security-report.md to ${taskDir}/\nReturn PASS or FAIL.`,
-        path.join(taskDir, "sec-output-fixer.md"), 0, taskDir);
-
-      if (fs.existsSync(secReport) && reportPasses(secReport)) {
-        recordTaskMetrics(taskDir, task.id, task.title, "security",
-          Math.floor(Date.now() / 1000) - secStart, securityAttempts + 1, "pass", "tasks", cfg.phaseStartedAt);
-        recordSecurityFindings(taskDir, task.id, taskDir);
-        checkSecurityTrajectory(repoRoot, taskDir);
-        log("Security: PASS (via Fixer)");
-      } else {
-        halt("Security failed after 3 attempts + Fixer", "AG-07",
-          fs.existsSync(secReport) ? fs.readFileSync(secReport, "utf8") : "(no report)");
-      }
-    }
-  } else if (opts.noSecurity) {
-    log("Security skipped (--no-security)");
-  } else {
-    log("Security already passed — skipping");
-  }
+  // ── Pipeline phases ─────────────────────────────────────────────────────────
+  runTesterPhase(cfg, task, taskDir, "");
+  runDeveloperPhase(cfg, task, taskDir, "", "");
+  runMigrationPhase(cfg, task, taskDir);
+  if (!opts.urgent) runRefactorPhase(cfg, task, taskDir, "");
+  if (!opts.noSecurity) runSecurityPhase(cfg, task, taskDir, "");
 
   // ── Git commit ──────────────────────────────────────────────────────────────
   log(`Committing ${task.id}...`);
@@ -762,7 +335,6 @@ Apply all security rules. Use process.env.DATABASE_URL for DB connections.`;
     }
   }
 
-  // Also stage test files that correspond to in-scope source files
   for (const f of task.files_in_scope) {
     const base = path.basename(f, ".ts");
     const findResult = spawnSync("find", [repoRoot, "-path", `*/__tests__/${base}*`], { encoding: "utf8" });
@@ -770,6 +342,8 @@ Apply all security rules. Use process.env.DATABASE_URL for DB connections.`;
       spawnSync("git", ["-C", repoRoot, "add", tf], { encoding: "utf8" });
     }
   }
+
+  spawnSync("git", ["-C", repoRoot, "add", taskDir], { encoding: "utf8" });
 
   const diffCheck = spawnSync("git", ["-C", repoRoot, "diff", "--cached", "--quiet"], { encoding: "utf8" });
   if (diffCheck.status !== 0) {
@@ -780,51 +354,12 @@ Apply all security rules. Use process.env.DATABASE_URL for DB connections.`;
   }
 
   // ── Summary ─────────────────────────────────────────────────────────────────
-  process.stdout.write("\x07"); // terminal bell
+  process.stdout.write("\x07");
   log("");
   log("========================================");
   log(`Task complete: ${task.title}`);
   log(`Output: ${taskDir}`);
   log("========================================");
-}
-
-function tryReadFile(filePath: string): string {
-  try { return fs.readFileSync(filePath, "utf8"); } catch { return ""; }
-}
-
-function readInt(filePath: string): number {
-  try { return Number.parseInt(fs.readFileSync(filePath, "utf8").trim(), 10) || 0; } catch { return 0; }
-}
-
-function captureBaselineFailures(redOutput: string, baselinePath: string): void {
-  const failFiles = new Set([...redOutput.matchAll(/^\s*FAIL\s+(\S+)/gm)].map((m) => m[1]));
-  const failTests = new Set([...redOutput.matchAll(/^\s*×\s+(.+?)\s+\d+ms/gm)].map((m) => m[1]));
-  const baseline = [...new Set([...failFiles, ...failTests])].sort();
-  fs.writeFileSync(baselinePath, baseline.length > 0 ? `${baseline.join("\n")}\n` : "");
-  log(`Baseline: ${baseline.length} pre-existing failure(s) recorded.`);
-}
-
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function buildComplexityBlock(taskDir: string): string {
-  try {
-    const report = JSON.parse(fs.readFileSync(path.join(taskDir, "health-report-pre.json"), "utf8")) as {
-      complex_functions?: Array<{ file: string; line: number; score?: number }>;
-    };
-    const fns = report.complex_functions ?? [];
-    if (fns.length === 0) return "";
-    const lines = [
-      "The following functions exceeded the cognitive complexity threshold (max: 10).",
-      "These are your primary refactor targets:",
-      "",
-    ];
-    for (const fn of fns) {
-      lines.push(`  ${fn.file}:${fn.line}${fn.score ? ` — complexity score ${fn.score}` : ""}`);
-    }
-    return lines.join("\n");
-  } catch { return ""; }
 }
 
 main().catch((err) => {

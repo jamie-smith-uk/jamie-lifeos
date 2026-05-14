@@ -53,7 +53,7 @@ the entire codebase — the task spec and build context contain everything neede
 Do NOT write implementation code.
 Do NOT write test-report.md — the orchestrator writes that.
 After writing all test files, write the single line 'tests-written' to:
-  pipeline/phase-${cfg.phase}/${task.id}/tests-written.txt
+  ${taskDir}/tests-written.txt
 
 Follow your system prompt exactly.`;
 
