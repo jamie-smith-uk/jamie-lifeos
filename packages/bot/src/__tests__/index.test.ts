@@ -111,11 +111,11 @@ class FakeTelegramBot {
 // ---------------------------------------------------------------------------
 
 const FAKE_ENV = {
-  TELEGRAM_BOT_TOKEN: "bot:test_token_12345",
+  TELEGRAM_BOT_TOKEN: "test_token_placeholder",
   TELEGRAM_ALLOWED_CHAT_ID: "99999",
-  ANTHROPIC_API_KEY: "sk-ant-test",
+  ANTHROPIC_API_KEY: "test_key_placeholder",
   ANTHROPIC_MODEL: "claude-sonnet-4-20250514",
-  DATABASE_URL: "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
+  DATABASE_URL: "postgresql://lifeos:test_password@localhost:5432/lifeos",
   ORCHESTRATOR_URL: "http://localhost:3001",
   DIGEST_CRON: "0 7 * * *",
   TZ: "Europe/London",
@@ -186,7 +186,7 @@ describe("AC-1: Bot starts without error when TELEGRAM_BOT_TOKEN is set", () => 
   it("constructs TelegramBot with the configured token", async () => {
     await loadBotModule();
     expect(holder.bot).not.toBeNull();
-    expect(holder.bot?.token).toBe("bot:test_token_12345");
+    expect(holder.bot?.token).toBe("test_token_placeholder");
   });
 
   it("starts in polling mode when BOT_MODE=polling", async () => {

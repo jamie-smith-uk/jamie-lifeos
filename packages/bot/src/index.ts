@@ -151,6 +151,15 @@ function validateOAuthParams(
     return { isValid: false, error: "Missing state token" };
   }
 
+  // Add length caps to prevent memory exhaustion attacks
+  if (code.length > 256) {
+    return { isValid: false, error: "Authorization code too long" };
+  }
+
+  if (state.length > 256) {
+    return { isValid: false, error: "State token too long" };
+  }
+
   return { isValid: true };
 }
 
@@ -210,7 +219,7 @@ async function handleOAuthCallback(
     // Validate required parameters
     const paramValidation = validateOAuthParams(code, state);
     if (!paramValidation.isValid) {
-      oauthLogger.warn({ code, state }, paramValidation.error);
+      oauthLogger.warn(paramValidation.error);
       res.writeHead(400, { "Content-Type": "text/plain" });
       res.end(paramValidation.error);
       return;
@@ -223,16 +232,13 @@ async function handleOAuthCallback(
         : await validateStateTokenInProduction(state as string);
 
     if (!stateValidation.isValid) {
-      oauthLogger.warn({ state }, stateValidation.error);
+      oauthLogger.warn(stateValidation.error);
       res.writeHead(401, { "Content-Type": "text/plain" });
       res.end(stateValidation.error);
       return;
     }
 
-    oauthLogger.info(
-      { code: `${(code as string).substring(0, 8)}...` },
-      "OAuth callback processed successfully",
-    );
+    oauthLogger.info("OAuth callback processed successfully");
 
     // TODO: Exchange authorization code for access token with Strava API
     // For now, return success response

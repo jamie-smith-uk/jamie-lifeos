@@ -77,3 +77,10 @@
 ⚠ task-4b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-5a — Create OAuth callback endpoint structure
+
+**Files:** packages/bot/src/index.ts, packages/bot/src/__tests__/index.test.ts
+
+⚠ task-5a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---

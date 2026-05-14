@@ -14,7 +14,7 @@
 - Returns HTTP 400 for missing or empty state parameters  
 - Returns HTTP 401 for invalid or expired state tokens
 - Returns HTTP 401 for state tokens not found in database
-- Logs appropriate warning messages for validation failures
+- Logs appropriate warning messages for validation failures (without logging sensitive state tokens)
 - Returns HTTP 500 for internal server errors with proper error logging
 
 ✅ **AC-3: Endpoint accepts authorization code parameter**
@@ -38,6 +38,10 @@ None. All acceptance criteria have been fully implemented as specified.
 
 4. **Port Configuration**: The HTTP server uses the configured PORT environment variable in both test and production modes, with proper error handling for port conflicts.
 
+## Security Fix Applied
+
+**Fixed security finding**: Removed state token from log statement on line 226 to prevent logging of sensitive authentication material. The log statement now only logs the error message without the state token value, following the security rule that state tokens should never be logged.
+
 ## TypeScript Compilation Output
 
 ```
@@ -49,7 +53,7 @@ $ pnpm exec tsc --noEmit
 
 ```
 $ pnpm exec biome check packages/bot/src/index.ts packages/bot/src/__tests__/index.test.ts
-Checked 2 files in 22ms. No fixes applied.
+Checked 2 files in 26ms. No fixes applied.
 ```
 
 ## Test Output
@@ -66,15 +70,15 @@ $ pnpm --filter @lifeos/bot test
 
  Test Files  4 passed (4)
       Tests  133 passed | 1 skipped (134)
-   Start at  08:40:49
-   Duration  3.05s (transform 582ms, setup 0ms, import 559ms, tests 4.68s, environment 0ms)
+   Start at  08:42:49
+   Duration  3.06s (transform 398ms, setup 0ms, import 460ms, tests 4.76s, environment 0ms)
 ```
 
 ## Notes for Future Agents
 
 - **OAuth Callback Endpoint Pattern**: The bot service now includes an HTTP server that handles both Telegram webhooks and OAuth callbacks. The server is created using Node.js `createServer` and listens on the configured PORT. OAuth callbacks are handled at the `/oauth/callback` path.
 
-- **State Token Validation Security**: OAuth state tokens are validated for CSRF protection using a two-step process: (1) parameter validation to ensure code and state are present and non-empty, (2) state token validation against the database (or simulated in test mode). State tokens are deleted after successful validation to prevent reuse.
+- **State Token Validation Security**: OAuth state tokens are validated for CSRF protection using a two-step process: (1) parameter validation to ensure code and state are present and non-empty, (2) state token validation against the database (or simulated in test mode). State tokens are deleted after successful validation to prevent reuse. **CRITICAL**: State tokens must never be logged as they are sensitive authentication material.
 
 - **Test Environment Handling**: OAuth callback tests require clearing global fetch mocks using `vi.unstubAllGlobals()` to allow real HTTP requests to the server. The test setup includes a 100ms delay to allow the server to start before making requests.
 
