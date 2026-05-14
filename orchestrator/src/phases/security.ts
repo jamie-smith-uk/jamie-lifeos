@@ -13,6 +13,7 @@ import {
 import { checkSecurityTrajectory } from "../checks/trajectory.js";
 import { runMutationTests } from "../checks/mutation.js";
 import { recordTaskMetrics, recordSecurityFindings } from "../metrics.js";
+import { tryFixer } from "./fixer.js";
 import type { PipelineConfig, Task } from "../types.js";
 
 // ── runSecurityPhase() ────────────────────────────────────────────────────────
@@ -44,6 +45,7 @@ export function runSecurityPhase(
   let securityPassed = false;
   let securityAttempts = readSecurityAttempts(secAttemptsFile);
   const securityStart = Math.floor(Date.now() / 1000);
+  let previousScopeViolations = "";
 
   // ── Mutation testing (before security agent, for security-sensitive tasks) ──
   if (task.security_sensitive) {
@@ -115,11 +117,7 @@ Return PASS or FAIL with specific findings.`;
       log(`Security: FAIL (attempt ${securityAttempts}/3)`);
 
       if (securityAttempts >= 3) {
-        halt(
-          "Security could not be resolved after 3 attempts",
-          "AG-07",
-          `Task: ${task.id} — see ${secReport}`,
-        );
+        break; // Exit loop — fixer will run below
       }
 
       log("Security fix needed — re-running Developer...");
@@ -127,6 +125,11 @@ Return PASS or FAIL with specific findings.`;
       const secFindings = fs.existsSync(secReport)
         ? fs.readFileSync(secReport, "utf8")
         : "(security-report.md not found)";
+
+      // Warn if previous attempt's changes were all reverted (doom-loop prevention)
+      const scopeWarning = previousScopeViolations
+        ? `\n## CRITICAL: Your previous fix attempt was rejected\n\nYou modified files outside files_in_scope and every change was automatically reverted:\n${previousScopeViolations}\nThose files remain unchanged. You MUST find a solution that works entirely within the files listed above. Do NOT add packages, do NOT create files in other packages, do NOT modify package.json or pnpm-lock.yaml.\n`
+        : "";
 
       const secFixPrompt = `You are AG-04 Developer for Life OS.
 
@@ -142,7 +145,7 @@ ${taskSpec}${contextSection}
 
 Files in scope (only modify these):
 ${filesBulletList}
-
+${scopeWarning}
 Do not modify test files.
 
 ## Validation commands — run all four before marking done
@@ -163,12 +166,78 @@ Use process.env.DATABASE_URL for any database connections.`;
         cfg.pipelineDir,
       );
 
-      // Revert any out-of-scope changes the security fix made
+      // Revert any out-of-scope changes and remember them for the next prompt
       const scopeViolations = checkScopeCompliance(filesInScopeJson, cfg.repoRoot);
       if (scopeViolations) {
         log("Scope violation after security fix — reverting...");
         revertScopeViolations(scopeViolations, cfg.repoRoot);
+        previousScopeViolations = scopeViolations;
+      } else {
+        previousScopeViolations = "";
       }
+    }
+  }
+
+  // ── Fixer after exhausted attempts ───────────────────────────────────────────
+  if (!securityPassed) {
+    const lastFindings = fs.existsSync(secReport)
+      ? fs.readFileSync(secReport, "utf8")
+      : "(no security report)";
+
+    const fixerContext = previousScopeViolations
+      ? `${lastFindings}\n\nNote: Previous fix attempts modified out-of-scope files which were reverted:\n${previousScopeViolations}\nThe fix must stay within files_in_scope.`
+      : lastFindings;
+
+    log("Security exhausted — invoking Fixer...");
+    const fixerFailures = tryFixer(
+      cfg,
+      task,
+      taskDir,
+      "Security could not be resolved after 3 developer attempts",
+      "AG-07",
+      fixerContext,
+      filesInScopeJson,
+    );
+
+    if (fixerFailures) {
+      halt(
+        "Security could not be resolved after 3 attempts",
+        "AG-07",
+        `Task: ${task.id} — see ${secReport}`,
+      );
+    }
+
+    // Fixer resolved it — run security one final time to confirm
+    log("Fixer resolved security findings — running final security check...");
+    runAgent(
+      "ag-07-security",
+      `You are AG-07 Security Agent for Life OS.\n\nReview the code written for task ${task.id} after a security fix.\nTask spec:\n${taskSpec}${contextSection}\n\nFiles to review:\n${filesBulletList}\n\nApply every rule in .opencode/agents/security-rules.md.\nWrite security-report.md to pipeline/phase-${cfg.phase}/${task.id}/\nReturn PASS or FAIL with specific findings.`,
+      path.join(taskDir, "sec-output-fixer.md"),
+      0,
+      cfg.pipelineDir,
+    );
+
+    if (fs.existsSync(secReport) && reportPasses(secReport)) {
+      recordTaskMetrics(
+        cfg.pipelineDir,
+        task.id,
+        task.title,
+        "security",
+        Math.floor(Date.now() / 1000) - securityStart,
+        securityAttempts + 1,
+        "pass",
+        cfg.phase,
+        cfg.phaseStartedAt,
+      );
+      recordSecurityFindings(cfg.pipelineDir, task.id, taskDir);
+      checkSecurityTrajectory(cfg.repoRoot, taskDir);
+      log("Security: PASS (via Fixer)");
+    } else {
+      halt(
+        "Security could not be resolved after 3 attempts + Fixer",
+        "AG-07",
+        `Task: ${task.id} — see ${secReport}`,
+      );
     }
   }
 }
