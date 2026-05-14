@@ -111,7 +111,32 @@ EP-05, EP-06, EP-07 (partial — nudge scheduler only)
 
 ---
 
-## Phase 4 — Morning Digest and Day Planning
+## Phase 4 — Strava Integration
+
+### Exit criteria
+- User can connect their Strava account by following an OAuth link from the bot
+- Activities from the last 90 days are synced on first connection
+- New activities sync automatically every 30 minutes via a background job
+- Token refresh happens automatically before any Strava API call
+- User can ask "what did I do this week?" and receive a formatted activity summary
+- User can ask for distance or time totals by sport and date range
+- User can ask about training trends and receive a plain-language pattern analysis
+- Activity data (last 7 days summary) is included in the agent system prompt so it factors into day planning answers
+
+### Smoke tests
+1. Send "connect Strava" — OAuth URL returned
+2. Complete OAuth flow — confirmation sent with athlete name, last 90 days of activities synced
+3. Send "what did I do this week?" — activities listed with sport, name, distance, duration, date
+4. Send "how far did I run this month?" — distance total returned
+5. Send "how's my training consistency?" — plain-language trend analysis returned
+6. Log a run in Strava — appears in bot query within 30 minutes
+
+### Epics in scope
+EP-10
+
+---
+
+## Phase 5 — Morning Digest and Day Planning
 
 ### Exit criteria
 - Morning digest fires automatically at configured time every day
@@ -133,31 +158,6 @@ EP-05, EP-06, EP-07 (partial — nudge scheduler only)
 
 ### Epics in scope
 EP-07 (full), EP-08
-
----
-
-## Phase 5 — Automations
-
-### Exit criteria
-- User can create a named automation with a natural language schedule
-- User can list all automations with name, schedule in plain English, and active status
-- Automations fire at their scheduled time and send the result to Telegram
-- User can pause an automation
-- User can resume a paused automation
-- User can edit an automation's schedule or prompt
-- User can delete an automation permanently
-- User can run an automation immediately on demand
-
-### Smoke tests
-1. Send "remind me every Sunday at 6pm to review my week" — automation created with confirmation
-2. Send "show my automations" — list returned with plain English schedule
-3. Wait for Sunday 6pm — automation fires and result arrives in Telegram
-4. Send "pause my weekly review" — automation paused with confirmation
-5. Send "run my weekly review now" — fires immediately
-6. Send "delete my weekly review" — deleted with confirmation
-
-### Epics in scope
-EP-09
 
 ---
 
@@ -230,13 +230,13 @@ EP-09
 - EP-08-03: User asks "what should I do next?" — agent checks current time, remaining calendar, and open tasks. Returns single clear recommendation.
 - EP-08-04: User pastes a multi-intent snippet — agent extracts all implied actions and proposes each. "Dinner with Jess Friday 8pm at Dishoom" creates calendar event and logs interaction with Jess if she is in the people graph.
 
-### EP-09 — Automations
+### EP-10 — Strava Integration
 
-- EP-09-01: User creates a named automation with a natural language schedule — agent infers cron expression, confirms with user before saving. Validates cron expression before writing to DB.
-- EP-09-02: User asks to see automations — returns list with name, description, plain English schedule, and active/paused status.
-- EP-09-03: Scheduler evaluates automations table on every tick. When next_run_at is past, executor runs stored prompt against agent and sends result to Telegram. Updates last_run_at and computes next_run_at after execution.
-- EP-09-04: User pauses an automation — sets is_active: false with confirmation. Paused automations skipped by scheduler.
-- EP-09-05: User resumes a paused automation — sets is_active: true, recomputes next_run_at, confirms.
-- EP-09-06: User edits an automation's schedule or prompt — agent updates, recomputes next_run_at, confirms with full updated details.
-- EP-09-07: User deletes an automation — agent confirms deletion is permanent (not pause), user confirms, record removed.
-- EP-09-08: User runs an automation immediately — executes stored prompt now. Does not affect next_run_at.
+- EP-10-01: User sends "connect Strava" — bot returns an OAuth authorisation URL with scope `activity:read_all`. URL includes a state token stored server-side for CSRF protection.
+- EP-10-02: OAuth callback endpoint receives the authorisation code, exchanges it for tokens via Strava API, and upserts access_token, refresh_token, expires_at, athlete_id, and scope into strava_credentials. Sends Telegram confirmation with the authenticated athlete name.
+- EP-10-03: On successful OAuth connection, bot fetches all activities from the last 90 days (paginated, 30 per page) and upserts into strava_activities. Sends a Telegram message when sync is complete with the count of activities imported.
+- EP-10-04: Sync job runs every 30 minutes via node-cron. Fetches activities updated since last_synced_at and upserts into strava_activities. Before every Strava API call, checks expires_at — if expired, exchanges refresh_token for a new access_token and updates strava_credentials.
+- EP-10-05: User asks about recent activities ("what did I do this week?", "show my runs") — agent calls get_strava_activities with appropriate date filter and returns a formatted list: sport emoji, name, distance, moving time, date. Handle case where no activities exist yet.
+- EP-10-06: User asks for totals by sport and/or date range ("how far did I run this month?", "total cycling distance this year") — agent calls get_strava_activities with filters and returns aggregated distance and time totals per sport.
+- EP-10-07: User asks about training trends or consistency ("how's my training?", "am I getting faster?") — agent calls get_strava_trends and returns plain-language analysis covering: weekly volume for last 8 weeks, average pace trend for runs, rest days per week.
+- EP-10-08: Agent system prompt includes a brief activity snapshot (last 7 days: activity count, total moving time, last activity sport and date) so exercise load is available as context in day planning and "what should I do next?" answers.

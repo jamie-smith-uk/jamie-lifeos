@@ -132,20 +132,42 @@ Life OS is structured in four layers:
     CREATE INDEX idx_conversation_context_chat_id_created_at
         ON conversation_context (chat_id, created_at DESC);
 
-### automations
+### strava_credentials
 
-    CREATE TABLE automations (
+    CREATE TABLE strava_credentials (
         id               SERIAL PRIMARY KEY,
-        name             TEXT        NOT NULL,
-        description      TEXT,
-        prompt           TEXT        NOT NULL,
-        cron_expression  TEXT        NOT NULL,
-        schedule_english TEXT        NOT NULL,
-        is_active        BOOLEAN     NOT NULL DEFAULT true,
-        last_run_at      TIMESTAMPTZ,
-        next_run_at      TIMESTAMPTZ,
+        athlete_id       BIGINT      NOT NULL UNIQUE,
+        access_token     TEXT        NOT NULL,
+        refresh_token    TEXT        NOT NULL,
+        expires_at       TIMESTAMPTZ NOT NULL,
+        scope            TEXT        NOT NULL DEFAULT 'activity:read_all',
+        last_synced_at   TIMESTAMPTZ,
         created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+### strava_activities
+
+    CREATE TABLE strava_activities (
+        id                    SERIAL PRIMARY KEY,
+        strava_id             BIGINT      NOT NULL UNIQUE,
+        athlete_id            BIGINT      NOT NULL REFERENCES strava_credentials(athlete_id) ON DELETE CASCADE,
+        name                  TEXT        NOT NULL,
+        sport_type            TEXT        NOT NULL,
+        start_date            TIMESTAMPTZ NOT NULL,
+        distance_m            NUMERIC(10,2),
+        moving_time_s         INTEGER,
+        elapsed_time_s        INTEGER,
+        total_elevation_gain  NUMERIC(8,2),
+        average_speed_ms      NUMERIC(8,4),
+        max_speed_ms          NUMERIC(8,4),
+        average_heartrate     NUMERIC(6,2),
+        max_heartrate         NUMERIC(6,2),
+        average_watts         NUMERIC(8,2),
+        kilojoules            NUMERIC(10,2),
+        suffer_score          INTEGER,
+        raw_data              JSONB,
+        synced_at             TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
 ---
@@ -158,7 +180,7 @@ Each request to the Anthropic API is assembled from five blocks in this order:
 2. **Live context** — current datetime, timezone, and a brief snapshot of today's calendar if relevant to the message.
 3. **People index** — names and relationship types of all known people, so the agent recognises references without a tool call.
 4. **Pending nudges** — any nudges that are due or overdue, so the agent can surface them if relevant.
-5. **Active automations** — names and schedules of all active automations, so the agent can answer questions about them without a DB query.
+5. **Activity snapshot** — last 7 days of Strava activity (count, total moving time, last activity sport and date) so the agent can factor in exercise load when answering day planning questions.
 
 The conversation history (last 20 messages) is appended as the `messages` array in the API request, separate from the system prompt.
 
@@ -201,14 +223,10 @@ The conversation history (last 20 messages) is appended as the `messages` array 
 - `create_nudge` — inserts a nudges record with trigger_at and message
 - `dismiss_nudge` — sets status to dismissed by nudge ID
 
-### Automation tools (internal DB)
-- `create_automation` — validates cron expression, inserts automations record, computes next_run_at
-- `list_automations` — returns all automations with name, schedule_english, is_active
-- `update_automation` — updates prompt or cron_expression, recomputes next_run_at
-- `pause_automation` — sets is_active false
-- `resume_automation` — sets is_active true, recomputes next_run_at
-- `delete_automation` — permanently removes record
-- `run_automation_now` — executes stored prompt immediately without affecting next_run_at
+### Strava tools (internal DB + Strava REST API)
+- `get_strava_oauth_url` — returns OAuth authorisation URL with state token for CSRF protection
+- `get_strava_activities` — queries strava_activities filtered by sport_type and/or date range; returns list or aggregated totals depending on query intent
+- `get_strava_trends` — analyses strava_activities for weekly volume trend (last 8 weeks), average pace trend for runs, and rest days per week; returns plain-language summary
 
 ---
 
