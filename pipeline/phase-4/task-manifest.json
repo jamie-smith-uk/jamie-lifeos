@@ -1,0 +1,203 @@
+[
+  {
+    "id": "task-1",
+    "title": "Create Strava credentials migration",
+    "description": "Create database migration to add strava_credentials table with athlete_id, access_token, refresh_token, expires_at, scope, last_synced_at, created_at, updated_at columns",
+    "files_in_scope": [
+      "migrations/005_strava_credentials.sql"
+    ],
+    "dependencies": [],
+    "acceptance_criteria": [
+      "strava_credentials.id: SERIAL PRIMARY KEY",
+      "strava_credentials.athlete_id: BIGINT NOT NULL UNIQUE",
+      "strava_credentials.access_token: TEXT NOT NULL",
+      "strava_credentials.refresh_token: TEXT NOT NULL",
+      "strava_credentials.expires_at: TIMESTAMPTZ NOT NULL",
+      "strava_credentials.scope: TEXT NOT NULL DEFAULT 'activity:read_all'",
+      "strava_credentials.last_synced_at: TIMESTAMPTZ",
+      "strava_credentials.created_at: TIMESTAMPTZ NOT NULL DEFAULT NOW()",
+      "strava_credentials.updated_at: TIMESTAMPTZ NOT NULL DEFAULT NOW()"
+    ],
+    "security_sensitive": true,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-2",
+    "title": "Create Strava activities migration",
+    "description": "Create database migration to add strava_activities table with strava_id, athlete_id, name, sport_type, start_date, distance_m, moving_time_s, elapsed_time_s, total_elevation_gain, average_speed_ms, max_speed_ms, average_heartrate, max_heartrate, average_watts, kilojoules, suffer_score, raw_data, synced_at columns",
+    "files_in_scope": [
+      "migrations/006_strava_activities.sql"
+    ],
+    "dependencies": ["task-1"],
+    "acceptance_criteria": [
+      "strava_activities.id: SERIAL PRIMARY KEY",
+      "strava_activities.strava_id: BIGINT NOT NULL UNIQUE",
+      "strava_activities.athlete_id: BIGINT NOT NULL REFERENCES strava_credentials(athlete_id) ON DELETE CASCADE",
+      "strava_activities.name: TEXT NOT NULL",
+      "strava_activities.sport_type: TEXT NOT NULL",
+      "strava_activities.start_date: TIMESTAMPTZ NOT NULL",
+      "strava_activities.distance_m: NUMERIC(10,2)",
+      "strava_activities.moving_time_s: INTEGER",
+      "strava_activities.elapsed_time_s: INTEGER",
+      "strava_activities.total_elevation_gain: NUMERIC(8,2)",
+      "strava_activities.average_speed_ms: NUMERIC(8,4)",
+      "strava_activities.max_speed_ms: NUMERIC(8,4)",
+      "strava_activities.average_heartrate: NUMERIC(6,2)",
+      "strava_activities.max_heartrate: NUMERIC(6,2)",
+      "strava_activities.average_watts: NUMERIC(8,2)",
+      "strava_activities.kilojoules: NUMERIC(10,2)",
+      "strava_activities.suffer_score: INTEGER",
+      "strava_activities.raw_data: JSONB",
+      "strava_activities.synced_at: TIMESTAMPTZ NOT NULL DEFAULT NOW()"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-3",
+    "title": "Add Strava environment variables",
+    "description": "Add STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET, and STRAVA_REDIRECT_URI to environment configuration and validation",
+    "files_in_scope": [
+      "packages/shared/src/env.ts",
+      "packages/shared/vitest.config.ts",
+      "packages/shared/tsconfig.json",
+      ".env.example"
+    ],
+    "dependencies": [],
+    "acceptance_criteria": [
+      "STRAVA_CLIENT_ID is validated as required string in env.ts",
+      "STRAVA_CLIENT_SECRET is validated as required string in env.ts",
+      "STRAVA_REDIRECT_URI is validated as required string in env.ts",
+      "All three variables are documented in .env.example"
+    ],
+    "security_sensitive": true,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-4",
+    "title": "Create Strava tools module",
+    "description": "Create strava.ts tools module with get_strava_oauth_url, get_strava_activities, and get_strava_trends functions, including OAuth state management and token refresh logic",
+    "files_in_scope": [
+      "packages/orchestrator/src/tools/strava.ts",
+      "packages/orchestrator/src/tools/__tests__/strava.test.ts",
+      "packages/orchestrator/vitest.config.ts",
+      "packages/orchestrator/tsconfig.json"
+    ],
+    "dependencies": ["task-1", "task-2", "task-3"],
+    "acceptance_criteria": [
+      "get_strava_oauth_url function generates OAuth URL with state token",
+      "get_strava_activities function queries database with sport_type and date filters",
+      "get_strava_trends function analyzes weekly volume and pace trends",
+      "Token refresh logic checks expires_at before API calls",
+      "All functions handle database connection errors gracefully",
+      "OAuth state tokens are stored and validated for CSRF protection"
+    ],
+    "security_sensitive": true,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-5",
+    "title": "Add Strava OAuth callback endpoint",
+    "description": "Add OAuth callback route to bot service to handle Strava authorization code exchange and credential storage",
+    "files_in_scope": [
+      "packages/bot/src/index.ts",
+      "packages/bot/src/__tests__/index.test.ts",
+      "packages/bot/vitest.config.ts",
+      "packages/bot/tsconfig.json"
+    ],
+    "dependencies": ["task-4"],
+    "acceptance_criteria": [
+      "OAuth callback endpoint validates state token for CSRF protection",
+      "Authorization code is exchanged for access and refresh tokens",
+      "Tokens are stored in strava_credentials table with athlete_id",
+      "Telegram confirmation message sent with athlete name",
+      "Error handling for invalid authorization codes or expired state tokens"
+    ],
+    "security_sensitive": true,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-6",
+    "title": "Add initial activity sync on OAuth completion",
+    "description": "Implement 90-day historical activity sync that runs after successful OAuth connection, fetching activities in paginated batches",
+    "files_in_scope": [
+      "packages/orchestrator/src/tools/strava.ts",
+      "packages/orchestrator/src/tools/__tests__/strava.test.ts",
+      "packages/orchestrator/vitest.config.ts",
+      "packages/orchestrator/tsconfig.json"
+    ],
+    "dependencies": ["task-5"],
+    "acceptance_criteria": [
+      "Fetches activities from last 90 days using Strava API",
+      "Handles pagination with 30 activities per page",
+      "Upserts activities into strava_activities table",
+      "Sends Telegram message with count of imported activities",
+      "Updates last_synced_at timestamp after successful sync"
+    ],
+    "security_sensitive": true,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-7",
+    "title": "Add Strava sync job to scheduler",
+    "description": "Add 30-minute cron job to scheduler.ts that syncs new Strava activities and refreshes tokens as needed",
+    "files_in_scope": [
+      "packages/orchestrator/src/scheduler.ts",
+      "packages/orchestrator/src/__tests__/scheduler.test.ts",
+      "packages/orchestrator/vitest.config.ts",
+      "packages/orchestrator/tsconfig.json"
+    ],
+    "dependencies": ["task-6"],
+    "acceptance_criteria": [
+      "Cron job runs every 30 minutes",
+      "Fetches activities updated since last_synced_at",
+      "Checks token expiration before each API call",
+      "Refreshes access token using refresh token when expired",
+      "Updates strava_credentials with new tokens and last_synced_at"
+    ],
+    "security_sensitive": true,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-8",
+    "title": "Add Strava tools to agent tool registry",
+    "description": "Register get_strava_oauth_url, get_strava_activities, and get_strava_trends tools in agent.ts tool definitions",
+    "files_in_scope": [
+      "packages/orchestrator/src/agent.ts",
+      "packages/orchestrator/src/__tests__/agent.test.ts",
+      "packages/orchestrator/vitest.config.ts",
+      "packages/orchestrator/tsconfig.json"
+    ],
+    "dependencies": ["task-4"],
+    "acceptance_criteria": [
+      "get_strava_oauth_url tool is registered with proper schema",
+      "get_strava_activities tool is registered with sport_type and date filters",
+      "get_strava_trends tool is registered for trend analysis queries",
+      "Tool schemas include required parameters and descriptions",
+      "Agent can successfully call all three Strava tools"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-9",
+    "title": "Add activity snapshot to agent system prompt",
+    "description": "Modify context.ts to include last 7 days Strava activity summary in agent system prompt for day planning context",
+    "files_in_scope": [
+      "packages/orchestrator/src/context.ts",
+      "packages/orchestrator/src/__tests__/agent.test.ts",
+      "packages/orchestrator/vitest.config.ts",
+      "packages/orchestrator/tsconfig.json"
+    ],
+    "dependencies": ["task-4"],
+    "acceptance_criteria": [
+      "System prompt includes last 7 days activity count",
+      "System prompt includes total moving time for last 7 days",
+      "System prompt includes last activity sport and date",
+      "Activity snapshot is formatted for agent context",
+      "Handles case where no activities exist gracefully"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "low"
+  }
+]
