@@ -249,3 +249,10 @@
 ⚠ task-15: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-16 — Update shared types for Phase 3 data structures
+
+**Files:** packages/shared/src/types.ts, packages/shared/vitest.config.ts, packages/shared/tsconfig.json, packages/shared/src/__tests__/types.test.ts
+
+⚠ task-16: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
