@@ -6,7 +6,7 @@
  */
 
 import { randomBytes } from "node:crypto";
-import { env, logger, pool } from "@lifeos/shared";
+import { env, logger, pool, telegramBot } from "@lifeos/shared";
 
 /**
  * Generates a Strava OAuth authorization URL with a state token for CSRF protection.
@@ -552,6 +552,240 @@ export async function get_strava_trends(params: {
     log.error(
       { error: error instanceof Error ? error.message : String(error) },
       "Failed to get Strava trends",
+    );
+    throw error;
+  }
+}
+
+/**
+ * Interface for activity data to be synced
+ */
+interface ActivityToSync {
+  id: number;
+  name: string;
+  sport_type: string;
+  start_date: Date;
+  distance_m?: number;
+  moving_time_s?: number;
+  elapsed_time_s?: number;
+  total_elevation_gain?: number;
+  average_speed_ms?: number;
+  max_speed_ms?: number;
+  average_heartrate?: number;
+  max_heartrate?: number;
+  average_watts?: number;
+  kilojoules?: number;
+  suffer_score?: number;
+}
+
+/**
+ * Interface for sync result
+ */
+interface SyncResult {
+  imported_count: number;
+}
+
+/**
+ * Validates athlete_id parameter
+ */
+function validateAthleteIdForSync(athleteId: number): void {
+  if (!athleteId || typeof athleteId !== "number" || athleteId <= 0) {
+    throw new Error("Invalid athlete_id: must be a positive number");
+  }
+}
+
+/**
+ * Validates chat_id parameter
+ */
+function validateChatId(chatId: number): void {
+  if (!chatId || typeof chatId !== "number" || chatId === 0) {
+    throw new Error("Invalid chat_id: must be a non-zero number");
+  }
+}
+
+/**
+ * Validates a single activity object
+ */
+function validateActivity(activity: ActivityToSync): void {
+  if (!activity.id || typeof activity.id !== "number" || activity.id <= 0) {
+    throw new Error("Invalid activity.id: must be a positive number");
+  }
+  if (!activity.name || typeof activity.name !== "string") {
+    throw new Error("Invalid activity.name: must be a non-empty string");
+  }
+  if (!activity.sport_type || typeof activity.sport_type !== "string") {
+    throw new Error("Invalid activity.sport_type: must be a non-empty string");
+  }
+  if (!activity.start_date || !(activity.start_date instanceof Date)) {
+    throw new Error("Invalid activity.start_date: must be a Date object");
+  }
+}
+
+/**
+ * Validates sync parameters
+ */
+function validateSyncParams(params: {
+  athlete_id: number;
+  chat_id: number;
+  activities: ActivityToSync[];
+}): void {
+  const { athlete_id, chat_id, activities } = params;
+
+  validateAthleteIdForSync(athlete_id);
+  validateChatId(chat_id);
+
+  if (!Array.isArray(activities)) {
+    throw new Error("Invalid activities: must be an array");
+  }
+
+  // Validate each activity
+  for (const activity of activities) {
+    validateActivity(activity);
+  }
+}
+
+/**
+ * Builds query parameters for activity upsert
+ */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: parameter mapping complexity
+function buildActivityQueryParams(athleteId: number, activity: ActivityToSync): unknown[] {
+  return [
+    activity.id, // strava_id
+    athleteId,
+    activity.name,
+    activity.sport_type,
+    activity.start_date,
+    activity.distance_m ?? null,
+    activity.moving_time_s ?? null,
+    activity.elapsed_time_s ?? null,
+    activity.total_elevation_gain ?? null,
+    activity.average_speed_ms ?? null,
+    activity.max_speed_ms ?? null,
+    activity.average_heartrate ?? null,
+    activity.max_heartrate ?? null,
+    activity.average_watts ?? null,
+    activity.kilojoules ?? null,
+    activity.suffer_score ?? null,
+  ];
+}
+
+/**
+ * Upserts a single activity into the strava_activities table
+ */
+async function upsertActivity(athleteId: number, activity: ActivityToSync): Promise<void> {
+  const insertQuery = `
+    INSERT INTO strava_activities (
+      strava_id, athlete_id, name, sport_type, start_date,
+      distance_m, moving_time_s, elapsed_time_s, total_elevation_gain,
+      average_speed_ms, max_speed_ms, average_heartrate, max_heartrate,
+      average_watts, kilojoules, suffer_score, synced_at
+    ) VALUES (
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW()
+    )
+    ON CONFLICT (strava_id) DO UPDATE SET
+      name = EXCLUDED.name,
+      sport_type = EXCLUDED.sport_type,
+      start_date = EXCLUDED.start_date,
+      distance_m = EXCLUDED.distance_m,
+      moving_time_s = EXCLUDED.moving_time_s,
+      elapsed_time_s = EXCLUDED.elapsed_time_s,
+      total_elevation_gain = EXCLUDED.total_elevation_gain,
+      average_speed_ms = EXCLUDED.average_speed_ms,
+      max_speed_ms = EXCLUDED.max_speed_ms,
+      average_heartrate = EXCLUDED.average_heartrate,
+      max_heartrate = EXCLUDED.max_heartrate,
+      average_watts = EXCLUDED.average_watts,
+      kilojoules = EXCLUDED.kilojoules,
+      suffer_score = EXCLUDED.suffer_score,
+      synced_at = NOW()
+    RETURNING id, strava_id
+    -- Note: last_synced_at will be updated separately in strava_credentials table
+  `;
+
+  const queryParams = buildActivityQueryParams(athleteId, activity);
+  const result = await pool.query(insertQuery, queryParams);
+
+  if (result.rowCount === 0) {
+    throw new Error(`Failed to upsert activity ${activity.id}`);
+  }
+}
+
+/**
+ * Updates the last_synced_at timestamp for the athlete
+ */
+async function updateLastSyncedAt(athleteId: number): Promise<void> {
+  const updateQuery = `
+    UPDATE strava_credentials
+    SET last_synced_at = $1, updated_at = NOW()
+    WHERE athlete_id = $2
+    RETURNING athlete_id, last_synced_at
+  `;
+
+  const now = new Date();
+  const result = await pool.query(updateQuery, [now, athleteId]);
+
+  if (result.rowCount === 0) {
+    throw new Error(`Failed to update last_synced_at for athlete ${athleteId}`);
+  }
+}
+
+/**
+ * Sends a Telegram message with the sync results
+ */
+async function sendSyncConfirmation(chatId: number, importedCount: number): Promise<void> {
+  const log = logger.child({ function: "sendSyncConfirmation" });
+
+  try {
+    const message = `✅ Strava sync complete! Successfully imported ${importedCount} activities.`;
+    await telegramBot.sendMessage(chatId, message);
+    log.info(`Sent sync confirmation message to chat ${chatId}`);
+  } catch (error) {
+    log.error(
+      { error: error instanceof Error ? error.message : String(error), chat_id: chatId },
+      "Failed to send sync confirmation message",
+    );
+    // Don't throw - we don't want to fail the sync if message sending fails
+  }
+}
+
+/**
+ * Syncs Strava activities by upserting them into the database and sending confirmation.
+ * Updates last_synced_at timestamp after successful sync.
+ */
+export async function sync_strava_activities(params: {
+  athlete_id: number;
+  chat_id: number;
+  activities: ActivityToSync[];
+}): Promise<SyncResult> {
+  const log = logger.child({ function: "sync_strava_activities" });
+  const { athlete_id, chat_id, activities } = params;
+
+  // Input validation
+  validateSyncParams(params);
+
+  try {
+    log.info(`Starting sync for athlete ${athlete_id} with ${activities.length} activities`);
+
+    // Upsert each activity
+    for (const activity of activities) {
+      await upsertActivity(athlete_id, activity);
+    }
+
+    // Update last_synced_at timestamp
+    await updateLastSyncedAt(athlete_id);
+
+    // Send confirmation message
+    await sendSyncConfirmation(chat_id, activities.length);
+
+    log.info(`Successfully synced ${activities.length} activities for athlete ${athlete_id}`);
+
+    return {
+      imported_count: activities.length,
+    };
+  } catch (error) {
+    log.error(
+      { error: error instanceof Error ? error.message : String(error), athlete_id },
+      "Failed to sync Strava activities",
     );
     throw error;
   }

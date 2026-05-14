@@ -26,6 +26,9 @@ describe("Strava Tools", () => {
         error: vi.fn(),
         warn: vi.fn(),
       },
+      telegramBot: {
+        sendMessage: vi.fn(),
+      },
       env: {
         STRAVA_CLIENT_ID: "test-client-id",
         STRAVA_REDIRECT_URI: "http://localhost:3001/oauth/strava/callback",
@@ -2394,6 +2397,956 @@ describe("Strava Tools", () => {
 
         expect(result.weekly_volume).toBeDefined();
         expect(result.pace_trends).toBeDefined();
+      });
+    });
+  });
+
+  describe("sync_strava_activities", () => {
+    describe("Activity upsert", () => {
+      it("should upsert activities into strava_activities table", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+            elapsed_time_s: 1900,
+            total_elevation_gain: 150.25,
+            average_speed_ms: 2.78,
+            max_speed_ms: 5.5,
+            average_heartrate: 145.5,
+            max_heartrate: 175.0,
+            average_watts: 250.0,
+            kilojoules: 450.0,
+            suffer_score: 85,
+          },
+        ];
+
+        // Mock upsert query
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 1, strava_id: 123456 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock update last_synced_at
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ athlete_id: 12345, last_synced_at: new Date() }],
+          rowCount: 1,
+          command: "UPDATE",
+          oid: 0,
+          fields: [],
+        });
+
+        const result = await stravaModule.sync_strava_activities({
+          athlete_id: 12345,
+          chat_id: 123456789,
+          activities,
+        });
+
+        expect(result).toBeDefined();
+        expect(mockQuery).toHaveBeenCalled();
+      });
+
+      it("should handle multiple activities in single upsert", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+          },
+          {
+            id: 123457,
+            name: "Evening Bike",
+            sport_type: "Ride",
+            start_date: new Date("2026-05-13"),
+            distance_m: 15000.0,
+            moving_time_s: 3600,
+          },
+        ];
+
+        // Mock upsert for each activity
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 1, strava_id: 123456 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 2, strava_id: 123457 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock update last_synced_at
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ athlete_id: 12345, last_synced_at: new Date() }],
+          rowCount: 1,
+          command: "UPDATE",
+          oid: 0,
+          fields: [],
+        });
+
+        const result = await stravaModule.sync_strava_activities({
+          athlete_id: 12345,
+          chat_id: 123456789,
+          activities,
+        });
+
+        expect(result).toBeDefined();
+        expect(mockQuery.mock.calls.length).toBeGreaterThanOrEqual(2);
+      });
+
+      it("should use ON CONFLICT for upsert logic", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+          },
+        ];
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 1, strava_id: 123456 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ athlete_id: 12345, last_synced_at: new Date() }],
+          rowCount: 1,
+          command: "UPDATE",
+          oid: 0,
+          fields: [],
+        });
+
+        await stravaModule.sync_strava_activities({
+          athlete_id: 12345,
+          chat_id: 123456789,
+          activities,
+        });
+
+        const upsertCall = mockQuery.mock.calls[0];
+        expect(upsertCall[0]).toContain("ON CONFLICT");
+      });
+
+      it("should insert all activity fields into database", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+            elapsed_time_s: 1900,
+            total_elevation_gain: 150.25,
+            average_speed_ms: 2.78,
+            max_speed_ms: 5.5,
+            average_heartrate: 145.5,
+            max_heartrate: 175.0,
+            average_watts: 250.0,
+            kilojoules: 450.0,
+            suffer_score: 85,
+          },
+        ];
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 1, strava_id: 123456 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ athlete_id: 12345, last_synced_at: new Date() }],
+          rowCount: 1,
+          command: "UPDATE",
+          oid: 0,
+          fields: [],
+        });
+
+        await stravaModule.sync_strava_activities({
+          athlete_id: 12345,
+          chat_id: 123456789,
+          activities,
+        });
+
+        const upsertCall = mockQuery.mock.calls[0];
+        expect(upsertCall[0]).toContain("strava_activities");
+        expect(upsertCall[0]).toContain("distance_m");
+        expect(upsertCall[0]).toContain("moving_time_s");
+      });
+
+      it("should handle empty activities array", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities: any[] = [];
+
+        // Mock update last_synced_at even with no activities
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ athlete_id: 12345, last_synced_at: new Date() }],
+          rowCount: 1,
+          command: "UPDATE",
+          oid: 0,
+          fields: [],
+        });
+
+        const result = await stravaModule.sync_strava_activities({
+          athlete_id: 12345,
+          chat_id: 123456789,
+          activities,
+        });
+
+        expect(result).toBeDefined();
+      });
+    });
+
+    describe("Telegram message sending", () => {
+      it("should send Telegram message with activity count", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+          },
+          {
+            id: 123457,
+            name: "Evening Bike",
+            sport_type: "Ride",
+            start_date: new Date("2026-05-13"),
+            distance_m: 15000.0,
+            moving_time_s: 3600,
+          },
+        ];
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 1, strava_id: 123456 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 2, strava_id: 123457 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ athlete_id: 12345, last_synced_at: new Date() }],
+          rowCount: 1,
+          command: "UPDATE",
+          oid: 0,
+          fields: [],
+        });
+
+        await stravaModule.sync_strava_activities({
+          athlete_id: 12345,
+          chat_id: 123456789,
+          activities,
+        });
+
+        expect(mockSendMessage).toHaveBeenCalled();
+        const messageCall = mockSendMessage.mock.calls[0];
+        expect(messageCall[0]).toBe(123456789);
+        expect(messageCall[1]).toContain("2");
+      });
+
+      it("should include activity count in message", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+          },
+        ];
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 1, strava_id: 123456 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ athlete_id: 12345, last_synced_at: new Date() }],
+          rowCount: 1,
+          command: "UPDATE",
+          oid: 0,
+          fields: [],
+        });
+
+        await stravaModule.sync_strava_activities({
+          athlete_id: 12345,
+          chat_id: 123456789,
+          activities,
+        });
+
+        expect(mockSendMessage).toHaveBeenCalled();
+        const messageCall = mockSendMessage.mock.calls[0];
+        expect(messageCall[1]).toContain("1");
+      });
+
+      it("should send message to correct chat_id", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+          },
+        ];
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 1, strava_id: 123456 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ athlete_id: 12345, last_synced_at: new Date() }],
+          rowCount: 1,
+          command: "UPDATE",
+          oid: 0,
+          fields: [],
+        });
+
+        const chatId = 987654321;
+        await stravaModule.sync_strava_activities({
+          athlete_id: 12345,
+          chat_id: chatId,
+          activities,
+        });
+
+        expect(mockSendMessage).toHaveBeenCalledWith(chatId, expect.any(String));
+      });
+
+      it("should handle Telegram message sending errors gracefully", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockRejectedValue(new Error("Telegram API error"));
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+          },
+        ];
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 1, strava_id: 123456 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ athlete_id: 12345, last_synced_at: new Date() }],
+          rowCount: 1,
+          command: "UPDATE",
+          oid: 0,
+          fields: [],
+        });
+
+        // Should not throw even if Telegram fails
+        const result = await stravaModule.sync_strava_activities({
+          athlete_id: 12345,
+          chat_id: 123456789,
+          activities,
+        });
+
+        expect(result).toBeDefined();
+      });
+
+      it("should send message with imported activities summary", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+          },
+        ];
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 1, strava_id: 123456 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ athlete_id: 12345, last_synced_at: new Date() }],
+          rowCount: 1,
+          command: "UPDATE",
+          oid: 0,
+          fields: [],
+        });
+
+        await stravaModule.sync_strava_activities({
+          athlete_id: 12345,
+          chat_id: 123456789,
+          activities,
+        });
+
+        expect(mockSendMessage).toHaveBeenCalled();
+        const messageCall = mockSendMessage.mock.calls[0];
+        const message = messageCall[1];
+        expect(message).toContain("imported");
+      });
+    });
+
+    describe("last_synced_at timestamp update", () => {
+      it("should update last_synced_at after successful sync", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+          },
+        ];
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 1, strava_id: 123456 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ athlete_id: 12345, last_synced_at: new Date() }],
+          rowCount: 1,
+          command: "UPDATE",
+          oid: 0,
+          fields: [],
+        });
+
+        await stravaModule.sync_strava_activities({
+          athlete_id: 12345,
+          chat_id: 123456789,
+          activities,
+        });
+
+        // Check that UPDATE was called
+        const updateCall = mockQuery.mock.calls.find((call: any[]) => call[0].includes("UPDATE"));
+        expect(updateCall).toBeDefined();
+        expect(updateCall?.[0]).toContain("last_synced_at");
+      });
+
+      it("should update last_synced_at in strava_credentials table", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+          },
+        ];
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 1, strava_id: 123456 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ athlete_id: 12345, last_synced_at: new Date() }],
+          rowCount: 1,
+          command: "UPDATE",
+          oid: 0,
+          fields: [],
+        });
+
+        await stravaModule.sync_strava_activities({
+          athlete_id: 12345,
+          chat_id: 123456789,
+          activities,
+        });
+
+        const updateCall = mockQuery.mock.calls.find((call: any[]) => call[0].includes("UPDATE"));
+        expect(updateCall?.[0]).toContain("strava_credentials");
+      });
+
+      it("should set last_synced_at to current timestamp", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+          },
+        ];
+
+        const beforeSync = new Date();
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 1, strava_id: 123456 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ athlete_id: 12345, last_synced_at: new Date() }],
+          rowCount: 1,
+          command: "UPDATE",
+          oid: 0,
+          fields: [],
+        });
+
+        await stravaModule.sync_strava_activities({
+          athlete_id: 12345,
+          chat_id: 123456789,
+          activities,
+        });
+
+        const afterSync = new Date();
+
+        const updateCall = mockQuery.mock.calls.find((call: any[]) => call[0].includes("UPDATE"));
+        expect(updateCall).toBeDefined();
+
+        // Verify the returned timestamp is recent
+        const returnedTimestamp = updateCall?.[1]?.[0];
+        if (returnedTimestamp instanceof Date) {
+          expect(returnedTimestamp.getTime()).toBeGreaterThanOrEqual(beforeSync.getTime());
+          expect(returnedTimestamp.getTime()).toBeLessThanOrEqual(afterSync.getTime());
+        }
+      });
+
+      it("should update last_synced_at for correct athlete_id", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+          },
+        ];
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 1, strava_id: 123456 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ athlete_id: 12345, last_synced_at: new Date() }],
+          rowCount: 1,
+          command: "UPDATE",
+          oid: 0,
+          fields: [],
+        });
+
+        const athleteId = 12345;
+        await stravaModule.sync_strava_activities({
+          athlete_id: athleteId,
+          chat_id: 123456789,
+          activities,
+        });
+
+        const updateCall = mockQuery.mock.calls.find((call: any[]) => call[0].includes("UPDATE"));
+        expect(updateCall?.[1]).toContain(athleteId);
+      });
+    });
+
+    describe("Error handling", () => {
+      it("should handle database errors during upsert", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+          },
+        ];
+
+        mockQuery.mockRejectedValueOnce(new Error("Database connection error"));
+
+        await expect(
+          stravaModule.sync_strava_activities({
+            athlete_id: 12345,
+            chat_id: 123456789,
+            activities,
+          }),
+        ).rejects.toThrow();
+      });
+
+      it("should handle database errors during timestamp update", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+          },
+        ];
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 1, strava_id: 123456 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockRejectedValueOnce(new Error("Failed to update timestamp"));
+
+        await expect(
+          stravaModule.sync_strava_activities({
+            athlete_id: 12345,
+            chat_id: 123456789,
+            activities,
+          }),
+        ).rejects.toThrow();
+      });
+
+      it("should log errors appropriately", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+          },
+        ];
+
+        const dbError = new Error("Database error");
+        mockQuery.mockRejectedValueOnce(dbError);
+
+        try {
+          await stravaModule.sync_strava_activities({
+            athlete_id: 12345,
+            chat_id: 123456789,
+            activities,
+          });
+        } catch {
+          // Expected to throw
+        }
+
+        expect(mockQuery).toHaveBeenCalled();
+      });
+
+      it("should validate athlete_id parameter", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const _mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+          },
+        ];
+
+        await expect(
+          stravaModule.sync_strava_activities({
+            athlete_id: -1,
+            chat_id: 123456789,
+            activities,
+          }),
+        ).rejects.toThrow();
+      });
+
+      it("should validate chat_id parameter", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const _mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+          },
+        ];
+
+        await expect(
+          stravaModule.sync_strava_activities({
+            athlete_id: 12345,
+            chat_id: -1,
+            activities,
+          }),
+        ).rejects.toThrow();
+      });
+    });
+
+    describe("Integration", () => {
+      it("should complete full sync workflow", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+            elapsed_time_s: 1900,
+            total_elevation_gain: 150.25,
+            average_speed_ms: 2.78,
+            max_speed_ms: 5.5,
+            average_heartrate: 145.5,
+            max_heartrate: 175.0,
+            average_watts: 250.0,
+            kilojoules: 450.0,
+            suffer_score: 85,
+          },
+          {
+            id: 123457,
+            name: "Evening Bike",
+            sport_type: "Ride",
+            start_date: new Date("2026-05-13"),
+            distance_m: 15000.0,
+            moving_time_s: 3600,
+          },
+        ];
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 1, strava_id: 123456 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 2, strava_id: 123457 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ athlete_id: 12345, last_synced_at: new Date() }],
+          rowCount: 1,
+          command: "UPDATE",
+          oid: 0,
+          fields: [],
+        });
+
+        const result = await stravaModule.sync_strava_activities({
+          athlete_id: 12345,
+          chat_id: 123456789,
+          activities,
+        });
+
+        // Verify all steps completed
+        expect(result).toBeDefined();
+        expect(mockQuery).toHaveBeenCalled();
+        expect(mockSendMessage).toHaveBeenCalled();
+      });
+
+      it("should return sync result with activity count", async () => {
+        const { pool, telegramBot } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+        const mockSendMessage = vi.fn().mockResolvedValue({ ok: true });
+        vi.mocked(telegramBot).sendMessage = mockSendMessage;
+
+        const activities = [
+          {
+            id: 123456,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-14"),
+            distance_m: 5000.5,
+            moving_time_s: 1800,
+          },
+          {
+            id: 123457,
+            name: "Evening Bike",
+            sport_type: "Ride",
+            start_date: new Date("2026-05-13"),
+            distance_m: 15000.0,
+            moving_time_s: 3600,
+          },
+        ];
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 1, strava_id: 123456 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ id: 2, strava_id: 123457 }],
+          rowCount: 1,
+          command: "INSERT",
+          oid: 0,
+          fields: [],
+        });
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [{ athlete_id: 12345, last_synced_at: new Date() }],
+          rowCount: 1,
+          command: "UPDATE",
+          oid: 0,
+          fields: [],
+        });
+
+        const result = await stravaModule.sync_strava_activities({
+          athlete_id: 12345,
+          chat_id: 123456789,
+          activities,
+        });
+
+        expect(result).toHaveProperty("imported_count");
+        expect(result.imported_count).toBe(2);
       });
     });
   });
