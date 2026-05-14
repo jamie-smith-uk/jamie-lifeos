@@ -8,7 +8,7 @@
  * All database queries use parameterized statements for security.
  */
 
-import { logger, pool } from "@lifeos/shared";
+import { env, logger, pool, telegramBot } from "@lifeos/shared";
 import * as cron from "node-cron";
 
 // ---------------------------------------------------------------------------
@@ -79,9 +79,30 @@ async function evaluateNudges(): Promise<void> {
 
     log.info({ count: nudgesToProcess.length, remainingSlots }, "Processing pending nudges");
 
-    // Process each nudge (mark as sent)
+    // Process each nudge (send via Telegram, then mark as sent)
     for (const nudge of nudgesToProcess) {
       try {
+        // Send nudge message to Telegram with dismiss button
+        const inlineKeyboard = {
+          inline_keyboard: [
+            [
+              {
+                text: "Dismiss",
+                callback_data: `dismiss_nudge_${nudge.id}`,
+              },
+            ],
+          ],
+        };
+
+        await telegramBot.sendMessage(
+          env.TELEGRAM_ALLOWED_CHAT_ID,
+          `${nudge.message}\n\n[Dismiss button available]`,
+          {
+            reply_markup: inlineKeyboard,
+          },
+        );
+
+        // Update nudge status to 'sent' with sent_at timestamp after successful send
         await pool.query(
           `UPDATE nudges 
            SET status = 'sent', sent_at = now()
