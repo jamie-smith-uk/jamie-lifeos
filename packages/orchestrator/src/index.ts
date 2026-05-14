@@ -43,6 +43,7 @@ import type {
 } from "@lifeos/shared";
 import { env, logger, runMigrations } from "@lifeos/shared";
 import { clearConfirmation, loadConfirmation, runAgent } from "./agent.js";
+import { startScheduler } from "./scheduler.js";
 import { executeCalendarTool } from "./tools/calendar.js";
 import { executeNudgesTool } from "./tools/nudges.js";
 
@@ -567,15 +568,13 @@ async function requestHandler(req: http.IncomingMessage, res: http.ServerRespons
     if (
       typeof parsed !== "object" ||
       parsed === null ||
-      typeof (parsed as Record<string, unknown>).nudge_id !== "number" ||
-      typeof (parsed as Record<string, unknown>).chat_id !== "number"
+      typeof (parsed as Record<string, unknown>).nudge_id !== "number"
     ) {
-      sendJson(res, 400, { success: false, error: "Missing required fields: nudge_id, chat_id" });
+      sendJson(res, 400, { success: false, error: "Missing required fields: nudge_id" });
       return;
     }
 
     const nudgeId = (parsed as Record<string, unknown>).nudge_id as number;
-    const chat_id = (parsed as Record<string, unknown>).chat_id as number;
 
     // Validate nudge_id is a positive integer
     if (!Number.isInteger(nudgeId) || nudgeId <= 0) {
@@ -583,13 +582,7 @@ async function requestHandler(req: http.IncomingMessage, res: http.ServerRespons
       return;
     }
 
-    if (chat_id !== Number(env.TELEGRAM_ALLOWED_CHAT_ID)) {
-      log.warn({ chat_id }, "Rejected /dismiss-nudge from unauthorised chat_id");
-      sendJson(res, 403, { success: false, error: "Forbidden" });
-      return;
-    }
-
-    log.info({ nudge_id: nudgeId, chat_id }, "POST /dismiss-nudge received");
+    log.info({ nudge_id: nudgeId }, "POST /dismiss-nudge received");
 
     let toolResult: string;
     try {
@@ -641,6 +634,14 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   log.info("Migrations complete");
+
+  // Initialize scheduler before starting HTTP server
+  log.info("Initializing scheduler…");
+  try {
+    await startScheduler();
+  } catch (err: unknown) {
+    log.error({ err }, "Failed to initialize scheduler — continuing startup");
+  }
 
   const port = Number(env.PORT);
   if (!Number.isFinite(port) || port < 1 || port > 65535) {
