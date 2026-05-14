@@ -220,3 +220,18 @@
 ⚠ task-13a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-13b — Implement dismiss nudge API call and UI update in bot
+
+**Files:** packages/bot/src/index.ts, packages/bot/vitest.config.ts, packages/bot/tsconfig.json
+
+- **Dismiss callback pattern**: The bot now handles two types of callbacks - `dismiss:X` format callbacks are processed directly with API calls to `/dismiss-nudge`, while all other callbacks are forwarded to the `/callback` endpoint as before.
+
+- **Keyboard removal pattern**: Use `editMessageReplyMarkup` with `{ reply_markup: { inline_keyboard: [] } }` to completely remove inline keyboards from messages. This should only be done after successful API operations.
+
+- **Error handling for direct API calls**: When the bot makes direct API calls (like `/dismiss-nudge`), it must handle errors gracefully by answering the callback query and sending error messages to the user, without performing UI updates like keyboard removal.
+
+- **Callback query answering**: Always call `answerCallbackQuery` to dismiss the loading spinner on buttons, regardless of whether the operation succeeds or fails. Use empty text for success cases and error messages for failure cases.
+
+- **Structured logging for bot operations**: Use the `botLogger.info()` and `botLogger.error()` patterns with relevant context (chat_id, nudge_id, callback_query_id) for all bot operations to aid in debugging and monitoring.
+
+---

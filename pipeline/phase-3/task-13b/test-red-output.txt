@@ -1,0 +1,386 @@
+
+> jamie-lifeos@0.0.1 test /home/runner/work/jamie-lifeos/jamie-lifeos
+> pnpm -r test
+
+Scope: 4 of 5 workspace projects
+packages/shared test$ vitest run --config vitest.config.ts
+packages/shared test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared[39m
+packages/shared test:  [32m✓[39m src/__tests__/env.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 49[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/logger.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 92[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 133[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/types.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/db.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate-async-await.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+packages/shared test: [2m Test Files [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+packages/shared test: [2m      Tests [22m [1m[32m89 passed[39m[22m[90m (89)[39m
+packages/shared test: [2m   Start at [22m 05:43:59
+packages/shared test: [2m   Duration [22m 695ms[2m (transform 457ms, setup 0ms, import 577ms, tests 318ms, environment 1ms)[22m
+packages/shared test: Done
+packages/bot test$ vitest run --config vitest.config.ts
+packages/orchestrator test$ vitest run --config vitest.config.ts
+packages/orchestrator test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator[39m
+packages/bot test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot[39m
+packages/bot test:  [32m✓[39m src/__tests__/dismiss-nudge.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 976[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m36 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 1104[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m25 tests[22m[2m)[22m[33m 1183[2mms[22m[39m
+packages/bot test:  [31m❯[39m src/__tests__/dismiss-nudge-api.test.ts [2m([22m[2m30 tests[22m[2m | [22m[31m25 failed[39m[2m)[22m[33m 1340[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m calls /dismiss-nudge endpoint when dismiss callback is received[39m[32m 224[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m extracts nudge ID from dismiss callback_data and includes in /dismiss-nudge request[39m[32m 46[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m uses POST method for /dismiss-nudge endpoint[39m[32m 42[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m sends application/json content-type for /dismiss-nudge request[39m[32m 35[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m includes chat_id in /dismiss-nudge request body[39m[32m 34[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m includes message_id in /dismiss-nudge request body[39m[32m 34[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m handles dismiss callback with single-digit nudge ID[39m[32m 35[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m handles dismiss callback with large nudge ID[39m[32m 40[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m calls /dismiss-nudge with correct orchestrator URL[39m[32m 35[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m calls editMessageReplyMarkup when dismiss is successful[39m[32m 40[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m editMessageReplyMarkup uses correct chat_id[39m[32m 37[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m editMessageReplyMarkup uses correct message_id[39m[32m 37[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m editMessageReplyMarkup removes keyboard by passing empty inline_keyboard[39m[32m 38[2mms[22m[39m
+packages/bot test:      [32m✓[39m does not call editMessageReplyMarkup when /dismiss-nudge fails[32m 39[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m calls editMessageReplyMarkup for multiple dismiss callbacks[39m[32m 68[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m editMessageReplyMarkup is called after /dismiss-nudge succeeds[39m[32m 42[2mms[22m[39m
+packages/bot test:      [32m✓[39m does not crash when /dismiss-nudge throws an error[32m 36[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m sends error reply when /dismiss-nudge fails[39m[32m 34[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m error reply contains 'Something went wrong' when /dismiss-nudge fails[39m[32m 40[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m handles /dismiss-nudge returning HTTP 500[39m[32m 34[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m handles /dismiss-nudge returning HTTP 404[39m[32m 34[2mms[22m[39m
+packages/bot test:      [32m✓[39m answers callback query even when /dismiss-nudge fails[32m 38[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m logs error when /dismiss-nudge fails[39m[32m 34[2mms[22m[39m
+packages/bot test:      [32m✓[39m does not call editMessageReplyMarkup when /dismiss-nudge returns error status[32m 35[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m verifies both /dismiss-nudge API call and editMessageReplyMarkup UI update occur together[39m[32m 41[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m verifies nudge_id is correctly extracted and sent to /dismiss-nudge[39m[32m 43[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m verifies editMessageReplyMarkup receives correct parameters from callback_query[39m[32m 38[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m verifies keyboard is completely removed (empty inline_keyboard array)[39m[32m 37[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m verifies error handling prevents UI update when API fails[39m[32m 34[2mms[22m[39m
+packages/bot test:      [32m✓[39m verifies callback_query is answered regardless of API success or failure[32m 33[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/keyboard.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+packages/bot test: [31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 25 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-1: Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID[2m > [22mcalls /dismiss-nudge endpoint when dismiss callback is received
+packages/bot test: [31m[1mAssertionError[22m: expected undefined to be defined[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m195:25[22m[39m
+packages/bot test:     [90m193|[39m     [90m// Should have calls to both /callback and /dismiss-nudge[39m
+packages/bot test:     [90m194|[39m     const dismissCall = calls.find((c) => c.url.includes("/dismiss-nud…
+packages/bot test:     [90m195|[39m     [34mexpect[39m(dismissCall)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+packages/bot test:     [90m   |[39m                         [31m^[39m
+packages/bot test:     [90m196|[39m   })[33m;[39m
+packages/bot test:     [90m197|[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-1: Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID[2m > [22mextracts nudge ID from dismiss callback_data and includes in /dismiss-nudge request
+packages/bot test: [31m[1mAssertionError[22m: expected undefined to be defined[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m214:25[22m[39m
+packages/bot test:     [90m212|[39m
+packages/bot test:     [90m213|[39m     const dismissCall = calls.find((c) => c.url.includes("/dismiss-nud…
+packages/bot test:     [90m214|[39m     [34mexpect[39m(dismissCall)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+packages/bot test:     [90m   |[39m                         [31m^[39m
+packages/bot test:     [90m215|[39m     [35mconst[39m body [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(dismissCall[33m?.[39minit[33m.[39mbody [35mas[39m string)[33m;[39m
+packages/bot test:     [90m216|[39m     [34mexpect[39m(body[33m.[39mnudge_id)[33m.[39m[34mtoBe[39m([34m123[39m)[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-1: Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID[2m > [22muses POST method for /dismiss-nudge endpoint
+packages/bot test: [31m[1mAssertionError[22m: expected undefined to be 'POST' // Object.is equality[39m
+packages/bot test: [32m- Expected:[39m
+packages/bot test: "POST"
+packages/bot test: [31m+ Received:[39m
+packages/bot test: undefined
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m235:38[22m[39m
+packages/bot test:     [90m233|[39m
+packages/bot test:     [90m234|[39m     const dismissCall = calls.find((c) => c.url.includes("/dismiss-nud…
+packages/bot test:     [90m235|[39m     [34mexpect[39m(dismissCall[33m?.[39minit[33m.[39mmethod)[33m.[39m[34mtoBe[39m([32m"POST"[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                                      [31m^[39m
+packages/bot test:     [90m236|[39m   })[33m;[39m
+packages/bot test:     [90m237|[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-1: Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID[2m > [22msends application/json content-type for /dismiss-nudge request
+packages/bot test: [31m[1mTypeError[22m: Cannot read properties of undefined (reading 'Content-Type')[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m255:12[22m[39m
+packages/bot test:     [90m253|[39m     const dismissCall = calls.find((c) => c.url.includes("/dismiss-nud…
+packages/bot test:     [90m254|[39m     const headers = dismissCall?.init.headers as Record<string, string…
+packages/bot test:     [90m255|[39m     [34mexpect[39m(headers[[32m"Content-Type"[39m])[33m.[39m[34mtoBe[39m([32m"application/json"[39m)[33m;[39m
+packages/bot test:     [90m   |[39m            [31m^[39m
+packages/bot test:     [90m256|[39m   })[33m;[39m
+packages/bot test:     [90m257|[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-1: Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID[2m > [22mincludes chat_id in /dismiss-nudge request body
+packages/bot test: [31m[1mSyntaxError[22m: "undefined" is not valid JSON[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m274:23[22m[39m
+packages/bot test:     [90m272|[39m
+packages/bot test:     [90m273|[39m     const dismissCall = calls.find((c) => c.url.includes("/dismiss-nud…
+packages/bot test:     [90m274|[39m     [35mconst[39m body [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(dismissCall[33m?.[39minit[33m.[39mbody [35mas[39m string)[33m;[39m
+packages/bot test:     [90m   |[39m                       [31m^[39m
+packages/bot test:     [90m275|[39m     [34mexpect[39m(body[33m.[39mchat_id)[33m.[39m[34mtoBe[39m([34m99999[39m)[33m;[39m
+packages/bot test:     [90m276|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-1: Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID[2m > [22mincludes message_id in /dismiss-nudge request body
+packages/bot test: [31m[1mSyntaxError[22m: "undefined" is not valid JSON[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m294:23[22m[39m
+packages/bot test:     [90m292|[39m
+packages/bot test:     [90m293|[39m     const dismissCall = calls.find((c) => c.url.includes("/dismiss-nud…
+packages/bot test:     [90m294|[39m     [35mconst[39m body [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(dismissCall[33m?.[39minit[33m.[39mbody [35mas[39m string)[33m;[39m
+packages/bot test:     [90m   |[39m                       [31m^[39m
+packages/bot test:     [90m295|[39m     [34mexpect[39m(body[33m.[39mmessage_id)[33m.[39m[34mtoBe[39m([34m555[39m)[33m;[39m
+packages/bot test:     [90m296|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-1: Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID[2m > [22mhandles dismiss callback with single-digit nudge ID
+packages/bot test: [31m[1mSyntaxError[22m: "undefined" is not valid JSON[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m314:23[22m[39m
+packages/bot test:     [90m312|[39m
+packages/bot test:     [90m313|[39m     const dismissCall = calls.find((c) => c.url.includes("/dismiss-nud…
+packages/bot test:     [90m314|[39m     [35mconst[39m body [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(dismissCall[33m?.[39minit[33m.[39mbody [35mas[39m string)[33m;[39m
+packages/bot test:     [90m   |[39m                       [31m^[39m
+packages/bot test:     [90m315|[39m     [34mexpect[39m(body[33m.[39mnudge_id)[33m.[39m[34mtoBe[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m316|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-1: Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID[2m > [22mhandles dismiss callback with large nudge ID
+packages/bot test: [31m[1mSyntaxError[22m: "undefined" is not valid JSON[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m334:23[22m[39m
+packages/bot test:     [90m332|[39m
+packages/bot test:     [90m333|[39m     const dismissCall = calls.find((c) => c.url.includes("/dismiss-nud…
+packages/bot test:     [90m334|[39m     [35mconst[39m body [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(dismissCall[33m?.[39minit[33m.[39mbody [35mas[39m string)[33m;[39m
+packages/bot test:     [90m   |[39m                       [31m^[39m
+packages/bot test:     [90m335|[39m     [34mexpect[39m(body[33m.[39mnudge_id)[33m.[39m[34mtoBe[39m([34m999999999[39m)[33m;[39m
+packages/bot test:     [90m336|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-1: Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID[2m > [22mcalls /dismiss-nudge with correct orchestrator URL
+packages/bot test: [31m[1mAssertionError[22m: expected undefined to be 'http://localhost:3001/dismiss-nudge' // Object.is equality[39m
+packages/bot test: [32m- Expected:[39m
+packages/bot test: "http://localhost:3001/dismiss-nudge"
+packages/bot test: [31m+ Received:[39m
+packages/bot test: undefined
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m354:30[22m[39m
+packages/bot test:     [90m352|[39m
+packages/bot test:     [90m353|[39m     const dismissCall = calls.find((c) => c.url.includes("/dismiss-nud…
+packages/bot test:     [90m354|[39m     expect(dismissCall?.url).toBe("http://localhost:3001/dismiss-nudge…
+packages/bot test:     [90m   |[39m                              [31m^[39m
+packages/bot test:     [90m355|[39m   })[33m;[39m
+packages/bot test:     [90m356|[39m })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-2: Successful dismissal removes the inline keyboard from the message[2m > [22mcalls editMessageReplyMarkup when dismiss is successful
+packages/bot test: [31m[1mAssertionError[22m: expected [] to have a length of 1 but got +0[39m
+packages/bot test: [32m- Expected[39m
+packages/bot test: [31m+ Received[39m
+packages/bot test: [32m- 1[39m
+packages/bot test: [31m+ 0[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m374:53[22m[39m
+packages/bot test:     [90m372|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+packages/bot test:     [90m373|[39m
+packages/bot test:     [90m374|[39m     [34mexpect[39m(holder[33m.[39mbot[33m?.[39meditMessageReplyMarkupCalls)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                                                     [31m^[39m
+packages/bot test:     [90m375|[39m   })[33m;[39m
+packages/bot test:     [90m376|[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-2: Successful dismissal removes the inline keyboard from the message[2m > [22meditMessageReplyMarkup uses correct chat_id
+packages/bot test: [31m[1mAssertionError[22m: expected undefined to be 99999 // Object.is equality[39m
+packages/bot test: [32m- Expected:[39m
+packages/bot test: 99999
+packages/bot test: [31m+ Received:[39m
+packages/bot test: undefined
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m388:64[22m[39m
+packages/bot test:     [90m386|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+packages/bot test:     [90m387|[39m
+packages/bot test:     [90m388|[39m     expect(holder.bot?.editMessageReplyMarkupCalls[0]?.chatId).toBe(99…
+packages/bot test:     [90m   |[39m                                                                [31m^[39m
+packages/bot test:     [90m389|[39m   })[33m;[39m
+packages/bot test:     [90m390|[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-2: Successful dismissal removes the inline keyboard from the message[2m > [22meditMessageReplyMarkup uses correct message_id
+packages/bot test: [31m[1mAssertionError[22m: expected undefined to be 777 // Object.is equality[39m
+packages/bot test: [32m- Expected:[39m
+packages/bot test: 777
+packages/bot test: [31m+ Received:[39m
+packages/bot test: undefined
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m402:67[22m[39m
+packages/bot test:     [90m400|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+packages/bot test:     [90m401|[39m
+packages/bot test:     [90m402|[39m     expect(holder.bot?.editMessageReplyMarkupCalls[0]?.messageId).toBe…
+packages/bot test:     [90m   |[39m                                                                   [31m^[39m
+packages/bot test:     [90m403|[39m   })[33m;[39m
+packages/bot test:     [90m404|[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-2: Successful dismissal removes the inline keyboard from the message[2m > [22meditMessageReplyMarkup removes keyboard by passing empty inline_keyboard
+packages/bot test: [31m[1mAssertionError[22m: expected undefined to be defined[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m417:31[22m[39m
+packages/bot test:     [90m415|[39m
+packages/bot test:     [90m416|[39m     [35mconst[39m editCall [33m=[39m holder[33m.[39mbot[33m?.[39meditMessageReplyMarkupCalls[[34m0[39m][33m;[39m
+packages/bot test:     [90m417|[39m     [34mexpect[39m(editCall[33m?.[39moptions)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+packages/bot test:     [90m   |[39m                               [31m^[39m
+packages/bot test:     [90m418|[39m     [35mconst[39m options [33m=[39m editCall[33m?.[39moptions [35mas[39m [33mRecord[39m[33m<[39mstring[33m,[39m unknown[33m>[39m[33m;[39m
+packages/bot test:     [90m419|[39m     [34mexpect[39m(options[33m.[39mreply_markup)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-2: Successful dismissal removes the inline keyboard from the message[2m > [22mcalls editMessageReplyMarkup for multiple dismiss callbacks
+packages/bot test: [31m[1mAssertionError[22m: expected [] to have a length of 2 but got +0[39m
+packages/bot test: [32m- Expected[39m
+packages/bot test: [31m+ Received[39m
+packages/bot test: [32m- 2[39m
+packages/bot test: [31m+ 0[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m461:53[22m[39m
+packages/bot test:     [90m459|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+packages/bot test:     [90m460|[39m
+packages/bot test:     [90m461|[39m     [34mexpect[39m(holder[33m.[39mbot[33m?.[39meditMessageReplyMarkupCalls)[33m.[39m[34mtoHaveLength[39m([34m2[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                                                     [31m^[39m
+packages/bot test:     [90m462|[39m   })[33m;[39m
+packages/bot test:     [90m463|[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-2: Successful dismissal removes the inline keyboard from the message[2m > [22meditMessageReplyMarkup is called after /dismiss-nudge succeeds
+packages/bot test: [31m[1mAssertionError[22m: expected [] to include 'dismiss-nudge'[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m494:23[22m[39m
+packages/bot test:     [90m492|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+packages/bot test:     [90m493|[39m
+packages/bot test:     [90m494|[39m     [34mexpect[39m(callOrder)[33m.[39m[34mtoContain[39m([32m"dismiss-nudge"[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                       [31m^[39m
+packages/bot test:     [90m495|[39m     [34mexpect[39m(callOrder)[33m.[39m[34mtoContain[39m([32m"editMessageReplyMarkup"[39m)[33m;[39m
+packages/bot test:     [90m496|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-3: Bot handles dismiss callback errors gracefully[2m > [22msends error reply when /dismiss-nudge fails
+packages/bot test: [31m[1mAssertionError[22m: expected [] to have a length of 1 but got +0[39m
+packages/bot test: [32m- Expected[39m
+packages/bot test: [31m+ Received[39m
+packages/bot test: [32m- 1[39m
+packages/bot test: [31m+ 0[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m542:42[22m[39m
+packages/bot test:     [90m540|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+packages/bot test:     [90m541|[39m
+packages/bot test:     [90m542|[39m     [34mexpect[39m(holder[33m.[39mbot[33m?.[39msendMessageCalls)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                                          [31m^[39m
+packages/bot test:     [90m543|[39m     [34mexpect[39m(holder[33m.[39mbot[33m?.[39msendMessageCalls[[34m0[39m][33m?.[39mchatId)[33m.[39m[34mtoBe[39m([34m99999[39m)[33m;[39m
+packages/bot test:     [90m544|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-3: Bot handles dismiss callback errors gracefully[2m > [22merror reply contains 'Something went wrong' when /dismiss-nudge fails
+packages/bot test: [31m[1mTypeError[22m: .toMatch() expects to receive a string, but got undefined[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m562:51[22m[39m
+packages/bot test:     [90m560|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+packages/bot test:     [90m561|[39m
+packages/bot test:     [90m562|[39m     expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/something w…
+packages/bot test:     [90m   |[39m                                                   [31m^[39m
+packages/bot test:     [90m563|[39m   })[33m;[39m
+packages/bot test:     [90m564|[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-3: Bot handles dismiss callback errors gracefully[2m > [22mhandles /dismiss-nudge returning HTTP 500
+packages/bot test: [31m[1mAssertionError[22m: expected [] to have a length of 1 but got +0[39m
+packages/bot test: [32m- Expected[39m
+packages/bot test: [31m+ Received[39m
+packages/bot test: [32m- 1[39m
+packages/bot test: [31m+ 0[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m581:42[22m[39m
+packages/bot test:     [90m579|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+packages/bot test:     [90m580|[39m
+packages/bot test:     [90m581|[39m     [34mexpect[39m(holder[33m.[39mbot[33m?.[39msendMessageCalls)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                                          [31m^[39m
+packages/bot test:     [90m582|[39m     expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/something w…
+packages/bot test:     [90m583|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-3: Bot handles dismiss callback errors gracefully[2m > [22mhandles /dismiss-nudge returning HTTP 404
+packages/bot test: [31m[1mAssertionError[22m: expected [] to have a length of 1 but got +0[39m
+packages/bot test: [32m- Expected[39m
+packages/bot test: [31m+ Received[39m
+packages/bot test: [32m- 1[39m
+packages/bot test: [31m+ 0[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m601:42[22m[39m
+packages/bot test:     [90m599|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+packages/bot test:     [90m600|[39m
+packages/bot test:     [90m601|[39m     [34mexpect[39m(holder[33m.[39mbot[33m?.[39msendMessageCalls)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                                          [31m^[39m
+packages/bot test:     [90m602|[39m   })[33m;[39m
+packages/bot test:     [90m603|[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-3: Bot handles dismiss callback errors gracefully[2m > [22mlogs error when /dismiss-nudge fails
+packages/bot test: [31m[1mAssertionError[22m: expected "vi.fn()" to be called at least once[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m639:30[22m[39m
+packages/bot test:     [90m637|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+packages/bot test:     [90m638|[39m
+packages/bot test:     [90m639|[39m     [34mexpect[39m(fakeLogger[33m.[39merror)[33m.[39m[34mtoHaveBeenCalled[39m()[33m;[39m
+packages/bot test:     [90m   |[39m                              [31m^[39m
+packages/bot test:     [90m640|[39m   })[33m;[39m
+packages/bot test:     [90m641|[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-4: Tests verify API call and UI update behavior[2m > [22mverifies both /dismiss-nudge API call and editMessageReplyMarkup UI update occur together
+packages/bot test: [31m[1mAssertionError[22m: expected undefined to be defined[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m683:25[22m[39m
+packages/bot test:     [90m681|[39m
+packages/bot test:     [90m682|[39m     const dismissCall = calls.find((c) => c.url.includes("/dismiss-nud…
+packages/bot test:     [90m683|[39m     [34mexpect[39m(dismissCall)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+packages/bot test:     [90m   |[39m                         [31m^[39m
+packages/bot test:     [90m684|[39m     [34mexpect[39m(holder[33m.[39mbot[33m?.[39meditMessageReplyMarkupCalls)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m685|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-4: Tests verify API call and UI update behavior[2m > [22mverifies nudge_id is correctly extracted and sent to /dismiss-nudge
+packages/bot test: [31m[1mSyntaxError[22m: "undefined" is not valid JSON[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m704:23[22m[39m
+packages/bot test:     [90m702|[39m
+packages/bot test:     [90m703|[39m     const dismissCall = calls.find((c) => c.url.includes("/dismiss-nud…
+packages/bot test:     [90m704|[39m     [35mconst[39m body [33m=[39m [33mJSON[39m[33m.[39m[34mparse[39m(dismissCall[33m?.[39minit[33m.[39mbody [35mas[39m string)[33m;[39m
+packages/bot test:     [90m   |[39m                       [31m^[39m
+packages/bot test:     [90m705|[39m     [34mexpect[39m(body[33m.[39mnudge_id)[33m.[39m[34mtoBe[39m(testNudgeId)[33m;[39m
+packages/bot test:     [90m706|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-4: Tests verify API call and UI update behavior[2m > [22mverifies editMessageReplyMarkup receives correct parameters from callback_query
+packages/bot test: [31m[1mAssertionError[22m: expected undefined to be 99999 // Object.is equality[39m
+packages/bot test: [32m- Expected:[39m
+packages/bot test: 99999
+packages/bot test: [31m+ Received:[39m
+packages/bot test: undefined
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m722:30[22m[39m
+packages/bot test:     [90m720|[39m
+packages/bot test:     [90m721|[39m     [35mconst[39m editCall [33m=[39m holder[33m.[39mbot[33m?.[39meditMessageReplyMarkupCalls[[34m0[39m][33m;[39m
+packages/bot test:     [90m722|[39m     [34mexpect[39m(editCall[33m?.[39mchatId)[33m.[39m[34mtoBe[39m(testChatId)[33m;[39m
+packages/bot test:     [90m   |[39m                              [31m^[39m
+packages/bot test:     [90m723|[39m     [34mexpect[39m(editCall[33m?.[39mmessageId)[33m.[39m[34mtoBe[39m(testMessageId)[33m;[39m
+packages/bot test:     [90m724|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-4: Tests verify API call and UI update behavior[2m > [22mverifies keyboard is completely removed (empty inline_keyboard array)
+packages/bot test: [31m[1mTypeError[22m: Cannot read properties of undefined (reading 'reply_markup')[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m739:33[22m[39m
+packages/bot test:     [90m737|[39m     [35mconst[39m editCall [33m=[39m holder[33m.[39mbot[33m?.[39meditMessageReplyMarkupCalls[[34m0[39m][33m;[39m
+packages/bot test:     [90m738|[39m     [35mconst[39m options [33m=[39m editCall[33m?.[39moptions [35mas[39m [33mRecord[39m[33m<[39mstring[33m,[39m unknown[33m>[39m[33m;[39m
+packages/bot test:     [90m739|[39m     const replyMarkup = options.reply_markup as Record<string, unknown…
+packages/bot test:     [90m   |[39m                                 [31m^[39m
+packages/bot test:     [90m740|[39m     [34mexpect[39m([33mArray[39m[33m.[39m[34misArray[39m(replyMarkup[33m.[39minline_keyboard))[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+packages/bot test:     [90m741|[39m     [34mexpect[39m((replyMarkup[33m.[39minline_keyboard [35mas[39m unknown[])[33m.[39mlength)[33m.[39m[34mtoBe[39m([34m0[39m)[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/dismiss-nudge-api.test.ts[2m > [22mAC-4: Tests verify API call and UI update behavior[2m > [22mverifies error handling prevents UI update when API fails
+packages/bot test: [31m[1mAssertionError[22m: expected [] to have a length of 1 but got +0[39m
+packages/bot test: [32m- Expected[39m
+packages/bot test: [31m+ Received[39m
+packages/bot test: [32m- 1[39m
+packages/bot test: [31m+ 0[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/dismiss-nudge-api.test.ts:[2m761:42[22m[39m
+packages/bot test:     [90m759|[39m
+packages/bot test:     [90m760|[39m     [34mexpect[39m(holder[33m.[39mbot[33m?.[39meditMessageReplyMarkupCalls)[33m.[39m[34mtoHaveLength[39m([34m0[39m)[33m;[39m
+packages/bot test:     [90m761|[39m     [34mexpect[39m(holder[33m.[39mbot[33m?.[39msendMessageCalls)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                                          [31m^[39m
+packages/bot test:     [90m762|[39m   })[33m;[39m
+packages/bot test:     [90m763|[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/25]⎯[22m[39m
+packages/bot test: [2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (4)[39m
+packages/bot test: [2m      Tests [22m [1m[31m25 failed[39m[22m[2m | [22m[1m[32m92 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (118)[39m
+packages/bot test: [2m   Start at [22m 05:44:00
+packages/bot test: [2m   Duration [22m 1.96s[2m (transform 565ms, setup 0ms, import 783ms, tests 3.45s, environment 1ms)[22m
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-1%3A Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID > calls /dismiss-nudge endpoint when dismiss callback is received,line=195,column=25::AssertionError: expected undefined to be defined%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:195:25%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-1%3A Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID > extracts nudge ID from dismiss callback_data and includes in /dismiss-nudge request,line=214,column=25::AssertionError: expected undefined to be defined%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:214:25%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-1%3A Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID > uses POST method for /dismiss-nudge endpoint,line=235,column=38::AssertionError: expected undefined to be 'POST' // Object.is equality%0A%0A- Expected:%0A"POST"%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:235:38%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-1%3A Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID > sends application/json content-type for /dismiss-nudge request,line=255,column=12::TypeError: Cannot read properties of undefined (reading 'Content-Type')%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:255:12%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-1%3A Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID > includes chat_id in /dismiss-nudge request body,line=274,column=23::SyntaxError: "undefined" is not valid JSON%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:274:23%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-1%3A Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID > includes message_id in /dismiss-nudge request body,line=294,column=23::SyntaxError: "undefined" is not valid JSON%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:294:23%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-1%3A Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID > handles dismiss callback with single-digit nudge ID,line=314,column=23::SyntaxError: "undefined" is not valid JSON%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:314:23%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-1%3A Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID > handles dismiss callback with large nudge ID,line=334,column=23::SyntaxError: "undefined" is not valid JSON%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:334:23%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-1%3A Bot calls orchestrator POST /dismiss-nudge endpoint with nudge ID > calls /dismiss-nudge with correct orchestrator URL,line=354,column=30::AssertionError: expected undefined to be 'http://localhost:3001/dismiss-nudge' // Object.is equality%0A%0A- Expected:%0A"http://localhost:3001/dismiss-nudge"%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:354:30%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-2%3A Successful dismissal removes the inline keyboard from the message > calls editMessageReplyMarkup when dismiss is successful,line=374,column=53::AssertionError: expected [] to have a length of 1 but got +0%0A%0A- Expected%0A+ Received%0A%0A- 1%0A+ 0%0A%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:374:53%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-2%3A Successful dismissal removes the inline keyboard from the message > editMessageReplyMarkup uses correct chat_id,line=388,column=64::AssertionError: expected undefined to be 99999 // Object.is equality%0A%0A- Expected:%0A99999%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:388:64%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-2%3A Successful dismissal removes the inline keyboard from the message > editMessageReplyMarkup uses correct message_id,line=402,column=67::AssertionError: expected undefined to be 777 // Object.is equality%0A%0A- Expected:%0A777%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:402:67%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-2%3A Successful dismissal removes the inline keyboard from the message > editMessageReplyMarkup removes keyboard by passing empty inline_keyboard,line=417,column=31::AssertionError: expected undefined to be defined%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:417:31%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-2%3A Successful dismissal removes the inline keyboard from the message > calls editMessageReplyMarkup for multiple dismiss callbacks,line=461,column=53::AssertionError: expected [] to have a length of 2 but got +0%0A%0A- Expected%0A+ Received%0A%0A- 2%0A+ 0%0A%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:461:53%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-2%3A Successful dismissal removes the inline keyboard from the message > editMessageReplyMarkup is called after /dismiss-nudge succeeds,line=494,column=23::AssertionError: expected [] to include 'dismiss-nudge'%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:494:23%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-3%3A Bot handles dismiss callback errors gracefully > sends error reply when /dismiss-nudge fails,line=542,column=42::AssertionError: expected [] to have a length of 1 but got +0%0A%0A- Expected%0A+ Received%0A%0A- 1%0A+ 0%0A%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:542:42%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-3%3A Bot handles dismiss callback errors gracefully > error reply contains 'Something went wrong' when /dismiss-nudge fails,line=562,column=51::TypeError: .toMatch() expects to receive a string, but got undefined%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:562:51%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-3%3A Bot handles dismiss callback errors gracefully > handles /dismiss-nudge returning HTTP 500,line=581,column=42::AssertionError: expected [] to have a length of 1 but got +0%0A%0A- Expected%0A+ Received%0A%0A- 1%0A+ 0%0A%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:581:42%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-3%3A Bot handles dismiss callback errors gracefully > handles /dismiss-nudge returning HTTP 404,line=601,column=42::AssertionError: expected [] to have a length of 1 but got +0%0A%0A- Expected%0A+ Received%0A%0A- 1%0A+ 0%0A%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:601:42%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-3%3A Bot handles dismiss callback errors gracefully > logs error when /dismiss-nudge fails,line=639,column=30::AssertionError: expected "vi.fn()" to be called at least once%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:639:30%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-4%3A Tests verify API call and UI update behavior > verifies both /dismiss-nudge API call and editMessageReplyMarkup UI update occur together,line=683,column=25::AssertionError: expected undefined to be defined%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:683:25%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-4%3A Tests verify API call and UI update behavior > verifies nudge_id is correctly extracted and sent to /dismiss-nudge,line=704,column=23::SyntaxError: "undefined" is not valid JSON%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:704:23%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-4%3A Tests verify API call and UI update behavior > verifies editMessageReplyMarkup receives correct parameters from callback_query,line=722,column=30::AssertionError: expected undefined to be 99999 // Object.is equality%0A%0A- Expected:%0A99999%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:722:30%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-4%3A Tests verify API call and UI update behavior > verifies keyboard is completely removed (empty inline_keyboard array),line=739,column=33::TypeError: Cannot read properties of undefined (reading 'reply_markup')%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:739:33%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/dismiss-nudge-api.test.ts,title=src/__tests__/dismiss-nudge-api.test.ts > AC-4%3A Tests verify API call and UI update behavior > verifies error handling prevents UI update when API fails,line=761,column=42::AssertionError: expected [] to have a length of 1 but got +0%0A%0A- Expected%0A+ Received%0A%0A- 1%0A+ 0%0A%0A ❯ src/__tests__/dismiss-nudge-api.test.ts:761:42%0A%0A
+packages/bot test: Failed
+/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/bot@0.0.1 test: `vitest run --config vitest.config.ts`
+Exit status 1
+ ELIFECYCLE  Test failed. See above for more details.

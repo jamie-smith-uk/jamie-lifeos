@@ -1,0 +1,11 @@
+{
+  "task_id": "task-13b",
+  "files_checked": [
+    "packages/bot/src/index.ts",
+    "packages/bot/vitest.config.ts",
+    "packages/bot/tsconfig.json"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 3.1,
+  "coverage_pct": null
+}
