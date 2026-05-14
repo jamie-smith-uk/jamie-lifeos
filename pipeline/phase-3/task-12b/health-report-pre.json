@@ -1,0 +1,11 @@
+{
+  "task_id": "task-12b",
+  "files_checked": [
+    "packages/orchestrator/src/__tests__/scheduler.test.ts",
+    "packages/orchestrator/vitest.config.ts",
+    "packages/orchestrator/tsconfig.json"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 0,
+  "coverage_pct": null
+}

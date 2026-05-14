@@ -206,3 +206,10 @@
 ⚠ task-12a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-12b — Add error handling and tests for nudge sending
+
+**Files:** packages/orchestrator/src/__tests__/scheduler.test.ts, packages/orchestrator/vitest.config.ts, packages/orchestrator/tsconfig.json
+
+⚠ task-12b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
