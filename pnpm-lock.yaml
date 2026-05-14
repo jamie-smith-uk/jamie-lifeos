@@ -60,10 +60,16 @@ importers:
       '@lifeos/shared':
         specifier: workspace:*
         version: link:../shared
+      node-telegram-bot-api:
+        specifier: 0.67.0
+        version: 0.67.0(request@2.88.2)
     devDependencies:
       '@types/node':
         specifier: 25.6.0
         version: 25.6.0
+      '@types/node-telegram-bot-api':
+        specifier: 0.64.14
+        version: 0.64.14
       typescript:
         specifier: 5.4.5
         version: 5.4.5
@@ -1751,6 +1757,7 @@ packages:
 
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   verror@1.10.0:
@@ -2276,7 +2283,7 @@ snapshots:
 
   '@types/node-telegram-bot-api@0.64.14':
     dependencies:
-      '@types/node': 25.6.0
+      '@types/node': 20.19.41
       '@types/request': 2.48.13
 
   '@types/node@20.19.41':
@@ -2296,7 +2303,7 @@ snapshots:
   '@types/request@2.48.13':
     dependencies:
       '@types/caseless': 0.12.5
-      '@types/node': 25.6.0
+      '@types/node': 20.19.41
       '@types/tough-cookie': 4.0.5
       form-data: 2.5.5
 

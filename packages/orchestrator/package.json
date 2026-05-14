@@ -14,10 +14,12 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.90.0",
-    "@lifeos/shared": "workspace:*"
+    "@lifeos/shared": "workspace:*",
+    "node-telegram-bot-api": "0.67.0"
   },
   "devDependencies": {
     "@types/node": "25.6.0",
+    "@types/node-telegram-bot-api": "0.64.14",
     "typescript": "5.4.5",
     "vitest": "4.1.4"
   }
