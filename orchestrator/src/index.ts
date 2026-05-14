@@ -5,8 +5,7 @@
  *
  * Usage: npx tsx orchestrator/src/index.ts --phase 1
  *
- * Functionally equivalent to orchestrator/run-phase.sh.
- * The bash script is the reference — do not modify it.
+ * This is the canonical orchestrator. orchestrator/run-phase.sh is deprecated.
  */
 
 import fs from "node:fs";

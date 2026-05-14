@@ -73,11 +73,8 @@ jobs:
       - name: Add opencode to PATH
         run: echo "$HOME/.npm-global/bin" >> $GITHUB_PATH
 
-      - name: Make scripts executable
-        run: chmod +x orchestrator/*.sh
-
       - name: Run AG-01 Architect + AG-02 Reviewer
-        run: ARCHITECT_ONLY=1 ./orchestrator/run-phase.sh --phase "$PHASE"
+        run: ARCHITECT_ONLY=1 pnpm --filter @lifeos/orchestrator exec tsx src/index.ts --phase "$PHASE"
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           POSTGRES_USER: lifeos
