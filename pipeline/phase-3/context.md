@@ -242,3 +242,10 @@
 ⚠ task-14: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-15 — Initialize scheduler in orchestrator startup
+
+**Files:** packages/orchestrator/src/index.ts, packages/orchestrator/vitest.config.ts, packages/orchestrator/tsconfig.json
+
+⚠ task-15: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---

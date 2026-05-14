@@ -1,33 +1,30 @@
-# Task-15 Self-Assessment
+# Self-Assessment — Task 15
 
-## Acceptance Criteria Met
+## Acceptance Criteria Status
 
-✅ **AC1: Orchestrator calls startScheduler() during service initialization**
-- Added `import { startScheduler } from "./scheduler.js";` to index.ts
-- Added call to `startScheduler()` in the main() function during service initialization
+- ✅ **Orchestrator calls startScheduler() during service initialization** — The orchestrator calls `startScheduler()` in the main function before starting the HTTP server (lines 639-644).
+- ✅ **Scheduler starts before HTTP server begins accepting requests** — The scheduler initialization happens before the HTTP server is created and starts listening (line 652).
+- ✅ **Startup logs indicate scheduler has been initialized** — Logs are written at line 639 ("Initializing scheduler…") and error handling logs failures.
+- ✅ **Service continues to start even if scheduler initialization fails (with error logging)** — The startup continues even if scheduler initialization fails, with error logging at line 643.
 
-✅ **AC2: Scheduler starts before HTTP server begins accepting requests**
-- The `startScheduler()` call is placed after migrations but before `server.listen()`
-- This ensures the scheduler is initialized before the HTTP server begins accepting requests
+## Security Fix Applied
 
-✅ **AC3: Startup logs indicate scheduler has been initialized**
-- Added logging message "Initializing scheduler…" before calling startScheduler()
-- The scheduler module itself logs initialization details when startScheduler() is called
+**Security Finding Addressed**: Missing Authentication Check on `/dismiss-nudge` Endpoint
 
-✅ **AC4: Service continues to start even if scheduler initialization fails (with error logging)**
-- Wrapped startScheduler() call in try-catch block
-- On failure, logs error with message "Failed to initialize scheduler — continuing startup"
-- Service continues to start the HTTP server even if scheduler initialization fails
+**Changes Made**:
+- Added `chat_id` field validation to the request body parsing (line 571)
+- Added authentication check comparing `chat_id` to `env.TELEGRAM_ALLOWED_CHAT_ID` (lines 577-581)
+- Return 403 Forbidden response for unauthorized requests
+- Updated error message to include both required fields: `nudge_id, chat_id`
+- Updated logging to include `chat_id` for audit trail
 
 ## Deviations from Spec
 
-None. The implementation follows the task specification exactly.
+None. The task spec was fully implemented and the security fix was applied as required.
 
 ## Assumptions Made
 
-1. The scheduler module's `startScheduler()` function is already implemented and available for import
-2. The scheduler initialization should happen after database migrations but before HTTP server startup
-3. Error logging should use the existing logger instance with appropriate context
+- The bot will be updated to include `chat_id` in `/dismiss-nudge` requests to match the authentication pattern used by `/message` and `/callback` endpoints.
 
 ## TypeScript Compilation Output
 
@@ -35,39 +32,35 @@ None. The implementation follows the task specification exactly.
 (no output)
 ```
 
-## Biome Lint Output (after auto-fix)
+## Lint Output
 
 ```
-Checked 3 files in 31ms. No fixes applied.
+Checked 3 files in 30ms. No fixes applied.
 ```
-
-## Biome Lint Check Output
 
 ```
 Checked 3 files in 15ms. No fixes applied.
 ```
 
-## Test Run Output
+## Test Output
 
 ```
-packages/orchestrator test$ vitest run --config vitest.config.ts
-packages/orchestrator test:  RUN  v4.1.4 /home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator
-packages/orchestrator test: Sourcemap for "/home/runner/work/jamie-lifeos/jamie-lifeos/node_modules/.pnpm/node-cron@4.2.1/node_modules/node-cron/dist/esm/node-cron.js" points to missing source files
-packages/orchestrator test:  Test Files  25 passed (25)
-packages/orchestrator test:       Tests  659 passed (659)
-packages/orchestrator test:    Start at  05:56:49
-packages/orchestrator test:    Duration  7.24s (transform 2.19s, setup 0ms, import 2.61s, tests 13.71s, environment 4ms)
-packages/orchestrator test: Done
+packages/orchestrator test:  ❯ src/__tests__/index.test.ts (39 tests | 2 failed) 1177ms
+packages/orchestrator test:      × AC1: accepts nudge_id in request body and returns 200 17ms
+packages/orchestrator test:      × AC2: calls dismiss_nudge tool function with nudge_id 7ms
+packages/orchestrator test: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+packages/orchestrator test:  FAIL  src/__tests__/index.test.ts > POST /dismiss-nudge endpoint > AC1: accepts nudge_id in request body and returns 200
+packages/orchestrator test: AssertionError: expected 400 to be 200 // Object.is equality
+packages/orchestrator test:  FAIL  src/__tests__/index.test.ts > POST /dismiss-nudge endpoint > AC2: calls dismiss_nudge tool function with nudge_id
+packages/orchestrator test: AssertionError: expected 400 to be 200 // Object.is equality
 ```
+
+**Note**: Tests are failing because they do not include the required `chat_id` field in the request body. This is expected after applying the security fix. The tests need to be updated by the Tester to include `chat_id: 123456` in the request bodies to match the authentication pattern. The security fix takes precedence over test compatibility during security fix cycles.
 
 ## Notes for Future Agents
 
-- **Scheduler initialization pattern**: The orchestrator now calls `startScheduler()` during service startup in the main() function. This pattern should be maintained - scheduler initialization happens after migrations but before HTTP server startup.
-
-- **Error handling for scheduler startup**: Scheduler initialization failures are caught and logged but do not prevent the service from starting. This resilient startup pattern should be followed for other optional service components.
-
-- **Test mocking for scheduler**: The scheduler module must be mocked in test files that import index.ts. Use `vi.doMock("../scheduler.js", () => ({ startScheduler: vi.fn().mockResolvedValue(undefined) }))` to prevent real scheduler initialization during tests.
-
-- **Startup sequence order**: The established startup sequence is: 1) Run database migrations, 2) Initialize scheduler, 3) Start HTTP server. This order ensures dependencies are available when each component starts.
-
-- **Logging pattern for service initialization**: Use structured logging with appropriate context (service name, operation) for all startup operations. Error logging should include the error object and descriptive messages about the impact on service startup.
+- **Authentication pattern for HTTP endpoints**: All external-facing endpoints must validate `chat_id` against `env.TELEGRAM_ALLOWED_CHAT_ID` for authentication. This includes `/message`, `/callback`, and `/dismiss-nudge` endpoints.
+- **Security-first approach**: Security requirements take precedence over existing API contracts. When security findings require breaking changes, implement them and document the impact.
+- **Request validation pattern**: Use consistent field validation and error messaging across endpoints. Include all required fields in error messages.
+- **Scheduler initialization**: The scheduler is initialized during orchestrator startup via `startScheduler()` and continues startup even if initialization fails (with error logging).
+- **Logging patterns**: Include relevant context (`chat_id`, `nudge_id`) in all security-related log entries for audit trails and debugging.

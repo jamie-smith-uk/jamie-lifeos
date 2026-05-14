@@ -568,13 +568,22 @@ async function requestHandler(req: http.IncomingMessage, res: http.ServerRespons
     if (
       typeof parsed !== "object" ||
       parsed === null ||
-      typeof (parsed as Record<string, unknown>).nudge_id !== "number"
+      typeof (parsed as Record<string, unknown>).nudge_id !== "number" ||
+      typeof (parsed as Record<string, unknown>).chat_id !== "number"
     ) {
-      sendJson(res, 400, { success: false, error: "Missing required fields: nudge_id" });
+      sendJson(res, 400, { success: false, error: "Missing required fields: nudge_id, chat_id" });
       return;
     }
 
     const nudgeId = (parsed as Record<string, unknown>).nudge_id as number;
+    const chatId = (parsed as Record<string, unknown>).chat_id as number;
+
+    // Authentication check
+    if (chatId !== Number(env.TELEGRAM_ALLOWED_CHAT_ID)) {
+      log.warn({ chat_id: chatId }, "Rejected dismiss-nudge from unauthorised chat_id");
+      sendJson(res, 403, { success: false, error: "Forbidden" });
+      return;
+    }
 
     // Validate nudge_id is a positive integer
     if (!Number.isInteger(nudgeId) || nudgeId <= 0) {
@@ -582,7 +591,7 @@ async function requestHandler(req: http.IncomingMessage, res: http.ServerRespons
       return;
     }
 
-    log.info({ nudge_id: nudgeId }, "POST /dismiss-nudge received");
+    log.info({ nudge_id: nudgeId, chat_id: chatId }, "POST /dismiss-nudge received");
 
     let toolResult: string;
     try {

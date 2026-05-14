@@ -151,6 +151,22 @@ async function startServer(port: number): Promise<ServerHandle> {
     clearConfirmation: vi.fn().mockResolvedValue(undefined),
   }));
 
+  // Mock the scheduler module
+  vi.doMock("../scheduler.js", () => ({
+    startScheduler: vi.fn().mockResolvedValue(undefined),
+  }));
+
+  // Mock the nudges tool
+  vi.doMock("../tools/nudges.js", () => ({
+    executeNudgesTool: vi.fn().mockResolvedValue(
+      JSON.stringify({
+        success: true,
+        nudge: { id: "42", status: "dismissed" },
+        message: "Nudge dismissed successfully",
+      }),
+    ),
+  }));
+
   // Dynamically import index.ts — this triggers main() immediately.
   // We need to wait for the server to begin listening before returning.
   await import("../index.js");

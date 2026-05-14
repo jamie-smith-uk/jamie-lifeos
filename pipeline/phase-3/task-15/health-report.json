@@ -1,0 +1,11 @@
+{
+  "task_id": "task-15",
+  "files_checked": [
+    "packages/orchestrator/src/index.ts",
+    "packages/orchestrator/vitest.config.ts",
+    "packages/orchestrator/tsconfig.json"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 2.6,
+  "coverage_pct": null
+}
