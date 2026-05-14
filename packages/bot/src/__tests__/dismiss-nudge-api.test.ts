@@ -87,10 +87,7 @@ class FakeTelegramBot {
     this.answerCallbackQueryCalls.push({ callbackQueryId, options });
   }
 
-  async editMessageReplyMarkup(
-    replyMarkup: unknown,
-    options?: unknown,
-  ): Promise<void> {
+  async editMessageReplyMarkup(replyMarkup: unknown, options?: unknown): Promise<void> {
     const opts = options as { chat_id?: number; message_id?: number } | undefined;
     this.editMessageReplyMarkupCalls.push({
       chatId: opts?.chat_id ?? 0,
