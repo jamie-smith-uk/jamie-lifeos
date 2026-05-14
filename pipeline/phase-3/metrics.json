@@ -1,0 +1,327 @@
+{
+  "phase": 3,
+  "started_at": "2026-05-14T05:19:35Z",
+  "tasks": {
+    "task-12a": {
+      "title": "Implement nudge sending in scheduler",
+      "red": {
+        "duration_s": 123,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "total_duration_s": 554,
+      "refactor": {
+        "duration_s": 150,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "health": {
+        "complex_fn_count": 0,
+        "max_complexity_score": 0,
+        "duplication_pct": 0,
+        "coverage_pct": null
+      },
+      "mutation": {
+        "duration_s": 9,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "security": {
+        "duration_s": 272,
+        "attempts": 3,
+        "result": "pass"
+      },
+      "security_findings": [
+        "Admin UI",
+        "Agent exposure",
+        "Cron injection",
+        "Input validation",
+        "Never log secrets",
+        "No PII in logs",
+        "No stack traces",
+        "No unjustified",
+        "OAuth tokens",
+        "Parameterised queries",
+        "Prompt injection",
+        "Secrets in .env",
+        "Statement timeout",
+        "agent-constructed SQL",
+        "exact versions",
+        "secrets in git"
+      ]
+    },
+    "task-12b": {
+      "title": "Add error handling and tests for nudge sending",
+      "red": {
+        "duration_s": 52,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "total_duration_s": 377,
+      "green": {
+        "duration_s": 105,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "refactor": {
+        "duration_s": 9,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "health": {
+        "complex_fn_count": 0,
+        "max_complexity_score": 0,
+        "duplication_pct": 0,
+        "coverage_pct": null
+      },
+      "health_delta": "no measurable change",
+      "mutation": {
+        "duration_s": 9,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "security": {
+        "duration_s": 202,
+        "attempts": 2,
+        "result": "pass"
+      },
+      "security_findings": [
+        "No PII in logs",
+        "exact versions"
+      ]
+    },
+    "task-13a": {
+      "title": "Implement dismiss nudge callback parsing in bot",
+      "red": {
+        "duration_s": 82,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "total_duration_s": 453,
+      "green": {
+        "duration_s": 258,
+        "attempts": 2,
+        "result": "pass"
+      },
+      "refactor": {
+        "duration_s": 3,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "health": {
+        "complex_fn_count": 0,
+        "max_complexity_score": 0,
+        "duplication_pct": 0,
+        "coverage_pct": null
+      },
+      "health_delta": "no measurable change",
+      "security": {
+        "duration_s": 110,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "security_findings": [
+        "Admin UI",
+        "Agent exposure",
+        "Cron injection",
+        "Input validation",
+        "No PII in logs",
+        "No stack traces",
+        "OAuth tokens",
+        "Prompt injection",
+        "Zero high or critical",
+        "agent-constructed SQL",
+        "exact versions"
+      ]
+    },
+    "task-13b": {
+      "title": "Implement dismiss nudge API call and UI update in bot",
+      "red": {
+        "duration_s": 81,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "total_duration_s": 224,
+      "green": {
+        "duration_s": 98,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "refactor": {
+        "duration_s": 4,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "health": {
+        "complex_fn_count": 0,
+        "max_complexity_score": 0,
+        "duplication_pct": 3.1,
+        "coverage_pct": null
+      },
+      "health_delta": "no measurable change",
+      "security": {
+        "duration_s": 41,
+        "attempts": 1,
+        "result": "pass"
+      }
+    },
+    "task-14": {
+      "title": "Add dismiss-nudge endpoint to orchestrator",
+      "red": {
+        "duration_s": 55,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "total_duration_s": 356,
+      "green": {
+        "duration_s": 161,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "refactor": {
+        "duration_s": 8,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "health": {
+        "complex_fn_count": 0,
+        "max_complexity_score": 0,
+        "duplication_pct": 2.6,
+        "coverage_pct": null
+      },
+      "health_delta": "no measurable change",
+      "security": {
+        "duration_s": 132,
+        "attempts": 2,
+        "result": "pass"
+      },
+      "security_findings": [
+        "Admin UI",
+        "Agent exposure",
+        "Cron injection",
+        "Input validation",
+        "Label all external content",
+        "Never log secrets",
+        "No PII in logs",
+        "No stack traces",
+        "No unjustified",
+        "OAuth tokens",
+        "Parameterised queries",
+        "Prompt injection",
+        "Secrets in .env",
+        "Statement timeout",
+        "Zero high or critical",
+        "agent-constructed SQL",
+        "exact versions",
+        "secrets in git"
+      ]
+    },
+    "task-15": {
+      "title": "Initialize scheduler in orchestrator startup",
+      "red": {
+        "duration_s": 86,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "total_duration_s": 461,
+      "green": {
+        "duration_s": 225,
+        "attempts": 2,
+        "result": "pass"
+      },
+      "refactor": {
+        "duration_s": 9,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "health": {
+        "complex_fn_count": 0,
+        "max_complexity_score": 0,
+        "duplication_pct": 2.6,
+        "coverage_pct": null
+      },
+      "health_delta": "no measurable change",
+      "security": {
+        "duration_s": 141,
+        "attempts": 2,
+        "result": "pass"
+      },
+      "security_findings": [
+        "Admin UI",
+        "Agent exposure",
+        "Cron injection",
+        "Input validation",
+        "Label all external content",
+        "Never log secrets",
+        "No PII in logs",
+        "No stack traces",
+        "No unjustified",
+        "OAuth tokens",
+        "Parameterised queries",
+        "Prompt injection",
+        "Secrets in .env",
+        "Statement timeout",
+        "Zero high or critical",
+        "agent-constructed SQL",
+        "exact versions",
+        "secrets in git"
+      ]
+    },
+    "task-16": {
+      "title": "Update shared types for Phase 3 data structures",
+      "red": {
+        "duration_s": 72,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "total_duration_s": 170,
+      "green": {
+        "duration_s": 76,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "refactor": {
+        "duration_s": 3,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "health": {
+        "complex_fn_count": 0,
+        "max_complexity_score": 0,
+        "duplication_pct": 0,
+        "coverage_pct": null
+      },
+      "health_delta": "no measurable change",
+      "security": {
+        "duration_s": 19,
+        "attempts": 1,
+        "result": "pass"
+      }
+    }
+  },
+  "summary": {
+    "completed_at": "2026-05-14T06:03:16Z",
+    "total_duration_s": 2595,
+    "tasks_completed": 7,
+    "pass_at_1_rate": 29,
+    "high_retry_tasks": [
+      "task-12a",
+      "task-12b",
+      "task-13a",
+      "task-14",
+      "task-15"
+    ],
+    "top_security_findings": [
+      "No PII in logs (5x)",
+      "exact versions (5x)",
+      "Admin UI (4x)",
+      "Agent exposure (4x)",
+      "Cron injection (4x)"
+    ],
+    "health": {
+      "avg_coverage_pct": null,
+      "avg_duplication_pct": 1.2,
+      "total_complex_fns": 0
+    }
+  }
+}
