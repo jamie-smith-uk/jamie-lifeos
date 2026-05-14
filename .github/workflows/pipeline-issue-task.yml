@@ -83,9 +83,6 @@ jobs:
       - name: Add opencode to PATH
         run: echo "$HOME/.npm-global/bin" >> $GITHUB_PATH
 
-      - name: Make scripts executable
-        run: chmod +x orchestrator/*.sh
-
       - name: Pre-flight quality check
         run: pnpm exec tsc --noEmit
       - name: Pre-flight lint
@@ -118,7 +115,7 @@ jobs:
           echo "text=$(cat /tmp/task-description.txt)" >> "$GITHUB_OUTPUT"
 
       - name: Run task
-        run: ./orchestrator/run-task.sh --quick "$TASK_DESCRIPTION"
+        run: pnpm --filter @lifeos/orchestrator exec tsx src/run-task.ts --quick "$TASK_DESCRIPTION"
         env:
           TASK_DESCRIPTION: ${{ steps.description.outputs.text }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
