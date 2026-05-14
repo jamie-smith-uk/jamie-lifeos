@@ -1,0 +1,10 @@
+{
+  "task_id": "task-6b",
+  "files_checked": [
+    "packages/orchestrator/src/tools/strava.ts",
+    "packages/orchestrator/src/tools/__tests__/strava.test.ts"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 2.4,
+  "coverage_pct": null
+}

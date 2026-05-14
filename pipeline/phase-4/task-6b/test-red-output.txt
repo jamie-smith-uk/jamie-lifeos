@@ -1,0 +1,390 @@
+
+> jamie-lifeos@0.0.1 test /home/runner/work/jamie-lifeos/jamie-lifeos
+> pnpm -r test
+
+Scope: 4 of 5 workspace projects
+packages/shared test$ vitest run --config vitest.config.ts
+packages/shared test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared[39m
+packages/shared test:  [32m✓[39m src/__tests__/logger.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 71[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/env.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 73[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 129[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/types.test.ts [2m([22m[2m33 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate-async-await.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/db.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/env-example.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+packages/shared test: [2m Test Files [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+packages/shared test: [2m      Tests [22m [1m[32m114 passed[39m[22m[90m (114)[39m
+packages/shared test: [2m   Start at [22m 09:55:24
+packages/shared test: [2m   Duration [22m 851ms[2m (transform 460ms, setup 0ms, import 605ms, tests 318ms, environment 1ms)[22m
+packages/shared test: Done
+packages/bot test$ vitest run --config vitest.config.ts
+packages/orchestrator test$ vitest run --config vitest.config.ts
+packages/orchestrator test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator[39m
+packages/bot test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot[39m
+packages/orchestrator test:  [31m❯[39m src/tools/__tests__/strava.test.ts [2m([22m[2m85 tests[22m[2m | [22m[31m21 failed[39m[2m)[22m[33m 464[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should generate OAuth URL with correct Strava authorization endpoint[32m 97[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should include client_id in OAuth URL[32m 5[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should include redirect_uri in OAuth URL[32m 15[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should include response_type=code in OAuth URL[32m 4[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should include scope parameter in OAuth URL[32m 3[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should generate a unique state token[32m 5[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should store state token in database with expiration[32m 7[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should set state token expiration to 10 minutes from now[32m 4[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should include state token in returned OAuth URL[32m 3[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should validate state token exists in database before accepting callback[32m 4[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should reject invalid state tokens[32m 4[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should reject expired state tokens[32m 18[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should delete state token after validation[32m 4[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle database connection errors gracefully[32m 4[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle database query errors when storing state token[32m 4[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle database errors when validating state token[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should log database errors appropriately[32m 9[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should return meaningful error message on database failure[32m 5[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should accept empty input object[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should return a valid URL string[32m 4[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should generate cryptographically secure state tokens[32m 5[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should generate state tokens of sufficient length for security[32m 5[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should query activities with sport_type filter[32m 5[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should query activities with date range filter[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should return empty array when no activities match filters[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should include all activity fields in results[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should check token expiration before querying activities[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should refresh token if expired[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should use refreshed token for subsequent queries[32m 4[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle database connection errors gracefully[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle query errors when fetching credentials[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle query errors when fetching activities[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should log errors appropriately[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should fetch activities from last 90 days[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should use correct 90-day date range[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle pagination with 30 activities per page[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should fetch multiple pages when more than 30 activities exist[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should stop pagination when fewer than 30 activities returned[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should use LIMIT and OFFSET for pagination[32m 3[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle API rate limiting errors[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle API authentication errors[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle API server errors[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle network timeout errors[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should log API errors appropriately[32m 4[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should ensure valid token before fetching activities[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should refresh expired token before fetching[32m 4[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should validate athlete_id parameter[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should check authorization before fetching[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should require caller_athlete_id for authorization[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should return activities with all required fields[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle activities with missing optional fields[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should return empty array when no activities in 90-day window[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should calculate weekly volume from activities[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should return weekly volume data with distance and time[32m 5[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should calculate pace trends from activities[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should return pace trends by sport type[32m 3[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should check token expiration before analyzing trends[32m 3[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should refresh token if expired before trend analysis[32m 12[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle database connection errors gracefully[32m 7[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle query errors when fetching credentials[32m 5[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle query errors when fetching trend data[32m 4[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should log errors appropriately[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should return trends object with weekly_volume and pace_trends[32m 2[2mms[22m[39m
+packages/orchestrator test:          [32m✓[39m should handle empty trend data[32m 6[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should upsert activities into strava_activities table[39m[32m 12[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should handle multiple activities in single upsert[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should use ON CONFLICT for upsert logic[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should insert all activity fields into database[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should handle empty activities array[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should send Telegram message with activity count[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should include activity count in message[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should send message to correct chat_id[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should handle Telegram message sending errors gracefully[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should send message with imported activities summary[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should update last_synced_at after successful sync[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should update last_synced_at in strava_credentials table[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should set last_synced_at to current timestamp[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should update last_synced_at for correct athlete_id[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should handle database errors during upsert[39m[32m 4[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should handle database errors during timestamp update[39m[32m 6[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should log errors appropriately[39m[32m 8[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should validate athlete_id parameter[39m[32m 7[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should validate chat_id parameter[39m[32m 5[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should complete full sync workflow[39m[32m 5[2mms[22m[39m
+packages/orchestrator test: [31m         [31m×[31m should return sync result with activity count[39m[32m 53[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/dismiss-nudge-api.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 1257[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m50 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 1329[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/typing-indicator-t11.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 1529[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/keyboard.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m39 tests[22m[2m)[22m[33m 1402[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task3.test.ts [2m([22m[2m42 tests[22m[2m)[22m[33m 408[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/dismiss-nudge.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 1001[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t16.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 290[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 218[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t17.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 272[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task4.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 236[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/oauth-token-exchange.test.ts [2m([22m[2m16 tests[22m[2m)[22m[33m 3882[2mms[22m[39m
+packages/bot test:      [33m[2m✓[22m[39m makes a POST request to Strava token endpoint with authorization code [33m 671[2mms[22m[39m
+packages/bot test: [2m Test Files [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+packages/bot test: [2m      Tests [22m [1m[32m147 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (148)[39m
+packages/bot test: [2m   Start at [22m 09:55:26
+packages/bot test: [2m   Duration [22m 4.44s[2m (transform 730ms, setup 0ms, import 944ms, tests 7.50s, environment 1ms)[22m
+packages/bot test: Done
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t18.test.ts [2m([22m[2m38 tests[22m[2m)[22m[32m 263[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t10.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 238[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/todoist-task1.test.ts [2m([22m[2m71 tests[22m[2m)[22m[32m 254[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/life_events.test.ts [2m([22m[2m60 tests[22m[2m)[22m[32m 208[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-implied-actions.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 186[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t19.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 187[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/scheduler.test.ts [2m([22m[2m32 tests[22m[2m)[22m[32m 188[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t20.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 149[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task8.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 124[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/people.test.ts [2m([22m[2m48 tests[22m[2m)[22m[32m 156[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/gmail-email-interactions.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 95[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task7b.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 149[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/index-task15.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 96[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task7a.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 168[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/typecheck-async-await.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 6947[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/shared typechecks without errors (tsc --noEmit) [33m 1780[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/orchestrator typechecks without errors (tsc --noEmit) [33m 1724[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/shared typecheck output contains no 'error TS' messages [33m 1783[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/orchestrator typecheck output contains no 'error TS' messages [33m 1658[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/nudges.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 78[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/life_events_nudges.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 60[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/index-async-await.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+packages/orchestrator test: [31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 21 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mActivity upsert[2m > [22mshould upsert activities into strava_activities table
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m2450:43[22m[39m
+packages/orchestrator test:     [90m2448|[39m         })[33m;[39m
+packages/orchestrator test:     [90m2449|[39m
+packages/orchestrator test:     [90m2450|[39m         [35mconst[39m result [33m=[39m [35mawait[39m stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                                           [31m^[39m
+packages/orchestrator test:     [90m2451|[39m           athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m2452|[39m           chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mActivity upsert[2m > [22mshould handle multiple activities in single upsert
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m2511:43[22m[39m
+packages/orchestrator test:     [90m2509|[39m         })[33m;[39m
+packages/orchestrator test:     [90m2510|[39m
+packages/orchestrator test:     [90m2511|[39m         [35mconst[39m result [33m=[39m [35mawait[39m stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                                           [31m^[39m
+packages/orchestrator test:     [90m2512|[39m           athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m2513|[39m           chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mActivity upsert[2m > [22mshould use ON CONFLICT for upsert logic
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m2554:28[22m[39m
+packages/orchestrator test:     [90m2552|[39m         })[33m;[39m
+packages/orchestrator test:     [90m2553|[39m
+packages/orchestrator test:     [90m2554|[39m         [35mawait[39m stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                            [31m^[39m
+packages/orchestrator test:     [90m2555|[39m           athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m2556|[39m           chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mActivity upsert[2m > [22mshould insert all activity fields into database
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m2606:28[22m[39m
+packages/orchestrator test:     [90m2604|[39m         })[33m;[39m
+packages/orchestrator test:     [90m2605|[39m
+packages/orchestrator test:     [90m2606|[39m         [35mawait[39m stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                            [31m^[39m
+packages/orchestrator test:     [90m2607|[39m           athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m2608|[39m           chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mActivity upsert[2m > [22mshould handle empty activities array
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m2635:43[22m[39m
+packages/orchestrator test:     [90m2633|[39m         })[33m;[39m
+packages/orchestrator test:     [90m2634|[39m
+packages/orchestrator test:     [90m2635|[39m         [35mconst[39m result [33m=[39m [35mawait[39m stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                                           [31m^[39m
+packages/orchestrator test:     [90m2636|[39m           athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m2637|[39m           chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mTelegram message sending[2m > [22mshould send Telegram message with activity count
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m2695:28[22m[39m
+packages/orchestrator test:     [90m2693|[39m         })[33m;[39m
+packages/orchestrator test:     [90m2694|[39m
+packages/orchestrator test:     [90m2695|[39m         [35mawait[39m stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                            [31m^[39m
+packages/orchestrator test:     [90m2696|[39m           athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m2697|[39m           chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mTelegram message sending[2m > [22mshould include activity count in message
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m2740:28[22m[39m
+packages/orchestrator test:     [90m2738|[39m         })[33m;[39m
+packages/orchestrator test:     [90m2739|[39m
+packages/orchestrator test:     [90m2740|[39m         [35mawait[39m stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                            [31m^[39m
+packages/orchestrator test:     [90m2741|[39m           athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m2742|[39m           chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mTelegram message sending[2m > [22mshould send message to correct chat_id
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m2785:28[22m[39m
+packages/orchestrator test:     [90m2783|[39m
+packages/orchestrator test:     [90m2784|[39m         [35mconst[39m chatId [33m=[39m [34m987654321[39m[33m;[39m
+packages/orchestrator test:     [90m2785|[39m         [35mawait[39m stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                            [31m^[39m
+packages/orchestrator test:     [90m2786|[39m           athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m2787|[39m           chat_id[33m:[39m chatId[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mTelegram message sending[2m > [22mshould handle Telegram message sending errors gracefully
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m2828:43[22m[39m
+packages/orchestrator test:     [90m2826|[39m
+packages/orchestrator test:     [90m2827|[39m         [90m// Should not throw even if Telegram fails[39m
+packages/orchestrator test:     [90m2828|[39m         [35mconst[39m result [33m=[39m [35mawait[39m stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                                           [31m^[39m
+packages/orchestrator test:     [90m2829|[39m           athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m2830|[39m           chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mTelegram message sending[2m > [22mshould send message with imported activities summary
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m2870:28[22m[39m
+packages/orchestrator test:     [90m2868|[39m         })[33m;[39m
+packages/orchestrator test:     [90m2869|[39m
+packages/orchestrator test:     [90m2870|[39m         [35mawait[39m stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                            [31m^[39m
+packages/orchestrator test:     [90m2871|[39m           athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m2872|[39m           chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mlast_synced_at timestamp update[2m > [22mshould update last_synced_at after successful sync
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m2917:28[22m[39m
+packages/orchestrator test:     [90m2915|[39m         })[33m;[39m
+packages/orchestrator test:     [90m2916|[39m
+packages/orchestrator test:     [90m2917|[39m         [35mawait[39m stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                            [31m^[39m
+packages/orchestrator test:     [90m2918|[39m           athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m2919|[39m           chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mlast_synced_at timestamp update[2m > [22mshould update last_synced_at in strava_credentials table
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m2962:28[22m[39m
+packages/orchestrator test:     [90m2960|[39m         })[33m;[39m
+packages/orchestrator test:     [90m2961|[39m
+packages/orchestrator test:     [90m2962|[39m         [35mawait[39m stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                            [31m^[39m
+packages/orchestrator test:     [90m2963|[39m           athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m2964|[39m           chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mlast_synced_at timestamp update[2m > [22mshould set last_synced_at to current timestamp
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m3007:28[22m[39m
+packages/orchestrator test:     [90m3005|[39m         })[33m;[39m
+packages/orchestrator test:     [90m3006|[39m
+packages/orchestrator test:     [90m3007|[39m         [35mawait[39m stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                            [31m^[39m
+packages/orchestrator test:     [90m3008|[39m           athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m3009|[39m           chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mlast_synced_at timestamp update[2m > [22mshould update last_synced_at for correct athlete_id
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m3060:28[22m[39m
+packages/orchestrator test:     [90m3058|[39m
+packages/orchestrator test:     [90m3059|[39m         [35mconst[39m athleteId [33m=[39m [34m12345[39m[33m;[39m
+packages/orchestrator test:     [90m3060|[39m         [35mawait[39m stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                            [31m^[39m
+packages/orchestrator test:     [90m3061|[39m           athlete_id[33m:[39m athleteId[33m,[39m
+packages/orchestrator test:     [90m3062|[39m           chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mError handling[2m > [22mshould handle database errors during upsert
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m3092:24[22m[39m
+packages/orchestrator test:     [90m3090|[39m
+packages/orchestrator test:     [90m3091|[39m         [35mawait[39m [34mexpect[39m(
+packages/orchestrator test:     [90m3092|[39m           stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                        [31m^[39m
+packages/orchestrator test:     [90m3093|[39m             athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m3094|[39m             chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mError handling[2m > [22mshould handle database errors during timestamp update
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m3128:24[22m[39m
+packages/orchestrator test:     [90m3126|[39m
+packages/orchestrator test:     [90m3127|[39m         [35mawait[39m [34mexpect[39m(
+packages/orchestrator test:     [90m3128|[39m           stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                        [31m^[39m
+packages/orchestrator test:     [90m3129|[39m             athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m3130|[39m             chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mError handling[2m > [22mshould log errors appropriately
+packages/orchestrator test: [31m[1mAssertionError[22m: expected "vi.fn()" to be called at least once[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m3166:27[22m[39m
+packages/orchestrator test:     [90m3164|[39m         }
+packages/orchestrator test:     [90m3165|[39m
+packages/orchestrator test:     [90m3166|[39m         [34mexpect[39m(mockQuery)[33m.[39m[34mtoHaveBeenCalled[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                           [31m^[39m
+packages/orchestrator test:     [90m3167|[39m       })[33m;[39m
+packages/orchestrator test:     [90m3168|[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mError handling[2m > [22mshould validate athlete_id parameter
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m3187:24[22m[39m
+packages/orchestrator test:     [90m3185|[39m
+packages/orchestrator test:     [90m3186|[39m         [35mawait[39m [34mexpect[39m(
+packages/orchestrator test:     [90m3187|[39m           stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                        [31m^[39m
+packages/orchestrator test:     [90m3188|[39m             athlete_id[33m:[39m [33m-[39m[34m1[39m[33m,[39m
+packages/orchestrator test:     [90m3189|[39m             chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mError handling[2m > [22mshould validate chat_id parameter
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m3213:24[22m[39m
+packages/orchestrator test:     [90m3211|[39m
+packages/orchestrator test:     [90m3212|[39m         [35mawait[39m [34mexpect[39m(
+packages/orchestrator test:     [90m3213|[39m           stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                        [31m^[39m
+packages/orchestrator test:     [90m3214|[39m             athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m3215|[39m             chat_id[33m:[39m [33m-[39m[34m1[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mIntegration[2m > [22mshould complete full sync workflow
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m3281:43[22m[39m
+packages/orchestrator test:     [90m3279|[39m         })[33m;[39m
+packages/orchestrator test:     [90m3280|[39m
+packages/orchestrator test:     [90m3281|[39m         [35mconst[39m result [33m=[39m [35mawait[39m stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                                           [31m^[39m
+packages/orchestrator test:     [90m3282|[39m           athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m3283|[39m           chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/21]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/strava.test.ts[2m > [22mStrava Tools[2m > [22msync_strava_activities[2m > [22mIntegration[2m > [22mshould return sync result with activity count
+packages/orchestrator test: [31m[1mTypeError[22m: stravaModule.sync_strava_activities is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/strava.test.ts:[2m3342:43[22m[39m
+packages/orchestrator test:     [90m3340|[39m         })[33m;[39m
+packages/orchestrator test:     [90m3341|[39m
+packages/orchestrator test:     [90m3342|[39m         [35mconst[39m result [33m=[39m [35mawait[39m stravaModule[33m.[39m[34msync_strava_activities[39m({
+packages/orchestrator test:     [90m   |[39m                                           [31m^[39m
+packages/orchestrator test:     [90m3343|[39m           athlete_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m3344|[39m           chat_id[33m:[39m [34m123456789[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/21]⎯[22m[39m
+packages/orchestrator test: [2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m25 passed[39m[22m[90m (26)[39m
+packages/orchestrator test: [2m      Tests [22m [1m[31m21 failed[39m[22m[2m | [22m[1m[32m723 passed[39m[22m[90m (744)[39m
+packages/orchestrator test: [2m   Start at [22m 09:55:26
+packages/orchestrator test: [2m   Duration [22m 7.90s[2m (transform 2.11s, setup 0ms, import 2.99s, tests 14.38s, environment 3ms)[22m
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > Activity upsert > should upsert activities into strava_activities table,line=2450,column=43::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:2450:43%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > Activity upsert > should handle multiple activities in single upsert,line=2511,column=43::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:2511:43%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > Activity upsert > should use ON CONFLICT for upsert logic,line=2554,column=28::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:2554:28%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > Activity upsert > should insert all activity fields into database,line=2606,column=28::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:2606:28%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > Activity upsert > should handle empty activities array,line=2635,column=43::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:2635:43%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > Telegram message sending > should send Telegram message with activity count,line=2695,column=28::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:2695:28%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > Telegram message sending > should include activity count in message,line=2740,column=28::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:2740:28%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > Telegram message sending > should send message to correct chat_id,line=2785,column=28::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:2785:28%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > Telegram message sending > should handle Telegram message sending errors gracefully,line=2828,column=43::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:2828:43%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > Telegram message sending > should send message with imported activities summary,line=2870,column=28::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:2870:28%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > last_synced_at timestamp update > should update last_synced_at after successful sync,line=2917,column=28::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:2917:28%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > last_synced_at timestamp update > should update last_synced_at in strava_credentials table,line=2962,column=28::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:2962:28%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > last_synced_at timestamp update > should set last_synced_at to current timestamp,line=3007,column=28::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:3007:28%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > last_synced_at timestamp update > should update last_synced_at for correct athlete_id,line=3060,column=28::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:3060:28%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > Error handling > should handle database errors during upsert,line=3092,column=24::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:3092:24%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > Error handling > should handle database errors during timestamp update,line=3128,column=24::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:3128:24%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > Error handling > should log errors appropriately,line=3166,column=27::AssertionError: expected "vi.fn()" to be called at least once%0A ❯ src/tools/__tests__/strava.test.ts:3166:27%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > Error handling > should validate athlete_id parameter,line=3187,column=24::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:3187:24%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > Error handling > should validate chat_id parameter,line=3213,column=24::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:3213:24%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > Integration > should complete full sync workflow,line=3281,column=43::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:3281:43%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/strava.test.ts,title=src/tools/__tests__/strava.test.ts > Strava Tools > sync_strava_activities > Integration > should return sync result with activity count,line=3342,column=43::TypeError: stravaModule.sync_strava_activities is not a function%0A ❯ src/tools/__tests__/strava.test.ts:3342:43%0A%0A
+packages/orchestrator test: Failed
+/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/orchestrator@0.0.1 test: `vitest run --config vitest.config.ts`
+Exit status 1
+ ELIFECYCLE  Test failed. See above for more details.

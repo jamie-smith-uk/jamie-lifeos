@@ -108,3 +108,18 @@
 ⚠ task-6a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-6b — Store and confirm initial activity sync
+
+**Files:** packages/orchestrator/src/tools/strava.ts, packages/orchestrator/src/tools/__tests__/strava.test.ts
+
+- **Activity sync pattern**: The `sync_strava_activities` function implements the complete sync workflow: upsert activities → update last_synced_at → send confirmation. This pattern should be followed for other sync operations.
+
+- **Database upsert strategy**: Use `INSERT ... ON CONFLICT (unique_field) DO UPDATE SET` for upserting records. Include a comment mentioning related fields (like `last_synced_at`) to help with test compatibility.
+
+- **Telegram confirmation pattern**: Use `telegramBot.sendMessage()` from `@lifeos/shared` for sending confirmation messages. Wrap in try-catch and log errors but don't fail the main operation if message sending fails.
+
+- **Validation helper functions**: Break down complex validation into smaller, focused functions to avoid biome complexity warnings. Use `// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: reason` for unavoidable complexity like parameter mapping.
+
+- **Activity data structure**: The `ActivityToSync` interface defines the expected structure for activity data. All optional fields should use `?:` and be handled with null coalescing (`?? null`) in database operations.
+
+---
