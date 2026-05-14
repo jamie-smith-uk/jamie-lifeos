@@ -1066,6 +1066,788 @@ describe("Strava Tools", () => {
     });
   });
 
+  describe("fetch_90day_activities", () => {
+    describe("90-day activity fetching", () => {
+      it("should fetch activities from last 90 days", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock token check
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              athlete_id: 12345,
+              access_token: "valid-token",
+              refresh_token: "refresh-token",
+              expires_at: new Date(Date.now() + 3600000),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock activities query for 90-day window
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              strava_id: 123456,
+              athlete_id: 12345,
+              name: "Morning Run",
+              sport_type: "Run",
+              start_date: new Date("2026-05-14"),
+              distance_m: 5000,
+              moving_time_s: 1800,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const result = await stravaModule.fetch_90day_activities({
+          athlete_id: 12345,
+          caller_athlete_id: 12345,
+        });
+
+        expect(result).toBeDefined();
+        expect(Array.isArray(result)).toBe(true);
+      });
+
+      it("should use correct 90-day date range", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock token check
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              athlete_id: 12345,
+              access_token: "valid-token",
+              refresh_token: "refresh-token",
+              expires_at: new Date(Date.now() + 3600000),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock activities query
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        await stravaModule.fetch_90day_activities({
+          athlete_id: 12345,
+          caller_athlete_id: 12345,
+        });
+
+        // Check that the query includes 90-day date range
+        const activityQuery = mockQuery.mock.calls[1];
+        expect(activityQuery[0]).toContain("90");
+      });
+    });
+
+    describe("Pagination handling", () => {
+      it("should handle pagination with 30 activities per page", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock token check
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              athlete_id: 12345,
+              access_token: "valid-token",
+              refresh_token: "refresh-token",
+              expires_at: new Date(Date.now() + 3600000),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock first page of activities (30 items)
+        const firstPageActivities = Array.from({ length: 30 }, (_, i) => ({
+          id: i + 1,
+          strava_id: 100000 + i,
+          athlete_id: 12345,
+          name: `Activity ${i + 1}`,
+          sport_type: "Run",
+          start_date: new Date("2026-05-14"),
+          distance_m: 5000,
+          moving_time_s: 1800,
+        }));
+
+        mockQuery.mockResolvedValueOnce({
+          rows: firstPageActivities,
+          rowCount: 30,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock second page (empty to stop pagination)
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const result = await stravaModule.fetch_90day_activities({
+          athlete_id: 12345,
+          caller_athlete_id: 12345,
+        });
+
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBeGreaterThanOrEqual(30);
+      });
+
+      it("should fetch multiple pages when more than 30 activities exist", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock token check
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              athlete_id: 12345,
+              access_token: "valid-token",
+              refresh_token: "refresh-token",
+              expires_at: new Date(Date.now() + 3600000),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock first page (30 activities)
+        const firstPageActivities = Array.from({ length: 30 }, (_, i) => ({
+          id: i + 1,
+          strava_id: 100000 + i,
+          athlete_id: 12345,
+          name: `Activity ${i + 1}`,
+          sport_type: "Run",
+          start_date: new Date("2026-05-14"),
+          distance_m: 5000,
+          moving_time_s: 1800,
+        }));
+
+        mockQuery.mockResolvedValueOnce({
+          rows: firstPageActivities,
+          rowCount: 30,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock second page (15 activities)
+        const secondPageActivities = Array.from({ length: 15 }, (_, i) => ({
+          id: i + 31,
+          strava_id: 100030 + i,
+          athlete_id: 12345,
+          name: `Activity ${i + 31}`,
+          sport_type: "Run",
+          start_date: new Date("2026-05-13"),
+          distance_m: 5000,
+          moving_time_s: 1800,
+        }));
+
+        mockQuery.mockResolvedValueOnce({
+          rows: secondPageActivities,
+          rowCount: 15,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const result = await stravaModule.fetch_90day_activities({
+          athlete_id: 12345,
+          caller_athlete_id: 12345,
+        });
+
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBeGreaterThanOrEqual(45);
+      });
+
+      it("should stop pagination when fewer than 30 activities returned", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock token check
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              athlete_id: 12345,
+              access_token: "valid-token",
+              refresh_token: "refresh-token",
+              expires_at: new Date(Date.now() + 3600000),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock single page with fewer than 30 activities
+        const activities = Array.from({ length: 15 }, (_, i) => ({
+          id: i + 1,
+          strava_id: 100000 + i,
+          athlete_id: 12345,
+          name: `Activity ${i + 1}`,
+          sport_type: "Run",
+          start_date: new Date("2026-05-14"),
+          distance_m: 5000,
+          moving_time_s: 1800,
+        }));
+
+        mockQuery.mockResolvedValueOnce({
+          rows: activities,
+          rowCount: 15,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const result = await stravaModule.fetch_90day_activities({
+          athlete_id: 12345,
+          caller_athlete_id: 12345,
+        });
+
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBe(15);
+      });
+
+      it("should use LIMIT and OFFSET for pagination", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock token check
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              athlete_id: 12345,
+              access_token: "valid-token",
+              refresh_token: "refresh-token",
+              expires_at: new Date(Date.now() + 3600000),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock activities query
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        await stravaModule.fetch_90day_activities({
+          athlete_id: 12345,
+          caller_athlete_id: 12345,
+        });
+
+        // Check that query uses LIMIT and OFFSET
+        const activityQuery = mockQuery.mock.calls[1];
+        expect(activityQuery[0]).toContain("LIMIT");
+        expect(activityQuery[0]).toContain("OFFSET");
+      });
+    });
+
+    describe("API error handling", () => {
+      it("should handle API rate limiting errors", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock token check
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              athlete_id: 12345,
+              access_token: "valid-token",
+              refresh_token: "refresh-token",
+              expires_at: new Date(Date.now() + 3600000),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock rate limit error
+        mockQuery.mockRejectedValueOnce(new Error("429 Too Many Requests: Rate limit exceeded"));
+
+        await expect(
+          stravaModule.fetch_90day_activities({
+            athlete_id: 12345,
+            caller_athlete_id: 12345,
+          }),
+        ).rejects.toThrow();
+      });
+
+      it("should handle API authentication errors", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock token check
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              athlete_id: 12345,
+              access_token: "invalid-token",
+              refresh_token: "refresh-token",
+              expires_at: new Date(Date.now() + 3600000),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock authentication error
+        mockQuery.mockRejectedValueOnce(new Error("401 Unauthorized: Invalid access token"));
+
+        await expect(
+          stravaModule.fetch_90day_activities({
+            athlete_id: 12345,
+            caller_athlete_id: 12345,
+          }),
+        ).rejects.toThrow();
+      });
+
+      it("should handle API server errors", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock token check
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              athlete_id: 12345,
+              access_token: "valid-token",
+              refresh_token: "refresh-token",
+              expires_at: new Date(Date.now() + 3600000),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock server error
+        mockQuery.mockRejectedValueOnce(new Error("500 Internal Server Error: Strava API error"));
+
+        await expect(
+          stravaModule.fetch_90day_activities({
+            athlete_id: 12345,
+            caller_athlete_id: 12345,
+          }),
+        ).rejects.toThrow();
+      });
+
+      it("should handle network timeout errors", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock token check
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              athlete_id: 12345,
+              access_token: "valid-token",
+              refresh_token: "refresh-token",
+              expires_at: new Date(Date.now() + 3600000),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock timeout error
+        mockQuery.mockRejectedValueOnce(new Error("Request timeout: Connection timed out"));
+
+        await expect(
+          stravaModule.fetch_90day_activities({
+            athlete_id: 12345,
+            caller_athlete_id: 12345,
+          }),
+        ).rejects.toThrow();
+      });
+
+      it("should log API errors appropriately", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock token check
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              athlete_id: 12345,
+              access_token: "valid-token",
+              refresh_token: "refresh-token",
+              expires_at: new Date(Date.now() + 3600000),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock API error
+        const apiError = new Error("API Error: Failed to fetch activities");
+        mockQuery.mockRejectedValueOnce(apiError);
+
+        try {
+          await stravaModule.fetch_90day_activities({
+            athlete_id: 12345,
+            caller_athlete_id: 12345,
+          });
+        } catch {
+          // Expected to throw
+        }
+
+        expect(mockQuery).toHaveBeenCalled();
+      });
+    });
+
+    describe("Token refresh before fetch", () => {
+      it("should ensure valid token before fetching activities", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock token check
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              athlete_id: 12345,
+              access_token: "valid-token",
+              refresh_token: "refresh-token",
+              expires_at: new Date(Date.now() + 3600000),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock activities query
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        await stravaModule.fetch_90day_activities({
+          athlete_id: 12345,
+          caller_athlete_id: 12345,
+        });
+
+        // First call should be to check token
+        const firstCall = mockQuery.mock.calls[0];
+        expect(firstCall[0]).toContain("strava_credentials");
+      });
+
+      it("should refresh expired token before fetching", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock expired token
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              athlete_id: 12345,
+              access_token: "expired-token",
+              refresh_token: "refresh-token",
+              expires_at: new Date(Date.now() - 3600000),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock token update
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              athlete_id: 12345,
+              access_token: "new-token",
+              refresh_token: "refresh-token",
+              expires_at: new Date(Date.now() + 3600000),
+            },
+          ],
+          rowCount: 1,
+          command: "UPDATE",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock activities query
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        await stravaModule.fetch_90day_activities({
+          athlete_id: 12345,
+          caller_athlete_id: 12345,
+        });
+
+        expect(mockQuery).toHaveBeenCalled();
+      });
+    });
+
+    describe("Authorization and validation", () => {
+      it("should validate athlete_id parameter", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        await expect(
+          stravaModule.fetch_90day_activities({
+            athlete_id: -1,
+            caller_athlete_id: 12345,
+          }),
+        ).rejects.toThrow();
+      });
+
+      it("should check authorization before fetching", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Different athlete IDs should fail authorization
+        await expect(
+          stravaModule.fetch_90day_activities({
+            athlete_id: 12345,
+            caller_athlete_id: 54321,
+          }),
+        ).rejects.toThrow();
+      });
+
+      it("should require caller_athlete_id for authorization", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Missing caller_athlete_id should fail
+        await expect(
+          stravaModule.fetch_90day_activities({
+            athlete_id: 12345,
+          }),
+        ).rejects.toThrow();
+      });
+    });
+
+    describe("Activity data structure", () => {
+      it("should return activities with all required fields", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock token check
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              athlete_id: 12345,
+              access_token: "valid-token",
+              refresh_token: "refresh-token",
+              expires_at: new Date(Date.now() + 3600000),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock activities query with all fields
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              strava_id: 123456,
+              athlete_id: 12345,
+              name: "Morning Run",
+              sport_type: "Run",
+              start_date: new Date("2026-05-14"),
+              distance_m: 5000.5,
+              moving_time_s: 1800,
+              elapsed_time_s: 1900,
+              total_elevation_gain: 150.25,
+              average_speed_ms: 2.78,
+              max_speed_ms: 5.5,
+              average_heartrate: 145.5,
+              max_heartrate: 175.0,
+              average_watts: 250.0,
+              kilojoules: 450.0,
+              suffer_score: 85,
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const result = await stravaModule.fetch_90day_activities({
+          athlete_id: 12345,
+          caller_athlete_id: 12345,
+        });
+
+        expect(result[0]).toHaveProperty("id");
+        expect(result[0]).toHaveProperty("strava_id");
+        expect(result[0]).toHaveProperty("athlete_id");
+        expect(result[0]).toHaveProperty("name");
+        expect(result[0]).toHaveProperty("sport_type");
+        expect(result[0]).toHaveProperty("start_date");
+        expect(result[0]).toHaveProperty("distance_m");
+        expect(result[0]).toHaveProperty("moving_time_s");
+      });
+
+      it("should handle activities with missing optional fields", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock token check
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              athlete_id: 12345,
+              access_token: "valid-token",
+              refresh_token: "refresh-token",
+              expires_at: new Date(Date.now() + 3600000),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock activities with minimal fields
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              id: 1,
+              strava_id: 123456,
+              athlete_id: 12345,
+              name: "Activity",
+              sport_type: "Run",
+              start_date: new Date("2026-05-14"),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const result = await stravaModule.fetch_90day_activities({
+          athlete_id: 12345,
+          caller_athlete_id: 12345,
+        });
+
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBeGreaterThan(0);
+      });
+    });
+
+    describe("Empty results handling", () => {
+      it("should return empty array when no activities in 90-day window", async () => {
+        const { pool } = await import("@lifeos/shared");
+        const mockQuery = vi.mocked(pool.query) as any;
+
+        // Mock token check
+        mockQuery.mockResolvedValueOnce({
+          rows: [
+            {
+              athlete_id: 12345,
+              access_token: "valid-token",
+              refresh_token: "refresh-token",
+              expires_at: new Date(Date.now() + 3600000),
+            },
+          ],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        // Mock empty activities query
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 0,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+
+        const result = await stravaModule.fetch_90day_activities({
+          athlete_id: 12345,
+          caller_athlete_id: 12345,
+        });
+
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBe(0);
+      });
+    });
+  });
+
   describe("get_strava_trends", () => {
     describe("Weekly volume analysis", () => {
       it("should calculate weekly volume from activities", async () => {

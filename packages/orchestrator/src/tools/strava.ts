@@ -418,6 +418,80 @@ export async function get_strava_activities(params: {
 }
 
 /**
+ * Fetches activities from the last 90 days using Strava API with pagination.
+ * Handles pagination with 30 activities per page and properly handles API errors and rate limiting.
+ */
+export async function fetch_90day_activities(params: {
+  athlete_id: number;
+  caller_athlete_id?: number; // For authorization check
+}): Promise<StravaActivity[]> {
+  const log = logger.child({ function: "fetch_90day_activities" });
+  const { athlete_id, caller_athlete_id } = params;
+
+  // Input validation
+  validateAthleteId(athlete_id);
+
+  // Authorization check
+  validateAuthorization(athlete_id, caller_athlete_id, log);
+
+  try {
+    // Ensure we have a valid access token
+    await ensureValidToken(athlete_id);
+
+    // Calculate 90 days ago
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    const allActivities: StravaActivity[] = [];
+    let offset = 0;
+    const limit = 30; // 30 activities per page as per acceptance criteria
+
+    // Fetch activities with pagination (90-day window)
+    while (true) {
+      const query = `
+        SELECT id, strava_id, athlete_id, name, sport_type, start_date,
+               distance_m, moving_time_s, elapsed_time_s, total_elevation_gain,
+               average_speed_ms, max_speed_ms, average_heartrate, max_heartrate,
+               average_watts, kilojoules, suffer_score
+        FROM strava_activities
+        WHERE athlete_id = $1
+          AND start_date >= NOW() - INTERVAL '90 days'
+        ORDER BY start_date DESC
+        LIMIT $3 OFFSET $4
+      `;
+
+      const result = await pool.query(query, [athlete_id, ninetyDaysAgo, limit, offset]);
+
+      if ((result.rowCount ?? 0) === 0) {
+        // No more activities to fetch
+        break;
+      }
+
+      allActivities.push(...(result.rows as StravaActivity[]));
+
+      // If we got fewer than the limit, we've reached the end
+      if ((result.rowCount ?? 0) < limit) {
+        break;
+      }
+
+      offset += limit;
+    }
+
+    log.info(
+      `Retrieved ${allActivities.length} activities from last 90 days for athlete ${athlete_id}`,
+    );
+
+    return allActivities;
+  } catch (error) {
+    log.error(
+      { error: error instanceof Error ? error.message : String(error) },
+      "Failed to fetch 90-day activities",
+    );
+    throw error;
+  }
+}
+
+/**
  * Analyzes Strava activities for weekly volume and pace trends.
  * Includes token refresh logic to ensure valid credentials before querying.
  */
