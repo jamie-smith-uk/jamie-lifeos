@@ -11,11 +11,12 @@ describe("Scheduler", () => {
   let schedulerModule: typeof import("../scheduler.js");
   let mockCronSchedule: ReturnType<typeof vi.fn>;
   let mockPoolQuery: ReturnType<typeof vi.fn>;
+  let mockTelegramBotSendMessage: ReturnType<typeof vi.fn>;
 
-  beforeEach(async () => {
-    vi.resetModules();
-
-    // Mock node-cron
+  function applyAllMocks(
+    poolQueryMock: ReturnType<typeof vi.fn>,
+    telegramSendMock: ReturnType<typeof vi.fn>,
+  ): void {
     mockCronSchedule = vi.fn(() => ({
       start: vi.fn(),
       stop: vi.fn(),
@@ -25,11 +26,15 @@ describe("Scheduler", () => {
       schedule: mockCronSchedule,
     }));
 
-    // Mock @lifeos/shared
-    mockPoolQuery = vi.fn();
     vi.doMock("@lifeos/shared", () => ({
+      env: {
+        TELEGRAM_ALLOWED_CHAT_ID: "123456789",
+      },
       pool: {
-        query: mockPoolQuery,
+        query: poolQueryMock,
+      },
+      telegramBot: {
+        sendMessage: telegramSendMock,
       },
       logger: {
         child: vi.fn(() => ({
@@ -42,6 +47,15 @@ describe("Scheduler", () => {
         warn: vi.fn(),
       },
     }));
+  }
+
+  beforeEach(async () => {
+    vi.resetModules();
+
+    mockPoolQuery = vi.fn();
+    mockTelegramBotSendMessage = vi.fn();
+
+    applyAllMocks(mockPoolQuery, mockTelegramBotSendMessage);
 
     schedulerModule = await import("../scheduler.js");
   });
@@ -497,6 +511,487 @@ describe("Scheduler", () => {
     });
   });
 
+  describe("Nudge sending via Telegram", () => {
+    it("should send nudge message to TELEGRAM_ALLOWED_CHAT_ID", async () => {
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 1,
+            person_id: 1,
+            life_event_id: null,
+            message: "Test nudge message",
+            trigger_at: new Date("2026-05-13T10:00:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+        ],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock count of recently sent nudges
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ count: 0 }],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock update response
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ id: 1 }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        await callback();
+      }
+
+      // Verify that telegramBot.sendMessage was called with the correct chat ID
+      expect(mockTelegramBotSendMessage).toHaveBeenCalled();
+      const sendCall = mockTelegramBotSendMessage.mock.calls[0];
+      expect(sendCall?.[0]).toBe("123456789"); // TELEGRAM_ALLOWED_CHAT_ID
+    });
+
+    it("should include nudge message text in Telegram message", async () => {
+      const nudgeMessage = "Remember to call your mom!";
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 1,
+            person_id: 1,
+            life_event_id: null,
+            message: nudgeMessage,
+            trigger_at: new Date("2026-05-13T10:00:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+        ],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ count: 0 }],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ id: 1 }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        await callback();
+      }
+
+      // Verify that the message text is included in the Telegram message
+      expect(mockTelegramBotSendMessage).toHaveBeenCalled();
+      const sendCall = mockTelegramBotSendMessage.mock.calls[0];
+      expect(String(sendCall?.[1])).toContain(nudgeMessage);
+    });
+
+    it("should include Dismiss button with callback data in Telegram message", async () => {
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 42,
+            person_id: 1,
+            life_event_id: null,
+            message: "Test nudge",
+            trigger_at: new Date("2026-05-13T10:00:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+        ],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ count: 0 }],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ id: 42 }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        await callback();
+      }
+
+      // Verify that the Dismiss button is included in the reply_markup
+      expect(mockTelegramBotSendMessage).toHaveBeenCalled();
+      const sendCall = mockTelegramBotSendMessage.mock.calls[0];
+      const options = sendCall?.[2];
+      const replyMarkup = options?.reply_markup;
+
+      expect(replyMarkup).toBeDefined();
+      expect(replyMarkup?.inline_keyboard).toBeDefined();
+      expect(Array.isArray(replyMarkup?.inline_keyboard)).toBe(true);
+
+      // Check that there's a button with text "Dismiss"
+      const buttons = replyMarkup?.inline_keyboard?.[0];
+      expect(buttons).toBeDefined();
+      expect(Array.isArray(buttons)).toBe(true);
+
+      const dismissButton = buttons?.[0];
+      expect(dismissButton?.text).toBe("Dismiss");
+    });
+
+    it("should include nudge ID in Dismiss button callback data", async () => {
+      const nudgeId = 99;
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: nudgeId,
+            person_id: 1,
+            life_event_id: null,
+            message: "Test nudge",
+            trigger_at: new Date("2026-05-13T10:00:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+        ],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ count: 0 }],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ id: nudgeId }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        await callback();
+      }
+
+      // Verify that the callback_data includes the nudge ID
+      expect(mockTelegramBotSendMessage).toHaveBeenCalled();
+      const sendCall = mockTelegramBotSendMessage.mock.calls[0];
+      const options = sendCall?.[2];
+      const replyMarkup = options?.reply_markup;
+      const dismissButton = replyMarkup?.inline_keyboard?.[0]?.[0];
+
+      expect(dismissButton?.callback_data).toBe(`dismiss_nudge_${nudgeId}`);
+    });
+
+    it("should update nudge status to sent after successful Telegram send", async () => {
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 1,
+            person_id: 1,
+            life_event_id: null,
+            message: "Test nudge",
+            trigger_at: new Date("2026-05-13T10:00:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+        ],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ count: 0 }],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ id: 1 }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        await callback();
+      }
+
+      // Verify that UPDATE query was called to mark nudge as sent
+      const updateCall = mockPoolQuery.mock.calls.find((call) =>
+        String(call[0]).includes("UPDATE"),
+      );
+
+      expect(updateCall).toBeDefined();
+      expect(String(updateCall?.[0])).toContain("status = 'sent'");
+      expect(String(updateCall?.[0])).toContain("sent_at = now()");
+    });
+
+    it("should set sent_at timestamp when marking nudge as sent", async () => {
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 1,
+            person_id: 1,
+            life_event_id: null,
+            message: "Test nudge",
+            trigger_at: new Date("2026-05-13T10:00:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+        ],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ count: 0 }],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ id: 1 }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        await callback();
+      }
+
+      // Verify that the UPDATE query sets sent_at to now()
+      const updateCall = mockPoolQuery.mock.calls.find((call) =>
+        String(call[0]).includes("UPDATE"),
+      );
+
+      expect(updateCall).toBeDefined();
+      expect(String(updateCall?.[0])).toContain("sent_at = now()");
+    });
+
+    it("should handle Telegram send failure gracefully", async () => {
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 1,
+            person_id: 1,
+            life_event_id: null,
+            message: "Test nudge",
+            trigger_at: new Date("2026-05-13T10:00:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+        ],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ count: 0 }],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock Telegram send failure
+      mockTelegramBotSendMessage.mockRejectedValueOnce(new Error("Telegram API error"));
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        // Should not throw even if Telegram send fails
+        await expect(callback()).resolves.not.toThrow();
+      }
+    });
+
+    it("should send multiple nudges with correct callback data for each", async () => {
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 1,
+            person_id: 1,
+            life_event_id: null,
+            message: "Nudge 1",
+            trigger_at: new Date("2026-05-13T10:00:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+          {
+            id: 2,
+            person_id: 2,
+            life_event_id: null,
+            message: "Nudge 2",
+            trigger_at: new Date("2026-05-13T10:05:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+        ],
+        rowCount: 2,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ count: 0 }],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ id: 1 }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ id: 2 }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        await callback();
+      }
+
+      // Verify that sendMessage was called twice
+      expect(mockTelegramBotSendMessage).toHaveBeenCalledTimes(2);
+
+      // Verify each call has the correct callback data
+      const firstCall = mockTelegramBotSendMessage.mock.calls[0];
+      const firstOptions = firstCall?.[2];
+      const firstButton = firstOptions?.reply_markup?.inline_keyboard?.[0]?.[0];
+      expect(firstButton?.callback_data).toBe("dismiss_nudge_1");
+
+      const secondCall = mockTelegramBotSendMessage.mock.calls[1];
+      const secondOptions = secondCall?.[2];
+      const secondButton = secondOptions?.reply_markup?.inline_keyboard?.[0]?.[0];
+      expect(secondButton?.callback_data).toBe("dismiss_nudge_2");
+    });
+  });
+
   describe("Logging and monitoring", () => {
     let mockLoggerChild: ReturnType<typeof vi.fn>;
     let mockLoggerInfo: ReturnType<typeof vi.fn>;
@@ -524,8 +1019,14 @@ describe("Scheduler", () => {
       }));
 
       vi.doMock("@lifeos/shared", () => ({
+        env: {
+          TELEGRAM_ALLOWED_CHAT_ID: "123456789",
+        },
         pool: {
           query: mockPoolQuery,
+        },
+        telegramBot: {
+          sendMessage: mockTelegramBotSendMessage,
         },
         logger: {
           child: mockLoggerChild,

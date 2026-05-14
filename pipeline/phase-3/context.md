@@ -199,3 +199,10 @@
 ⚠ task-11b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-12a — Implement nudge sending in scheduler
+
+**Files:** packages/orchestrator/src/scheduler.ts
+
+⚠ task-12a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
