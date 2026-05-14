@@ -88,6 +88,9 @@ importers:
 
   packages/shared:
     dependencies:
+      node-telegram-bot-api:
+        specifier: 0.67.0
+        version: 0.67.0(request@2.88.2)
       pg:
         specifier: 8.20.0
         version: 8.20.0
@@ -98,6 +101,9 @@ importers:
       '@types/node':
         specifier: 25.6.0
         version: 25.6.0
+      '@types/node-telegram-bot-api':
+        specifier: 0.64.14
+        version: 0.64.14
       '@types/pg':
         specifier: 8.20.0
         version: 8.20.0

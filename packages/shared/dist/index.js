@@ -1,4 +1,5 @@
 // packages/shared — public entry point
+export * from "./bot.js";
 export * from "./db.js";
 export * from "./env.js";
 export * from "./logger.js";
