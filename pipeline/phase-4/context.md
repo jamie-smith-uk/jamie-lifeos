@@ -70,3 +70,10 @@
 - **Database query pattern**: Use parameterized queries with the shared `pool` from `@lifeos/shared`. Always check `rowCount` for INSERT operations to ensure success before proceeding.
 
 ---
+## task-4b — Add activity query and trend analysis functions to Strava tools
+
+**Files:** packages/orchestrator/src/tools/strava.ts, packages/orchestrator/src/tools/__tests__/strava.test.ts
+
+⚠ task-4b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---

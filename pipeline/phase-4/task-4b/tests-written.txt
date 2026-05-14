@@ -1,0 +1,10 @@
+Tests written for task-4b: Add activity query and trend analysis functions to Strava tools
+
+✅ get_strava_activities function tests (13 tests)
+✅ get_strava_trends function tests (10 tests)
+✅ Token refresh logic tests for both functions
+✅ Error handling tests for database connection errors
+✅ All acceptance criteria covered
+
+Total: 23 new tests added to strava.test.ts
+Status: RED phase complete - tests fail as expected (functions not implemented yet)

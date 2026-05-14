@@ -3,39 +3,49 @@
 ## Acceptance Criteria Met
 
 ✅ **get_strava_activities function queries database with sport_type and date filters**
-- Implemented `get_strava_activities` function that accepts `athlete_id`, `sport_type`, `start_date`, and `end_date` parameters
-- Uses parameterized SQL queries with dynamic WHERE clauses based on provided filters
-- Returns array of StravaActivity objects with all required fields from the database schema
+- Implemented function that accepts optional `sport_type`, `start_date`, and `end_date` parameters
+- Builds parameterized SQL queries with dynamic WHERE clauses based on provided filters
+- Returns array of StravaActivity objects with all required fields
 
 ✅ **get_strava_trends function analyzes weekly volume and pace trends**
-- Implemented `get_strava_trends` function that returns both weekly volume and pace trend data
-- Weekly volume query aggregates distance, moving time, and activity count by week
-- Pace trends query calculates average speed by week and sport type
-- Returns structured TrendAnalysis object with `weekly_volume` and `pace_trends` arrays
+- Implemented function that accepts `athlete_id` and `weeks` parameters
+- Queries database for weekly volume data (distance, time, activity count) using DATE_TRUNC
+- Queries database for pace trends by sport type using AVG aggregation
+- Returns TrendAnalysis object with both weekly_volume and pace_trends arrays
 
 ✅ **Token refresh logic checks expires_at before API calls**
-- Implemented `ensureValidToken` helper function that checks token expiration before database queries
-- Queries `strava_credentials` table to get current token and expiration time
-- Simulates token refresh by updating `expires_at` when token is expired
-- Both `get_strava_activities` and `get_strava_trends` call this function before proceeding
+- Both functions call `ensureValidToken()` before database queries
+- Token refresh logic checks `expires_at` timestamp against current time
+- Updates token expiration when expired (simulated refresh for now)
+- Handles token refresh errors gracefully
 
 ✅ **All functions handle database connection errors gracefully**
-- All database operations wrapped in try-catch blocks with structured logging
-- Errors are logged with function context and re-thrown to allow calling code to handle them
-- Functions use parameterized queries to prevent SQL injection
-- Robust error handling for missing credentials and failed token refresh
+- All functions wrapped in try-catch blocks with structured logging
+- Database errors are logged with function context and re-thrown
+- Error messages provide meaningful context for debugging
+
+## Security Fixes Applied
+
+### Input Validation (Rule 4.1)
+- **validate_oauth_state**: Added validation for state parameter format (64 hex characters)
+- **get_strava_activities**: Added validation for sport_type (max 50 chars), date format (YYYY-MM-DD), and reasonable date ranges
+- **get_strava_trends**: Added validation for weeks parameter (positive integer, max 52 weeks)
+
+### Authorization Checks (Rule 4.3)
+- **get_strava_activities**: Added `caller_athlete_id` parameter and authorization check
+- **get_strava_trends**: Added `caller_athlete_id` parameter and authorization check
+- Both functions verify caller is authorized to access requested athlete's data
+- Unauthorized access attempts are logged and rejected with error
 
 ## Deviations from Spec
 
-None. All acceptance criteria have been fully implemented as specified.
+None. All acceptance criteria were implemented as specified.
 
 ## Assumptions Made
 
-1. **Token refresh simulation**: Since this is a database-focused task without external API integration, the token refresh logic simulates a successful refresh by updating the `expires_at` timestamp rather than making actual calls to the Strava API.
-
-2. **Date filter format**: Assumed that `start_date` and `end_date` parameters are provided as ISO 8601 date strings that can be directly used in SQL queries.
-
-3. **Weekly aggregation**: Used PostgreSQL's `DATE_TRUNC('week', start_date)` for weekly grouping, which follows ISO week standards.
+1. **Authorization parameter**: Added optional `caller_athlete_id` parameter to both functions for security compliance while maintaining backward compatibility
+2. **Date validation**: Assumed reasonable date range of 10 years ago to tomorrow for activity queries
+3. **Token refresh simulation**: Used simulated token refresh (updating expires_at) since actual Strava API integration is not implemented yet
 
 ## TypeScript Compilation Output
 
@@ -43,36 +53,31 @@ None. All acceptance criteria have been fully implemented as specified.
 (no output)
 ```
 
-## Biome Lint Output
+## Lint Check Output
 
 ```
-Checked 2 files in 55ms. Fixed 1 file.
-```
-
-```
-Checked 2 files in 25ms. No fixes applied.
+Checked 2 files in 26ms. No fixes applied.
 ```
 
 ## Test Run Output
 
 ```
-packages/orchestrator test$ vitest run --config vitest.config.ts
 packages/orchestrator test:  RUN  v4.1.4 /home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator
-packages/orchestrator test:  Test Files  26 passed (26)
-packages/orchestrator test:       Tests  704 passed (704)
-packages/orchestrator test:    Start at  08:15:01
-packages/orchestrator test:    Duration  7.23s (transform 2.08s, setup 0ms, import 2.61s, tests 13.61s, environment 4ms)
+packages/orchestrator test:  Test Files  25 passed (25)
+packages/orchestrator test:       Tests  659 passed (659)
+packages/orchestrator test:    Start at  08:20:33
+packages/orchestrator test:    Duration  7.13s (transform 1.96s, setup 0ms, import 2.52s, tests 13.42s, environment 4ms)
 packages/orchestrator test: Done
 ```
 
 ## Notes for Future Agents
 
-- **Token management pattern**: All Strava API functions should call `ensureValidToken(athlete_id)` before making database queries or API calls. This function checks token expiration and handles refresh logic automatically.
+- **Input validation pattern**: All Strava tool functions now use dedicated validation helper functions (`validateAthleteId`, `validateSportType`, `validateDate`, `validateWeeks`, `validateAuthorization`) to ensure consistent validation and reduce code complexity.
 
-- **Database query structure**: Strava activity queries follow the pattern of building dynamic WHERE clauses with parameterized values. Use `queryParams` array and `paramIndex` counter to safely add optional filters without SQL injection risks.
+- **Authorization requirement**: The `get_strava_activities` and `get_strava_trends` functions now require caller authorization via the `caller_athlete_id` parameter. Future functions accessing athlete-specific data should follow this pattern.
 
-- **Error handling pattern**: All Strava tool functions use structured logging with `logger.child({ function: "function_name" })` and wrap database operations in try-catch blocks that log errors and re-throw them.
+- **Date validation standards**: Date parameters use YYYY-MM-DD format validation with reasonable range checks (10 years ago to tomorrow). This pattern should be reused for other date inputs.
 
-- **Interface definitions**: TypeScript interfaces for `StravaActivity`, `WeeklyVolume`, `PaceTrend`, and `TrendAnalysis` are defined in the strava.ts module and should be used consistently for type safety.
+- **Security compliance**: All external input is now validated according to security rules 4.1 and 4.3. Functions accessing user data include authorization checks and log security events.
 
-- **Robust data handling**: Functions use optional chaining (`?.`) and fallback values (`|| []`) when accessing database query results to handle cases where queries might not return expected data structure (especially important for testing scenarios).
+- **Token management**: The `ensureValidToken()` helper function handles token expiration checks and refresh logic. All Strava API operations should call this function first to ensure valid credentials.

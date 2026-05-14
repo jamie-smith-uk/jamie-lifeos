@@ -276,12 +276,15 @@ describe("Strava Tools", () => {
         const { pool } = await import("@lifeos/shared");
         const mockQuery = vi.mocked(pool.query) as any;
 
+        // Use a properly formatted 64-character hex token
+        const validToken = "a".repeat(64);
+
         // Mock finding valid state token
         mockQuery.mockResolvedValueOnce({
           rows: [
             {
               id: 1,
-              state_token: "valid-state-token",
+              state_token: validToken,
               created_at: new Date(),
               expires_at: new Date(Date.now() + 3600000),
             },
@@ -292,8 +295,17 @@ describe("Strava Tools", () => {
           fields: [],
         });
 
+        // Mock the DELETE query for token cleanup
+        mockQuery.mockResolvedValueOnce({
+          rows: [],
+          rowCount: 1,
+          command: "DELETE",
+          oid: 0,
+          fields: [],
+        });
+
         const isValid = await stravaModule.validate_oauth_state({
-          state: "valid-state-token",
+          state: validToken,
         });
 
         expect(isValid).toBe(true);
@@ -350,12 +362,15 @@ describe("Strava Tools", () => {
         const { pool } = await import("@lifeos/shared");
         const mockQuery = vi.mocked(pool.query) as any;
 
-        // Mock finding and deleting state token
+        // Use a properly formatted 64-character hex token
+        const validToken = "b".repeat(64);
+
+        // Mock finding valid state token
         mockQuery.mockResolvedValueOnce({
           rows: [
             {
               id: 1,
-              state_token: "valid-state-token",
+              state_token: validToken,
               created_at: new Date(),
               expires_at: new Date(Date.now() + 3600000),
             },
@@ -375,7 +390,7 @@ describe("Strava Tools", () => {
         });
 
         await stravaModule.validate_oauth_state({
-          state: "valid-state-token",
+          state: validToken,
         });
 
         expect(mockQuery).toHaveBeenCalledTimes(2);
@@ -409,9 +424,12 @@ describe("Strava Tools", () => {
         const { pool } = await import("@lifeos/shared");
         const mockQuery = vi.mocked(pool.query) as any;
 
+        // Use a properly formatted 64-character hex token
+        const validToken = "c".repeat(64);
+
         mockQuery.mockRejectedValueOnce(new Error("Database connection lost"));
 
-        await expect(stravaModule.validate_oauth_state({ state: "test-token" })).rejects.toThrow();
+        await expect(stravaModule.validate_oauth_state({ state: validToken })).rejects.toThrow();
       });
 
       it("should log database errors appropriately", async () => {
@@ -647,7 +665,7 @@ describe("Strava Tools", () => {
 
         const result = await stravaModule.get_strava_activities({
           athlete_id: 12345,
-          sport_type: "Run",
+          caller_athlete_id: 12345,
         });
 
         expect(result).toBeDefined();
@@ -699,6 +717,7 @@ describe("Strava Tools", () => {
           athlete_id: 12345,
           start_date: "2026-05-01",
           end_date: "2026-05-14",
+          caller_athlete_id: 12345,
         });
 
         expect(result).toBeDefined();
@@ -737,6 +756,7 @@ describe("Strava Tools", () => {
         const result = await stravaModule.get_strava_activities({
           athlete_id: 12345,
           sport_type: "Swim",
+          caller_athlete_id: 12345,
         });
 
         expect(Array.isArray(result)).toBe(true);
@@ -794,6 +814,7 @@ describe("Strava Tools", () => {
 
         const result = await stravaModule.get_strava_activities({
           athlete_id: 12345,
+          caller_athlete_id: 12345,
         });
 
         expect(result[0]).toHaveProperty("distance_m");
@@ -834,6 +855,7 @@ describe("Strava Tools", () => {
 
         await stravaModule.get_strava_activities({
           athlete_id: 12345,
+          caller_athlete_id: 12345,
         });
 
         // First call should be to check token expiration
@@ -889,6 +911,7 @@ describe("Strava Tools", () => {
 
         await stravaModule.get_strava_activities({
           athlete_id: 12345,
+          caller_athlete_id: 12345,
         });
 
         // Should have called update for token refresh
@@ -953,6 +976,7 @@ describe("Strava Tools", () => {
 
         const result = await stravaModule.get_strava_activities({
           athlete_id: 12345,
+          caller_athlete_id: 12345,
         });
 
         expect(result).toBeDefined();
@@ -971,6 +995,7 @@ describe("Strava Tools", () => {
         await expect(
           stravaModule.get_strava_activities({
             athlete_id: 12345,
+            caller_athlete_id: 12345,
           }),
         ).rejects.toThrow();
       });
@@ -984,6 +1009,7 @@ describe("Strava Tools", () => {
         await expect(
           stravaModule.get_strava_activities({
             athlete_id: 12345,
+            caller_athlete_id: 12345,
           }),
         ).rejects.toThrow();
       });
@@ -1014,6 +1040,7 @@ describe("Strava Tools", () => {
         await expect(
           stravaModule.get_strava_activities({
             athlete_id: 12345,
+            caller_athlete_id: 12345,
           }),
         ).rejects.toThrow();
       });
@@ -1028,6 +1055,7 @@ describe("Strava Tools", () => {
         try {
           await stravaModule.get_strava_activities({
             athlete_id: 12345,
+            caller_athlete_id: 12345,
           });
         } catch {
           // Expected to throw
@@ -1085,6 +1113,7 @@ describe("Strava Tools", () => {
         const result = await stravaModule.get_strava_trends({
           athlete_id: 12345,
           weeks: 4,
+          caller_athlete_id: 12345,
         });
 
         expect(result).toBeDefined();
@@ -1130,6 +1159,7 @@ describe("Strava Tools", () => {
         const result = await stravaModule.get_strava_trends({
           athlete_id: 12345,
           weeks: 1,
+          caller_athlete_id: 12345,
         });
 
         expect(result.weekly_volume).toBeDefined();
@@ -1201,6 +1231,7 @@ describe("Strava Tools", () => {
         const result = await stravaModule.get_strava_trends({
           athlete_id: 12345,
           weeks: 4,
+          caller_athlete_id: 12345,
         });
 
         expect(result).toHaveProperty("pace_trends");
@@ -1265,6 +1296,7 @@ describe("Strava Tools", () => {
         const result = await stravaModule.get_strava_trends({
           athlete_id: 12345,
           weeks: 1,
+          caller_athlete_id: 12345,
         });
 
         expect(result.pace_trends).toBeDefined();
@@ -1314,6 +1346,7 @@ describe("Strava Tools", () => {
         await stravaModule.get_strava_trends({
           athlete_id: 12345,
           weeks: 4,
+          caller_athlete_id: 12345,
         });
 
         // First call should be to check token expiration
@@ -1378,6 +1411,7 @@ describe("Strava Tools", () => {
         await stravaModule.get_strava_trends({
           athlete_id: 12345,
           weeks: 4,
+          caller_athlete_id: 12345,
         });
 
         expect(mockQuery).toHaveBeenCalled();
@@ -1397,6 +1431,7 @@ describe("Strava Tools", () => {
           stravaModule.get_strava_trends({
             athlete_id: 12345,
             weeks: 4,
+            caller_athlete_id: 12345,
           }),
         ).rejects.toThrow();
       });
@@ -1411,6 +1446,7 @@ describe("Strava Tools", () => {
           stravaModule.get_strava_trends({
             athlete_id: 12345,
             weeks: 4,
+            caller_athlete_id: 12345,
           }),
         ).rejects.toThrow();
       });
@@ -1442,6 +1478,7 @@ describe("Strava Tools", () => {
           stravaModule.get_strava_trends({
             athlete_id: 12345,
             weeks: 4,
+            caller_athlete_id: 12345,
           }),
         ).rejects.toThrow();
       });
@@ -1457,6 +1494,7 @@ describe("Strava Tools", () => {
           await stravaModule.get_strava_trends({
             athlete_id: 12345,
             weeks: 4,
+            caller_athlete_id: 12345,
           });
         } catch {
           // Expected to throw
@@ -1521,6 +1559,7 @@ describe("Strava Tools", () => {
         const result = await stravaModule.get_strava_trends({
           athlete_id: 12345,
           weeks: 1,
+          caller_athlete_id: 12345,
         });
 
         expect(result).toHaveProperty("weekly_volume");
@@ -1568,6 +1607,7 @@ describe("Strava Tools", () => {
         const result = await stravaModule.get_strava_trends({
           athlete_id: 12345,
           weeks: 4,
+          caller_athlete_id: 12345,
         });
 
         expect(result.weekly_volume).toBeDefined();

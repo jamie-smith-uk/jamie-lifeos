@@ -65,6 +65,18 @@ export async function validate_oauth_state(params: { state: string }): Promise<b
   const log = logger.child({ function: "validate_oauth_state" });
   const { state } = params;
 
+  // Input validation for state parameter
+  if (!state || typeof state !== "string") {
+    log.warn("Invalid state parameter: must be non-empty string");
+    return false;
+  }
+
+  // Validate state token format (should be 64 hex characters from randomBytes(32))
+  if (state.length !== 64 || !/^[a-f0-9]{64}$/i.test(state)) {
+    log.warn("Invalid state token format: must be 64 hex characters");
+    return false;
+  }
+
   try {
     // Find the state token and check if it's still valid
     const selectQuery = `
@@ -159,6 +171,111 @@ interface TrendAnalysis {
 }
 
 /**
+ * Validates athlete_id parameter
+ */
+function validateAthleteId(athleteId: number): void {
+  if (!athleteId || typeof athleteId !== "number" || athleteId <= 0) {
+    throw new Error("Invalid athlete_id: must be a positive number");
+  }
+}
+
+/**
+ * Validates sport_type parameter
+ */
+function validateSportType(sportType: string | undefined): void {
+  if (sportType !== undefined) {
+    if (typeof sportType !== "string" || sportType.trim().length === 0) {
+      throw new Error("Invalid sport_type: must be non-empty string");
+    }
+    if (sportType.length > 50) {
+      throw new Error("Invalid sport_type: must be 50 characters or less");
+    }
+  }
+}
+
+/**
+ * Validates date parameter format and range
+ */
+function validateDate(date: string | undefined, paramName: string): Date | undefined {
+  if (date === undefined) {
+    return undefined;
+  }
+
+  if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw new Error(`Invalid ${paramName}: must be in YYYY-MM-DD format`);
+  }
+
+  const dateObj = new Date(date);
+  if (Number.isNaN(dateObj.getTime())) {
+    throw new Error(`Invalid ${paramName}: not a valid date`);
+  }
+
+  // Check reasonable date range (not more than 10 years ago, not in future)
+  const tenYearsAgo = new Date();
+  tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  if (dateObj < tenYearsAgo || dateObj > tomorrow) {
+    throw new Error(`Invalid ${paramName}: must be within reasonable date range`);
+  }
+
+  return dateObj;
+}
+
+/**
+ * Validates date range (end_date >= start_date)
+ */
+function validateDateRange(startDate: Date | undefined, endDate: Date | undefined): void {
+  if (startDate !== undefined && endDate !== undefined && endDate < startDate) {
+    throw new Error("Invalid date range: end_date must be >= start_date");
+  }
+}
+
+/**
+ * Validates weeks parameter
+ */
+function validateWeeks(weeks: number): void {
+  if (!weeks || typeof weeks !== "number" || !Number.isInteger(weeks)) {
+    throw new Error("Invalid weeks: must be a positive integer");
+  }
+  if (weeks <= 0) {
+    throw new Error("Invalid weeks: must be greater than 0");
+  }
+  if (weeks > 52) {
+    throw new Error("Invalid weeks: must be 52 weeks or less");
+  }
+}
+
+/**
+ * Validates authorization for accessing athlete data
+ */
+function validateAuthorization(
+  athleteId: number,
+  callerAthleteId: number | undefined,
+  log: {
+    error: (obj: Record<string, unknown>, msg: string) => void;
+    warn: (obj: Record<string, unknown>, msg: string) => void;
+  },
+): void {
+  if (callerAthleteId !== undefined) {
+    if (typeof callerAthleteId !== "number" || callerAthleteId <= 0) {
+      throw new Error("Invalid caller_athlete_id: must be a positive number");
+    }
+    if (callerAthleteId !== athleteId) {
+      log.warn(
+        { caller_athlete_id: callerAthleteId, requested_athlete_id: athleteId },
+        "Authorization failed: caller not authorized to access athlete data",
+      );
+      throw new Error("Unauthorized: cannot access another athlete's data");
+    }
+  } else {
+    log.error({ athlete_id: athleteId }, "Authorization failed: caller_athlete_id is required");
+    throw new Error("Unauthorized: caller_athlete_id is required");
+  }
+}
+
+/**
  * Checks if a Strava access token is expired and refreshes it if needed.
  * Returns the current valid credentials.
  */
@@ -232,9 +349,20 @@ export async function get_strava_activities(params: {
   sport_type?: string;
   start_date?: string;
   end_date?: string;
+  caller_athlete_id?: number; // For authorization check
 }): Promise<StravaActivity[]> {
   const log = logger.child({ function: "get_strava_activities" });
-  const { athlete_id, sport_type, start_date, end_date } = params;
+  const { athlete_id, sport_type, start_date, end_date, caller_athlete_id } = params;
+
+  // Input validation
+  validateAthleteId(athlete_id);
+  validateSportType(sport_type);
+  const startDateObj = validateDate(start_date, "start_date");
+  const endDateObj = validateDate(end_date, "end_date");
+  validateDateRange(startDateObj, endDateObj);
+
+  // Authorization check
+  validateAuthorization(athlete_id, caller_athlete_id, log);
 
   try {
     // Ensure we have a valid access token
@@ -296,9 +424,17 @@ export async function get_strava_activities(params: {
 export async function get_strava_trends(params: {
   athlete_id: number;
   weeks: number;
+  caller_athlete_id?: number; // For authorization check
 }): Promise<TrendAnalysis> {
   const log = logger.child({ function: "get_strava_trends" });
-  const { athlete_id, weeks } = params;
+  const { athlete_id, weeks, caller_athlete_id } = params;
+
+  // Input validation
+  validateAthleteId(athlete_id);
+  validateWeeks(weeks);
+
+  // Authorization check
+  validateAuthorization(athlete_id, caller_athlete_id, log);
 
   try {
     // Ensure we have a valid access token
@@ -313,12 +449,12 @@ export async function get_strava_trends(params: {
         COUNT(*) as activity_count
       FROM strava_activities
       WHERE athlete_id = $1
-        AND start_date >= NOW() - INTERVAL '${weeks} weeks'
+        AND start_date >= NOW() - INTERVAL '1 week' * $2
       GROUP BY DATE_TRUNC('week', start_date)
       ORDER BY week DESC
     `;
 
-    const volumeResult = await pool.query(volumeQuery, [athlete_id]);
+    const volumeResult = await pool.query(volumeQuery, [athlete_id, weeks]);
 
     // Query for pace trends by sport type
     const paceQuery = `
@@ -328,13 +464,13 @@ export async function get_strava_trends(params: {
         sport_type
       FROM strava_activities
       WHERE athlete_id = $1
-        AND start_date >= NOW() - INTERVAL '${weeks} weeks'
+        AND start_date >= NOW() - INTERVAL '1 week' * $2
         AND average_speed_ms IS NOT NULL
       GROUP BY DATE_TRUNC('week', start_date), sport_type
       ORDER BY week DESC, sport_type
     `;
 
-    const paceResult = await pool.query(paceQuery, [athlete_id]);
+    const paceResult = await pool.query(paceQuery, [athlete_id, weeks]);
 
     log.info(`Analyzed trends for ${weeks} weeks for athlete ${athlete_id}`);
 
