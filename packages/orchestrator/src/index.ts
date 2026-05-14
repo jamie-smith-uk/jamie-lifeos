@@ -44,6 +44,7 @@ import type {
 import { env, logger, runMigrations } from "@lifeos/shared";
 import { clearConfirmation, loadConfirmation, runAgent } from "./agent.js";
 import { executeCalendarTool } from "./tools/calendar.js";
+import { executeNudgesTool } from "./tools/nudges.js";
 
 // ---------------------------------------------------------------------------
 // Logger child (declared early so helpers below can use it)
@@ -538,6 +539,77 @@ async function requestHandler(req: http.IncomingMessage, res: http.ServerRespons
     }
 
     sendJson(res, result.status, callbackResponsePayload);
+    return;
+  }
+
+  // ------------------------------------------------------------------
+  // POST /dismiss-nudge
+  // ------------------------------------------------------------------
+  if (method === "POST" && url === "/dismiss-nudge") {
+    let body: string;
+    try {
+      body = await readBody(req);
+    } catch (err) {
+      log.warn({ err }, "Failed to read /dismiss-nudge request body");
+      sendJson(res, 400, { success: false, error: "Bad request body" });
+      return;
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(body);
+    } catch {
+      sendJson(res, 400, { success: false, error: "Invalid JSON" });
+      return;
+    }
+
+    // Validate required fields.
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      typeof (parsed as Record<string, unknown>).nudge_id !== "number"
+    ) {
+      sendJson(res, 400, { success: false, error: "Missing required field: nudge_id" });
+      return;
+    }
+
+    const nudgeId = (parsed as Record<string, unknown>).nudge_id as number;
+
+    // Validate nudge_id is a positive integer
+    if (!Number.isInteger(nudgeId) || nudgeId <= 0) {
+      sendJson(res, 400, { success: false, error: "nudge_id must be a positive integer" });
+      return;
+    }
+
+    log.info({ nudge_id: nudgeId }, "POST /dismiss-nudge received");
+
+    let toolResult: string;
+    try {
+      // Call dismiss_nudge via executeNudgesTool with operation field
+      toolResult = await executeNudgesTool(
+        JSON.stringify({
+          operation: "dismiss_nudge",
+          nudge_id: nudgeId,
+        }),
+      );
+    } catch (err) {
+      log.error({ err, nudge_id: nudgeId }, "Error calling dismiss_nudge tool");
+      sendJson(res, 500, { success: false, error: "Internal server error" });
+      return;
+    }
+
+    // Parse the tool result to determine success/failure
+    let toolResultObj: { success?: boolean; error?: string } | null = null;
+    try {
+      toolResultObj = JSON.parse(toolResult) as { success?: boolean; error?: string };
+    } catch {
+      log.error({ nudge_id: nudgeId, toolResult }, "Failed to parse dismiss_nudge tool result");
+      sendJson(res, 500, { success: false, error: "Internal server error" });
+      return;
+    }
+
+    // Return the tool result as JSON
+    sendJson(res, 200, toolResultObj);
     return;
   }
 

@@ -899,3 +899,216 @@ describe("AC4 — server listens on PORT env var, defaults to 3001", () => {
     );
   }, 10000);
 });
+
+// ---------------------------------------------------------------------------
+// POST /dismiss-nudge endpoint tests (task-14)
+// ---------------------------------------------------------------------------
+
+describe("POST /dismiss-nudge endpoint", () => {
+  let handle: ServerHandle;
+
+  beforeAll(async () => {
+    handle = await startServer(13908);
+  }, 10000);
+
+  afterAll(async () => {
+    await handle.close();
+    vi.resetModules();
+  });
+
+  it("AC1: accepts nudge_id in request body and returns 200", async () => {
+    const res = await httpPost(handle.port, "/dismiss-nudge", {
+      nudge_id: 42,
+    });
+    expect(res.statusCode).toBe(200);
+  });
+
+  it("AC1: response body is valid JSON", async () => {
+    const res = await httpPost(handle.port, "/dismiss-nudge", {
+      nudge_id: 42,
+    });
+    expect(() => JSON.parse(res.body)).not.toThrow();
+  });
+
+  it("AC2: calls dismiss_nudge tool function with nudge_id", async () => {
+    vi.resetModules();
+
+    const dismissNudgeMock = vi.fn().mockResolvedValue(
+      JSON.stringify({
+        success: true,
+        nudge: { id: "42", status: "dismissed" },
+        message: "Nudge dismissed successfully",
+      }),
+    );
+
+    const silentChild = {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+    };
+
+    const silentLogger = {
+      child: vi.fn(() => silentChild),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+    };
+
+    const PORT = 13909;
+
+    vi.doMock("@lifeos/shared", () => ({
+      env: {
+        PORT: String(PORT),
+        TELEGRAM_BOT_TOKEN: "bot:test_token",
+        TELEGRAM_ALLOWED_CHAT_ID: "123456",
+        ANTHROPIC_API_KEY: "sk-ant-test",
+        DATABASE_URL: "postgresql://lifeos:nQPDvKEqqyXNtaKZoGRvCNWExkFhLkyG@localhost:5432/lifeos",
+        DIGEST_CRON: "0 7 * * *",
+        TZ: "Europe/London",
+        ANTHROPIC_MODEL: "claude-sonnet-4-20250514",
+        BOT_MODE: "polling",
+        LOG_LEVEL: "info",
+        ORCHESTRATOR_URL: "http://localhost:3001",
+      },
+      logger: silentLogger,
+      runMigrations: vi.fn().mockResolvedValue(undefined),
+      pool: {
+        query: vi.fn().mockResolvedValue({ rows: [] }),
+        connect: vi.fn().mockResolvedValue({
+          query: vi.fn().mockResolvedValue({ rows: [] }),
+          release: vi.fn(),
+        }),
+      },
+    }));
+
+    vi.doMock("../agent.js", () => ({
+      runAgent: vi
+        .fn()
+        .mockResolvedValue({ text: "stub response", showConfirmationKeyboard: false }),
+      loadContext: vi.fn().mockResolvedValue([]),
+      saveMessage: vi.fn().mockResolvedValue(undefined),
+      loadConfirmation: vi.fn().mockResolvedValue(null),
+      clearConfirmation: vi.fn().mockResolvedValue(undefined),
+    }));
+
+    vi.doMock("../tools/nudges.js", () => ({
+      executeNudgesTool: dismissNudgeMock,
+    }));
+
+    await import("../index.js");
+    await waitForPort(PORT);
+
+    const res = await httpPost(PORT, "/dismiss-nudge", {
+      nudge_id: 42,
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(dismissNudgeMock).toHaveBeenCalled();
+
+    const server = await getServerOnPort(PORT);
+    await new Promise<void>((resolve, reject) =>
+      server.close((err) => (err ? reject(err) : resolve())),
+    );
+  }, 10000);
+
+  it("AC3: returns success response with nudge data on success", async () => {
+    const res = await httpPost(handle.port, "/dismiss-nudge", {
+      nudge_id: 42,
+    });
+    const parsed = JSON.parse(res.body) as Record<string, unknown>;
+    expect(parsed).toHaveProperty("success");
+  });
+
+  it("AC3: returns error response when nudge not found", async () => {
+    const res = await httpPost(handle.port, "/dismiss-nudge", {
+      nudge_id: 999999,
+    });
+    const parsed = JSON.parse(res.body) as Record<string, unknown>;
+    expect(parsed).toHaveProperty("success");
+  });
+
+  it("AC4: validates nudge_id is provided", async () => {
+    const res = await httpPost(handle.port, "/dismiss-nudge", {});
+    expect(res.statusCode).toBe(400);
+  });
+
+  it("AC4: validates nudge_id is a number", async () => {
+    const res = await httpPost(handle.port, "/dismiss-nudge", {
+      nudge_id: "not-a-number",
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it("AC4: validates nudge_id is an integer", async () => {
+    const res = await httpPost(handle.port, "/dismiss-nudge", {
+      nudge_id: 42.5,
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it("AC4: validates nudge_id is positive", async () => {
+    const res = await httpPost(handle.port, "/dismiss-nudge", {
+      nudge_id: 0,
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it("AC4: validates nudge_id is positive (negative)", async () => {
+    const res = await httpPost(handle.port, "/dismiss-nudge", {
+      nudge_id: -1,
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it("AC5: returns 400 for invalid JSON body", async () => {
+    const response = await new Promise<HttpResponse>((resolve, reject) => {
+      const body = "not json{{{";
+      const options: http.RequestOptions = {
+        hostname: "127.0.0.1",
+        port: handle.port,
+        path: "/dismiss-nudge",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(body, "utf8"),
+        },
+      };
+      const req = http.request(options, (res) => {
+        let data = "";
+        res.setEncoding("utf8");
+        res.on("data", (chunk) => (data += chunk));
+        res.on("end", () => resolve({ statusCode: res.statusCode ?? 0, body: data }));
+      });
+      req.on("error", reject);
+      req.write(body);
+      req.end();
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("AC5: returns 400 for missing required fields", async () => {
+    const res = await httpPost(handle.port, "/dismiss-nudge", {
+      some_other_field: "value",
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it("AC5: returns error response with descriptive message on validation failure", async () => {
+    const res = await httpPost(handle.port, "/dismiss-nudge", {
+      nudge_id: "invalid",
+    });
+    expect(res.statusCode).toBe(400);
+    const body = res.body;
+    expect(body.length).toBeGreaterThan(0);
+  });
+
+  it("AC5: follows same error handling as other endpoints (returns JSON error)", async () => {
+    const res = await httpPost(handle.port, "/dismiss-nudge", {
+      nudge_id: null,
+    });
+    expect(res.statusCode).toBe(400);
+    expect(() => JSON.parse(res.body)).not.toThrow();
+  });
+});
