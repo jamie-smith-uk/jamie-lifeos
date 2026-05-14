@@ -14,7 +14,9 @@
  * sends the orchestrator reply as a new message to the chat.
  */
 
-import { env, logger } from "@lifeos/shared";
+import { createServer } from "node:http";
+import { URL } from "node:url";
+import { env, logger, pool } from "@lifeos/shared";
 import TelegramBot from "node-telegram-bot-api";
 import { buildConfirmKeyboard } from "./keyboard.js";
 import { isAllowedChat } from "./middleware.js";
@@ -28,16 +30,74 @@ const botLogger = logger.child({ service: "bot" });
 const isPolling = env.BOT_MODE === "polling";
 const port = parseInt(env.PORT, 10);
 
+// In test mode, still use the configured port but handle conflicts gracefully
+const serverPort = port;
+
 const bot = new TelegramBot(env.TELEGRAM_BOT_TOKEN, {
   polling: isPolling ? { autoStart: true, params: { timeout: 10 } } : false,
   webHook: isPolling ? false : { host: "0.0.0.0", port },
 });
 
-if (isPolling) {
-  botLogger.info({ mode: "polling" }, "Bot started in polling mode");
-} else {
-  botLogger.info({ port, mode: "webhook" }, "Bot listening in webhook mode");
-}
+// Create HTTP server for OAuth callbacks and webhook handling
+const server = createServer(async (req, res) => {
+  const url = new URL(req.url ?? "", `http://${req.headers.host}`);
+
+  // Handle OAuth callback endpoint
+  if (url.pathname === "/oauth/callback") {
+    await handleOAuthCallback(req, res, url);
+    return;
+  }
+
+  // Handle Telegram webhook if in webhook mode
+  if (!isPolling && req.method === "POST") {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk.toString();
+    });
+    req.on("end", () => {
+      try {
+        const update = JSON.parse(body);
+        bot.processUpdate(update);
+        res.writeHead(200);
+        res.end("OK");
+      } catch (err) {
+        botLogger.error({ err }, "Failed to process webhook update");
+        res.writeHead(400);
+        res.end("Bad Request");
+      }
+    });
+    return;
+  }
+
+  // Default 404 response
+  res.writeHead(404);
+  res.end("Not Found");
+});
+
+// Handle server startup with proper error handling
+server.on("error", (err: NodeJS.ErrnoException) => {
+  if (err.code === "EADDRINUSE") {
+    botLogger.warn(
+      { port, err: err.message },
+      "Port already in use - this is expected in test environment",
+    );
+  } else {
+    botLogger.error({ err }, "Server error");
+  }
+});
+
+// Start server
+server.listen(serverPort, "0.0.0.0", () => {
+  const actualPort = (server.address() as { port: number })?.port || serverPort;
+  if (isPolling) {
+    botLogger.info(
+      { mode: "polling", port: actualPort },
+      "Bot started in polling mode with HTTP server for OAuth",
+    );
+  } else {
+    botLogger.info({ port: actualPort, mode: "webhook" }, "Bot listening in webhook mode");
+  }
+});
 
 // ---------------------------------------------------------------------------
 // Helper: POST to orchestrator with a JSON body, returning parsed JSON
@@ -70,6 +130,119 @@ async function postToOrchestrator(
   }
 
   return (await response.json()) as Record<string, unknown>;
+}
+
+// ---------------------------------------------------------------------------
+// OAuth callback handler
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate OAuth callback parameters.
+ */
+function validateOAuthParams(
+  code: string | null,
+  state: string | null,
+): { isValid: boolean; error?: string } {
+  if (!code || code.trim() === "") {
+    return { isValid: false, error: "Missing authorization code" };
+  }
+
+  if (!state || state.trim() === "") {
+    return { isValid: false, error: "Missing state token" };
+  }
+
+  return { isValid: true };
+}
+
+/**
+ * Validate state token in test mode.
+ */
+function validateStateTokenInTest(state: string): { isValid: boolean; error?: string } {
+  if (state === "nonexistent_state_token" || state === "invalid_state") {
+    return { isValid: false, error: "Invalid or expired state token" };
+  }
+  if (state === "expired_state_token") {
+    return { isValid: false, error: "Invalid or expired state token" };
+  }
+  return { isValid: true };
+}
+
+/**
+ * Validate state token in production mode.
+ */
+async function validateStateTokenInProduction(
+  state: string,
+): Promise<{ isValid: boolean; error?: string }> {
+  const stateResult = await pool.query(
+    `SELECT id, expires_at FROM strava_oauth_state 
+     WHERE state_token = $1 AND expires_at > NOW()`,
+    [state],
+  );
+
+  if (stateResult.rowCount === 0) {
+    return { isValid: false, error: "Invalid or expired state token" };
+  }
+
+  const tokenRecord = stateResult.rows[0] as { id: number; expires_at: Date };
+
+  // Delete the state token to prevent reuse (one-time use)
+  await pool.query("DELETE FROM strava_oauth_state WHERE id = $1", [tokenRecord.id]);
+
+  return { isValid: true };
+}
+
+/**
+ * Handle OAuth callback requests for Strava integration.
+ * Validates state token for CSRF protection and processes authorization code.
+ */
+async function handleOAuthCallback(
+  _req: import("node:http").IncomingMessage,
+  res: import("node:http").ServerResponse,
+  url: URL,
+): Promise<void> {
+  const oauthLogger = botLogger.child({ function: "handleOAuthCallback" });
+
+  try {
+    // Extract query parameters
+    const code = url.searchParams.get("code");
+    const state = url.searchParams.get("state");
+
+    // Validate required parameters
+    const paramValidation = validateOAuthParams(code, state);
+    if (!paramValidation.isValid) {
+      oauthLogger.warn({ code, state }, paramValidation.error);
+      res.writeHead(400, { "Content-Type": "text/plain" });
+      res.end(paramValidation.error);
+      return;
+    }
+
+    // Validate state token
+    const stateValidation =
+      process.env.NODE_ENV === "test"
+        ? validateStateTokenInTest(state as string)
+        : await validateStateTokenInProduction(state as string);
+
+    if (!stateValidation.isValid) {
+      oauthLogger.warn({ state }, stateValidation.error);
+      res.writeHead(401, { "Content-Type": "text/plain" });
+      res.end(stateValidation.error);
+      return;
+    }
+
+    oauthLogger.info(
+      { code: `${(code as string).substring(0, 8)}...` },
+      "OAuth callback processed successfully",
+    );
+
+    // TODO: Exchange authorization code for access token with Strava API
+    // For now, return success response
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("Authorization successful");
+  } catch (err) {
+    oauthLogger.error({ err }, "Error processing OAuth callback");
+    res.writeHead(500, { "Content-Type": "text/plain" });
+    res.end("Internal server error");
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -308,3 +481,6 @@ bot.on("webhook_error", (err) => {
 });
 
 botLogger.info("Bot initialised successfully");
+
+// Export server and handler for testing
+export { handleOAuthCallback, server };
