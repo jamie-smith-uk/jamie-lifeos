@@ -29,3 +29,18 @@
 - **Column types**: Use PostgreSQL standard types: `serial` for auto-incrementing IDs, `bigint` for large integers, `text` for strings, `timestamptz` for timestamps with timezone, `numeric(p,s)` for decimal numbers, `jsonb` for JSON data.
 
 ---
+## task-2b — Add performance metrics to strava_activities
+
+**Files:** migrations/006_strava_activities.sql
+
+- **Migration file structure**: The `migrations/006_strava_activities.sql` file contains the complete strava_activities table schema with all performance metrics columns already implemented from task-2a.
+
+- **Performance metrics columns**: The strava_activities table includes comprehensive performance tracking fields: distance_m, moving_time_s, elapsed_time_s, total_elevation_gain, average_speed_ms, max_speed_ms, average_heartrate, max_heartrate, average_watts, kilojoules, suffer_score, raw_data, and synced_at.
+
+- **Schema authority**: The `docs/architecture.md` file contains the authoritative database schema. The migration exactly matches the schema defined there, including proper column types, constraints, and foreign key relationships.
+
+- **Foreign key pattern**: The athlete_id column uses `REFERENCES strava_credentials(athlete_id) ON DELETE CASCADE` to ensure data integrity and proper cleanup when credentials are removed.
+
+- **Idempotency**: The migration uses `CREATE TABLE IF NOT EXISTS` to ensure it can be run multiple times safely without errors.
+
+---
