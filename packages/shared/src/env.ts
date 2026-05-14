@@ -29,6 +29,11 @@ interface EnvConfig {
   GOOGLE_CLIENT_SECRET: string;
   GOOGLE_REFRESH_TOKEN: string;
 
+  // Strava OAuth2
+  STRAVA_CLIENT_ID: string;
+  STRAVA_CLIENT_SECRET: string;
+  STRAVA_REDIRECT_URI: string;
+
   // Scheduling
   DIGEST_CRON: string;
   TZ: string;
@@ -44,6 +49,9 @@ const REQUIRED_VARS: ReadonlyArray<keyof EnvConfig> = [
   "TELEGRAM_ALLOWED_CHAT_ID",
   "ANTHROPIC_API_KEY",
   "DATABASE_URL",
+  "STRAVA_CLIENT_ID",
+  "STRAVA_CLIENT_SECRET",
+  "STRAVA_REDIRECT_URI",
   "DIGEST_CRON",
   "TZ",
 ];
@@ -106,6 +114,9 @@ function loadEnv(): EnvConfig {
     GOOGLE_CLIENT_ID: raw("GOOGLE_CLIENT_ID"),
     GOOGLE_CLIENT_SECRET: raw("GOOGLE_CLIENT_SECRET"),
     GOOGLE_REFRESH_TOKEN: raw("GOOGLE_REFRESH_TOKEN"),
+    STRAVA_CLIENT_ID: raw("STRAVA_CLIENT_ID"),
+    STRAVA_CLIENT_SECRET: raw("STRAVA_CLIENT_SECRET"),
+    STRAVA_REDIRECT_URI: raw("STRAVA_REDIRECT_URI"),
     DIGEST_CRON: raw("DIGEST_CRON"),
     TZ: raw("TZ"),
     BOT_MODE: botMode,
