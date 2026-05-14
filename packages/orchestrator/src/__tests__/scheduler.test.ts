@@ -1327,6 +1327,174 @@ describe("Scheduler", () => {
       expect(updateErrorCall).toBeDefined();
     });
 
+    it("should continue processing other nudges when one fails to send", async () => {
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 1,
+            person_id: 1,
+            life_event_id: null,
+            message: "Nudge 1",
+            trigger_at: new Date("2026-05-13T10:00:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+          {
+            id: 2,
+            person_id: 2,
+            life_event_id: null,
+            message: "Nudge 2",
+            trigger_at: new Date("2026-05-13T10:05:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+          {
+            id: 3,
+            person_id: 3,
+            life_event_id: null,
+            message: "Nudge 3",
+            trigger_at: new Date("2026-05-13T10:10:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+        ],
+        rowCount: 3,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock count of recently sent nudges
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ count: 0 }],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock Telegram send failure for nudge 1
+      mockTelegramBotSendMessage.mockRejectedValueOnce(new Error("Telegram API error"));
+
+      // Mock successful update for nudge 2
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ id: 2 }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock successful update for nudge 3
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ id: 3 }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        await callback();
+      }
+
+      // Verify that sendMessage was called 3 times (all nudges attempted)
+      expect(mockTelegramBotSendMessage).toHaveBeenCalledTimes(3);
+
+      // Verify that nudges 2 and 3 were marked as sent despite nudge 1 failing
+      const updateCalls = mockPoolQuery.mock.calls.filter((call) =>
+        String(call[0]).includes("UPDATE"),
+      );
+      expect(updateCalls.length).toBe(2);
+    });
+
+    it("should continue processing when nudge status update fails", async () => {
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 1,
+            person_id: 1,
+            life_event_id: null,
+            message: "Nudge 1",
+            trigger_at: new Date("2026-05-13T10:00:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+          {
+            id: 2,
+            person_id: 2,
+            life_event_id: null,
+            message: "Nudge 2",
+            trigger_at: new Date("2026-05-13T10:05:00Z"),
+            status: "pending",
+            sent_at: null,
+            dismissed_at: null,
+            created_at: new Date("2026-05-12T10:00:00Z"),
+          },
+        ],
+        rowCount: 2,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock count of recently sent nudges
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ count: 0 }],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock update failure for nudge 1
+      mockPoolQuery.mockRejectedValueOnce(new Error("Database update failed"));
+
+      // Mock successful update for nudge 2
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ id: 2 }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const nudgeEvaluatorCall = mockCronSchedule.mock.calls.find(
+        (call) => call[0] === "*/15 * * * *" || call[0]?.includes("15"),
+      );
+
+      const callback = nudgeEvaluatorCall?.[1];
+      if (callback && typeof callback === "function") {
+        await callback();
+      }
+
+      // Verify that sendMessage was called for both nudges
+      expect(mockTelegramBotSendMessage).toHaveBeenCalledTimes(2);
+
+      // Verify that nudge 2 was still processed despite nudge 1 update failing
+      const updateCalls = mockPoolQuery.mock.calls.filter((call) =>
+        String(call[0]).includes("UPDATE"),
+      );
+      expect(updateCalls.length).toBe(2);
+    });
+
     it("should log processing count and remaining slots", async () => {
       mockPoolQuery.mockResolvedValueOnce({
         rows: [
