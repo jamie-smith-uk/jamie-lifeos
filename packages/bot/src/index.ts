@@ -54,7 +54,7 @@ if (isPolling) {
  * @returns     The parsed JSON response body as a plain object.
  */
 async function postToOrchestrator(
-  path: "/message" | "/callback",
+  path: "/message" | "/callback" | "/dismiss-nudge",
   body: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
   const url = `${env.ORCHESTRATOR_URL}${path}`;
@@ -185,6 +185,68 @@ bot.on("callback_query", (query) => {
     "Received callback_query",
   );
 
+  // Check if this is a dismiss nudge callback (format: "dismiss:123")
+  const dismissMatch = callbackData.match(/^dismiss:(\d+)$/);
+  if (dismissMatch) {
+    const nudgeId = parseInt(dismissMatch[1], 10);
+
+    botLogger.info(
+      { chat_id: chatId, nudge_id: nudgeId, callback_query_id: callbackQueryId },
+      "Processing dismiss nudge callback",
+    );
+
+    // Call the /dismiss-nudge endpoint directly
+    const dismissBody = {
+      chat_id: chatId,
+      message_id: messageId,
+      nudge_id: nudgeId,
+    };
+
+    postToOrchestrator("/dismiss-nudge", dismissBody)
+      .then(() => {
+        // Answer the callback query to dismiss the loading spinner
+        bot.answerCallbackQuery(callbackQueryId, { text: "" }).catch((answerErr: unknown) => {
+          botLogger.warn(
+            { err: answerErr, callback_query_id: callbackQueryId },
+            "Failed to answer callback query",
+          );
+        });
+
+        // Remove the inline keyboard from the message
+        bot
+          .editMessageReplyMarkup(chatId, messageId, {
+            reply_markup: { inline_keyboard: [] },
+          })
+          .catch((editErr: unknown) => {
+            botLogger.error(
+              { err: editErr, chat_id: chatId, message_id: messageId },
+              "Failed to remove inline keyboard after dismiss",
+            );
+          });
+      })
+      .catch((err: unknown) => {
+        botLogger.error(
+          { err, chat_id: chatId, nudge_id: nudgeId, callback_query_id: callbackQueryId },
+          "Failed to dismiss nudge",
+        );
+
+        // Answer the callback query even on error to dismiss the spinner
+        bot
+          .answerCallbackQuery(callbackQueryId, { text: "Something went wrong." })
+          .catch((answerErr: unknown) => {
+            botLogger.warn(
+              { err: answerErr, callback_query_id: callbackQueryId },
+              "Failed to answer callback query on error",
+            );
+          });
+
+        void sendErrorReply(chatId);
+      });
+
+    return;
+  }
+
+  // For all other callbacks, forward to the orchestrator as before
   const body: Record<string, unknown> = {
     chat_id: chatId,
     callback_query_id: callbackQueryId,
