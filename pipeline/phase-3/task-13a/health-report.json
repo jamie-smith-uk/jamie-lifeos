@@ -1,0 +1,10 @@
+{
+  "task_id": "task-13a",
+  "files_checked": [
+    "packages/bot/src/index.ts",
+    "packages/bot/src/keyboard.ts"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 0,
+  "coverage_pct": null
+}

@@ -213,3 +213,10 @@
 ⚠ task-12b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-13a — Implement dismiss nudge callback parsing in bot
+
+**Files:** packages/bot/src/index.ts, packages/bot/src/keyboard.ts
+
+⚠ task-13a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
