@@ -101,3 +101,10 @@
 - **PII logging security**: Never log personally identifiable information like names, emails, or phone numbers. Use IDs instead (e.g., `athlete_id` instead of `athlete_name`) when logging for debugging purposes.
 
 ---
+## task-6a — Implement 90-day activity fetch from Strava API
+
+**Files:** packages/orchestrator/src/tools/strava.ts, packages/orchestrator/src/tools/__tests__/strava.test.ts
+
+⚠ task-6a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---

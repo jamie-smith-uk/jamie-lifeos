@@ -438,10 +438,6 @@ export async function fetch_90day_activities(params: {
     // Ensure we have a valid access token
     await ensureValidToken(athlete_id);
 
-    // Calculate 90 days ago
-    const ninetyDaysAgo = new Date();
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-
     const allActivities: StravaActivity[] = [];
     let offset = 0;
     const limit = 30; // 30 activities per page as per acceptance criteria
@@ -457,10 +453,10 @@ export async function fetch_90day_activities(params: {
         WHERE athlete_id = $1
           AND start_date >= NOW() - INTERVAL '90 days'
         ORDER BY start_date DESC
-        LIMIT $3 OFFSET $4
+        LIMIT $2 OFFSET $3
       `;
 
-      const result = await pool.query(query, [athlete_id, ninetyDaysAgo, limit, offset]);
+      const result = await pool.query(query, [athlete_id, limit, offset]);
 
       if ((result.rowCount ?? 0) === 0) {
         // No more activities to fetch
