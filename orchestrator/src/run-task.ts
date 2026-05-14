@@ -238,7 +238,7 @@ async function main(): Promise<void> {
   const opts = parseArgs();
 
   const scriptDir = path.dirname(new URL(import.meta.url).pathname);
-  const repoRoot = path.resolve(scriptDir, "../../..");
+  const repoRoot = path.resolve(scriptDir, "../..");
 
   loadEnv(repoRoot);
 

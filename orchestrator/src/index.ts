@@ -290,7 +290,7 @@ try {
   const { phase } = parseArgs();
   currentPhase = phase;
   const scriptDir = path.dirname(new URL(import.meta.url).pathname);
-  currentRepoRoot = path.resolve(scriptDir, "../../..");
+  currentRepoRoot = path.resolve(scriptDir, "../..");
 } catch {
   // ignore — will fail properly in main()
 }

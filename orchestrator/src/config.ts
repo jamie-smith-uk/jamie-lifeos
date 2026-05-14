@@ -38,7 +38,7 @@ export function loadEnv(dir: string): void {
 export function buildConfig(phase: string): PipelineConfig {
   // Derive REPO_ROOT from this file's location: orchestrator/src/config.ts → ../../
   const scriptDir = path.dirname(new URL(import.meta.url).pathname);
-  const repoRoot = path.resolve(scriptDir, "../../..");
+  const repoRoot = path.resolve(scriptDir, "../..");
 
   loadEnv(repoRoot);
 
