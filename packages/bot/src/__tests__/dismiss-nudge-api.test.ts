@@ -88,11 +88,15 @@ class FakeTelegramBot {
   }
 
   async editMessageReplyMarkup(
-    chatId: number,
-    messageId: number,
+    replyMarkup: unknown,
     options?: unknown,
   ): Promise<void> {
-    this.editMessageReplyMarkupCalls.push({ chatId, messageId, options });
+    const opts = options as { chat_id?: number; message_id?: number } | undefined;
+    this.editMessageReplyMarkupCalls.push({
+      chatId: opts?.chat_id ?? 0,
+      messageId: opts?.message_id ?? 0,
+      options: { reply_markup: replyMarkup },
+    });
   }
 
   triggerText(msg: TelegramMessage): void {

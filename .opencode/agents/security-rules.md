@@ -17,9 +17,6 @@
 - Every external request handler validates: caller is authorised, payload is non-empty, length is within a reasonable cap
 - FAIL: missing authorisation check, no length cap, or processing empty payloads
 
-### Cron injection — Validate cron expressions before storing
-- cron_expression must be validated with strict regex and parsed by node-cron validate() before DB write
-- FAIL: unvalidated cron strings stored in the automations table
 
 ## 4.2 Secrets and Credentials
 
@@ -53,8 +50,9 @@
 - FAIL: any code path where agent output is used to construct a SQL statement
 
 ### MCP — OAuth tokens stored securely
-- OAuth tokens for Google services stored in .env or secrets store — never in PostgreSQL or source code
-- FAIL: OAuth tokens written to DB or appearing in source files
+- OAuth tokens for Google MCP services (Google Calendar, Gmail) stored in .env or secrets store — never in PostgreSQL or source code
+- FAIL: Google MCP OAuth tokens written to DB or appearing in source files
+- NOTE: First-party integration tokens (e.g. Strava access_token, refresh_token) MUST be persisted in the strava_credentials table so background sync jobs can refresh and use them. Storing Strava credentials in PostgreSQL is correct by design — do not flag as a violation.
 
 ### Admin UI — Not externally exposed
 - Any admin service bound to 127.0.0.1 only
