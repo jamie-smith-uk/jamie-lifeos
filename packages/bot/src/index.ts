@@ -214,9 +214,10 @@ bot.on("callback_query", (query) => {
 
         // Remove the inline keyboard from the message
         bot
-          .editMessageReplyMarkup(chatId, messageId, {
-            reply_markup: { inline_keyboard: [] },
-          })
+          .editMessageReplyMarkup(
+            { inline_keyboard: [] },
+            { chat_id: chatId, message_id: messageId },
+          )
           .catch((editErr: unknown) => {
             botLogger.error(
               { err: editErr, chat_id: chatId, message_id: messageId },
