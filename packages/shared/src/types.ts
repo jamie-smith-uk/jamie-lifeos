@@ -90,6 +90,60 @@ export interface DeleteEventData {
 }
 
 // ---------------------------------------------------------------------------
+// Life events
+// ---------------------------------------------------------------------------
+
+/**
+ * A life event associated with a person (e.g., birthday, anniversary, wedding).
+ * Stored in the life_events table.
+ */
+export interface LifeEvent {
+  /** Auto-incremented row ID from the database. */
+  id: number;
+  /** Foreign key reference to the person this event belongs to. */
+  person_id: number;
+  /** Type of event (e.g., "birthday", "anniversary", "wedding"). */
+  event_type: string;
+  /** Date of the event (stored as DATE in database). */
+  event_date: Date;
+  /** Whether this event recurs annually. */
+  is_recurring: boolean;
+  /** Optional notes about the event. */
+  notes: string | null;
+  /** UTC timestamp when the row was inserted. */
+  created_at: Date;
+}
+
+// ---------------------------------------------------------------------------
+// Nudges
+// ---------------------------------------------------------------------------
+
+/**
+ * A nudge reminder associated with a life event or person.
+ * Stored in the nudges table.
+ */
+export interface Nudge {
+  /** Auto-incremented row ID from the database. */
+  id: number;
+  /** Foreign key reference to the person (can be null if deleted). */
+  person_id: number | null;
+  /** Foreign key reference to the life event (can be null if deleted). */
+  life_event_id: number | null;
+  /** The reminder message to send to the user. */
+  message: string;
+  /** UTC timestamp when the nudge should be triggered. */
+  trigger_at: Date;
+  /** Current status of the nudge: pending, sent, or dismissed. */
+  status: "pending" | "sent" | "dismissed";
+  /** UTC timestamp when the nudge was sent (null if not yet sent). */
+  sent_at: Date | null;
+  /** UTC timestamp when the nudge was dismissed (null if not dismissed). */
+  dismissed_at: Date | null;
+  /** UTC timestamp when the row was inserted. */
+  created_at: Date;
+}
+
+// ---------------------------------------------------------------------------
 // Callback query routing
 // ---------------------------------------------------------------------------
 

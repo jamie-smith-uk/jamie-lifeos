@@ -23,7 +23,9 @@ import type {
   DeleteEventData,
   IncomingCallback,
   IncomingMessage,
+  LifeEvent,
   MessageRole,
+  Nudge,
   OrchestratorReply,
   UpdateEventData,
 } from "../types.js";
@@ -265,5 +267,234 @@ describe("types.ts — HTTP payload interfaces", () => {
       show_confirmation_keyboard: true,
     };
     expect(reply.show_confirmation_keyboard).toBe(true);
+  });
+});
+
+describe("types.ts — LifeEvent interface", () => {
+  it("can construct a valid LifeEvent with all required fields", () => {
+    const event: LifeEvent = {
+      id: 1,
+      person_id: 5,
+      event_type: "birthday",
+      event_date: new Date("2026-05-15"),
+      is_recurring: true,
+      notes: "Turning 30",
+      created_at: new Date("2026-04-20T10:00:00Z"),
+    };
+
+    expect(event.id).toBe(1);
+    expect(event.person_id).toBe(5);
+    expect(event.event_type).toBe("birthday");
+    expect(event.event_date).toBeInstanceOf(Date);
+    expect(event.is_recurring).toBe(true);
+    expect(event.notes).toBe("Turning 30");
+    expect(event.created_at).toBeInstanceOf(Date);
+  });
+
+  it("LifeEvent.is_recurring can be false", () => {
+    const event: LifeEvent = {
+      id: 2,
+      person_id: 3,
+      event_type: "wedding",
+      event_date: new Date("2026-06-20"),
+      is_recurring: false,
+      notes: "Getting married",
+      created_at: new Date("2026-04-20T10:00:00Z"),
+    };
+
+    expect(event.is_recurring).toBe(false);
+  });
+
+  it("LifeEvent.notes can be null or undefined", () => {
+    const eventWithNull: LifeEvent = {
+      id: 3,
+      person_id: 4,
+      event_type: "anniversary",
+      event_date: new Date("2026-07-10"),
+      is_recurring: true,
+      notes: null,
+      created_at: new Date("2026-04-20T10:00:00Z"),
+    };
+
+    expect(eventWithNull.notes).toBeNull();
+  });
+
+  it("LifeEvent has all required fields", () => {
+    const event: LifeEvent = {
+      id: 99,
+      person_id: 88,
+      event_type: "graduation",
+      event_date: new Date("2026-08-01"),
+      is_recurring: false,
+      notes: "College graduation",
+      created_at: new Date("2026-04-20T10:00:00Z"),
+    };
+
+    expect(Object.keys(event)).toEqual(
+      expect.arrayContaining([
+        "id",
+        "person_id",
+        "event_type",
+        "event_date",
+        "is_recurring",
+        "notes",
+        "created_at",
+      ]),
+    );
+  });
+
+  it("LifeEvent event_type accepts various event types", () => {
+    const types = ["birthday", "anniversary", "wedding", "graduation", "promotion"];
+    types.forEach((eventType) => {
+      const event: LifeEvent = {
+        id: 1,
+        person_id: 1,
+        event_type: eventType,
+        event_date: new Date("2026-05-15"),
+        is_recurring: false,
+        notes: null,
+        created_at: new Date("2026-04-20T10:00:00Z"),
+      };
+      expect(event.event_type).toBe(eventType);
+    });
+  });
+});
+
+describe("types.ts — Nudge interface", () => {
+  it("can construct a valid Nudge with all required fields", () => {
+    const nudge: Nudge = {
+      id: 1,
+      person_id: 5,
+      life_event_id: 10,
+      message: "Remember to call Alice for her birthday!",
+      trigger_at: new Date("2026-05-15T09:00:00Z"),
+      status: "pending",
+      sent_at: null,
+      dismissed_at: null,
+      created_at: new Date("2026-04-20T10:00:00Z"),
+    };
+
+    expect(nudge.id).toBe(1);
+    expect(nudge.person_id).toBe(5);
+    expect(nudge.life_event_id).toBe(10);
+    expect(nudge.message).toBe("Remember to call Alice for her birthday!");
+    expect(nudge.trigger_at).toBeInstanceOf(Date);
+    expect(nudge.status).toBe("pending");
+    expect(nudge.sent_at).toBeNull();
+    expect(nudge.dismissed_at).toBeNull();
+    expect(nudge.created_at).toBeInstanceOf(Date);
+  });
+
+  it("Nudge.status can be 'sent'", () => {
+    const nudge: Nudge = {
+      id: 2,
+      person_id: 3,
+      life_event_id: 5,
+      message: "Reminder message",
+      trigger_at: new Date("2026-05-10T10:00:00Z"),
+      status: "sent",
+      sent_at: new Date("2026-05-10T10:00:00Z"),
+      dismissed_at: null,
+      created_at: new Date("2026-04-20T10:00:00Z"),
+    };
+
+    expect(nudge.status).toBe("sent");
+    expect(nudge.sent_at).toBeInstanceOf(Date);
+  });
+
+  it("Nudge.status can be 'dismissed'", () => {
+    const nudge: Nudge = {
+      id: 3,
+      person_id: 2,
+      life_event_id: 8,
+      message: "Dismissed reminder",
+      trigger_at: new Date("2026-05-05T10:00:00Z"),
+      status: "dismissed",
+      sent_at: new Date("2026-05-05T10:00:00Z"),
+      dismissed_at: new Date("2026-05-05T10:30:00Z"),
+      created_at: new Date("2026-04-20T10:00:00Z"),
+    };
+
+    expect(nudge.status).toBe("dismissed");
+    expect(nudge.dismissed_at).toBeInstanceOf(Date);
+  });
+
+  it("Nudge.person_id can be null", () => {
+    const nudge: Nudge = {
+      id: 4,
+      person_id: null,
+      life_event_id: 12,
+      message: "Generic nudge",
+      trigger_at: new Date("2026-05-20T10:00:00Z"),
+      status: "pending",
+      sent_at: null,
+      dismissed_at: null,
+      created_at: new Date("2026-04-20T10:00:00Z"),
+    };
+
+    expect(nudge.person_id).toBeNull();
+  });
+
+  it("Nudge.life_event_id can be null", () => {
+    const nudge: Nudge = {
+      id: 5,
+      person_id: 7,
+      life_event_id: null,
+      message: "General reminder",
+      trigger_at: new Date("2026-05-25T10:00:00Z"),
+      status: "pending",
+      sent_at: null,
+      dismissed_at: null,
+      created_at: new Date("2026-04-20T10:00:00Z"),
+    };
+
+    expect(nudge.life_event_id).toBeNull();
+  });
+
+  it("Nudge has all required fields", () => {
+    const nudge: Nudge = {
+      id: 99,
+      person_id: 88,
+      life_event_id: 77,
+      message: "Test nudge",
+      trigger_at: new Date("2026-06-01T10:00:00Z"),
+      status: "pending",
+      sent_at: null,
+      dismissed_at: null,
+      created_at: new Date("2026-04-20T10:00:00Z"),
+    };
+
+    expect(Object.keys(nudge)).toEqual(
+      expect.arrayContaining([
+        "id",
+        "person_id",
+        "life_event_id",
+        "message",
+        "trigger_at",
+        "status",
+        "sent_at",
+        "dismissed_at",
+        "created_at",
+      ]),
+    );
+  });
+
+  it("Nudge status values are constrained to pending, sent, dismissed", () => {
+    const validStatuses: Array<"pending" | "sent" | "dismissed"> = ["pending", "sent", "dismissed"];
+
+    validStatuses.forEach((status) => {
+      const nudge: Nudge = {
+        id: 1,
+        person_id: 1,
+        life_event_id: 1,
+        message: "Test",
+        trigger_at: new Date("2026-05-15T10:00:00Z"),
+        status,
+        sent_at: null,
+        dismissed_at: null,
+        created_at: new Date("2026-04-20T10:00:00Z"),
+      };
+      expect(nudge.status).toBe(status);
+    });
   });
 });
