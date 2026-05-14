@@ -44,3 +44,14 @@
 - **Idempotency**: The migration uses `CREATE TABLE IF NOT EXISTS` to ensure it can be run multiple times safely without errors.
 
 ---
+## task-3 — Add Strava environment variables
+
+**Files:** packages/shared/src/env.ts, packages/shared/vitest.config.ts, packages/shared/tsconfig.json, .env.example
+
+- **Environment variable validation pattern**: All required environment variables are added to the `REQUIRED_VARS` array in `packages/shared/src/env.ts` and validated for non-empty strings in the `loadEnv()` function
+- **Environment configuration structure**: The `EnvConfig` interface defines the TypeScript types for all environment variables, and the `loadEnv()` function handles validation and default value assignment
+- **Documentation standard**: All environment variables must be documented in `.env.example` with example values and grouped by service/functionality
+- **Strava OAuth2 configuration**: The three Strava environment variables (`STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `STRAVA_REDIRECT_URI`) are now required for the application to start and are validated at startup
+- **Testing approach**: Environment variable tests use module cache clearing (`vi.resetModules()`) and dynamic imports to test different environment configurations in isolation
+
+---
