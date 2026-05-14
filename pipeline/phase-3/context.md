@@ -235,3 +235,10 @@
 - **Structured logging for bot operations**: Use the `botLogger.info()` and `botLogger.error()` patterns with relevant context (chat_id, nudge_id, callback_query_id) for all bot operations to aid in debugging and monitoring.
 
 ---
+## task-14 — Add dismiss-nudge endpoint to orchestrator
+
+**Files:** packages/orchestrator/src/index.ts, packages/orchestrator/vitest.config.ts, packages/orchestrator/tsconfig.json, packages/orchestrator/src/__tests__/index.test.ts
+
+⚠ task-14: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
