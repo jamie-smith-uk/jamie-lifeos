@@ -140,3 +140,10 @@
 - **Parameterized queries**: All database operations use parameterized queries with `$1, $2, etc.` placeholders for security, following the established pattern in the codebase.
 
 ---
+## task-7b — Register Strava sync job in scheduler
+
+**Files:** packages/orchestrator/src/scheduler.ts, packages/orchestrator/src/__tests__/scheduler.test.ts
+
+⚠ task-7b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
