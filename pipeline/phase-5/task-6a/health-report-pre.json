@@ -1,0 +1,9 @@
+{
+  "task_id": "task-6a",
+  "files_checked": [
+    "packages/bot/src/index.ts"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 1.5,
+  "coverage_pct": null
+}

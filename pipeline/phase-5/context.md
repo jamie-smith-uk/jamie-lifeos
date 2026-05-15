@@ -66,3 +66,10 @@
 ⚠ task-5b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-6a — Implement voice message detection in bot handler
+
+**Files:** packages/bot/src/index.ts
+
+⚠ task-6a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---

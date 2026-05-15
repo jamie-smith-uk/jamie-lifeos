@@ -364,12 +364,21 @@ async function handleOAuthCallback(
     const code = url.searchParams.get("code");
     const state = url.searchParams.get("state");
 
-    // Validate required parameters
+    // Validate required parameters first (for proper error codes)
     const paramValidation = validateOAuthParams(code, state);
     if (!paramValidation.isValid) {
       oauthLogger.warn(paramValidation.error);
       res.writeHead(400, { "Content-Type": "text/plain" });
       res.end(paramValidation.error);
+      return;
+    }
+
+    // Authenticate the OAuth callback request
+    const oauthSecret = url.searchParams.get("secret");
+    if (oauthSecret !== env.OAUTH_CALLBACK_SECRET) {
+      oauthLogger.warn("Unauthorized OAuth callback attempt");
+      res.writeHead(401, { "Content-Type": "text/plain" });
+      res.end("Unauthorized");
       return;
     }
 
@@ -434,7 +443,29 @@ bot.onText(/.*/, (msg) => {
     return;
   }
 
+  // Validate text message length
+  const MAX_TEXT_LENGTH = 4096;
+  if (text.length > MAX_TEXT_LENGTH) {
+    botLogger.warn(
+      { chat_id: chatId, text_length: text.length },
+      "Text message exceeds maximum length",
+    );
+    void sendErrorReply(chatId);
+    return;
+  }
+
+  // Validate voice file size if present
   if (voice) {
+    const MAX_VOICE_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+    if (voice.file_size > MAX_VOICE_FILE_SIZE) {
+      botLogger.warn(
+        { chat_id: chatId, file_size: voice.file_size },
+        "Voice file exceeds maximum size",
+      );
+      void sendErrorReply(chatId);
+      return;
+    }
+
     botLogger.info(
       {
         chat_id: chatId,
@@ -453,19 +484,19 @@ bot.onText(/.*/, (msg) => {
 
   const body: Record<string, unknown> = {
     chat_id: chatId,
-    text,
+    text: `<untrusted>${text}</untrusted>`,
     message_id: messageId,
   };
   if (fromUsername !== undefined) {
-    body.from_username = fromUsername;
+    body.from_username = `<untrusted>${fromUsername}</untrusted>`;
   }
   if (voice) {
     body.voice = {
-      file_id: voice.file_id,
-      file_unique_id: voice.file_unique_id,
+      file_id: `<untrusted>${voice.file_id}</untrusted>`,
+      file_unique_id: `<untrusted>${voice.file_unique_id}</untrusted>`,
       file_size: voice.file_size,
       duration: voice.duration,
-      ...(voice.mime_type && { mime_type: voice.mime_type }),
+      ...(voice.mime_type && { mime_type: `<untrusted>${voice.mime_type}</untrusted>` }),
     };
   }
 
@@ -606,7 +637,7 @@ bot.on("callback_query", (query) => {
   const body: Record<string, unknown> = {
     chat_id: chatId,
     callback_query_id: callbackQueryId,
-    callback_data: callbackData,
+    callback_data: `<untrusted>${callbackData}</untrusted>`,
     message_id: messageId,
   };
 
