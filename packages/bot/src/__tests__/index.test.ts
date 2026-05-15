@@ -1513,3 +1513,1194 @@ describe("T-6b AC-4: Tests verify error message handling", () => {
     expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/something went wrong/i);
   });
 });
+
+// ---------------------------------------------------------------------------
+// T-7a AC-1: voice_yes callback handler deletes pending intent and sends message
+// ---------------------------------------------------------------------------
+
+describe("T-7a AC-1: voice_yes callback handler deletes pending intent and sends message", () => {
+  it("parses intent ID from voice_yes callback data", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    // Mock database to return a valid pending intent
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 123,
+              chat_id: 99999,
+              transcription: "test transcription",
+              telegram_file_id: "file_123",
+              expires_at: new Date(Date.now() + 3600000), // 1 hour from now
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-yes",
+      data: "voice_yes_123",
+      message: { chat: { id: 99999 }, message_id: 10 },
+    });
+    await flushPromises();
+
+    // Verify database query was called with the parsed intent ID
+    expect(fakePool.query).toHaveBeenCalledWith(
+      expect.stringContaining("SELECT id, chat_id, transcription"),
+      [123],
+    );
+  });
+
+  it("loads pending intent from database using intent ID", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 456,
+              chat_id: 99999,
+              transcription: "loaded transcription",
+              telegram_file_id: "file_456",
+              expires_at: new Date(Date.now() + 3600000),
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-yes-load",
+      data: "voice_yes_456",
+      message: { chat: { id: 99999 }, message_id: 11 },
+    });
+    await flushPromises();
+
+    // Verify the intent was loaded from database
+    expect(fakePool.query).toHaveBeenCalledWith(
+      expect.stringContaining("SELECT id, chat_id, transcription"),
+      [456],
+    );
+  });
+
+  it("checks if intent has expired before processing", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    const expiredDate = new Date(Date.now() - 1000); // 1 second ago
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 789,
+              chat_id: 99999,
+              transcription: "expired transcription",
+              telegram_file_id: "file_789",
+              expires_at: expiredDate,
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-yes-expired",
+      data: "voice_yes_789",
+      message: { chat: { id: 99999 }, message_id: 12 },
+    });
+    await flushPromises();
+
+    // Verify expiry message was sent
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/expired/i);
+  });
+
+  it("deletes expired intent from database", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    const expiredDate = new Date(Date.now() - 1000);
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 999,
+              chat_id: 99999,
+              transcription: "expired",
+              telegram_file_id: "file_999",
+              expires_at: expiredDate,
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-yes-delete",
+      data: "voice_yes_999",
+      message: { chat: { id: 99999 }, message_id: 13 },
+    });
+    await flushPromises();
+
+    // Verify DELETE query was called
+    expect(fakePool.query).toHaveBeenCalledWith(
+      expect.stringContaining("DELETE FROM pending_voice_intents"),
+      [999],
+    );
+  });
+
+  it("sends expiry message when intent is expired", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    const expiredDate = new Date(Date.now() - 1000);
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 111,
+              chat_id: 99999,
+              transcription: "expired",
+              telegram_file_id: "file_111",
+              expires_at: expiredDate,
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-yes-expiry-msg",
+      data: "voice_yes_111",
+      message: { chat: { id: 99999 }, message_id: 14 },
+    });
+    await flushPromises();
+
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toContain("expired");
+  });
+
+  it("forwards valid intent to orchestrator with [voice] prefix", async () => {
+    const calls: CapturedCall[] = [];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200 });
+    });
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 222,
+              chat_id: 99999,
+              transcription: "hello world",
+              telegram_file_id: "file_222",
+              expires_at: new Date(Date.now() + 3600000),
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-yes-forward",
+      data: "voice_yes_222",
+      message: { chat: { id: 99999 }, message_id: 15 },
+    });
+    await flushPromises();
+
+    // Verify orchestrator was called with [voice] prefix
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toContain("/callback");
+    const body = JSON.parse(calls[0]?.init.body as string);
+    expect(body.callback_data).toContain("[voice]");
+    expect(body.callback_data).toContain("hello world");
+  });
+
+  it("handles intent not found in database gracefully", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({ rowCount: 0, rows: [] });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-yes-notfound",
+      data: "voice_yes_333",
+      message: { chat: { id: 99999 }, message_id: 16 },
+    });
+    await flushPromises();
+
+    // Verify error reply was sent
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/something went wrong/i);
+  });
+
+  it("rejects invalid intent ID (zero or negative)", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-yes-invalid",
+      data: "voice_yes_0",
+      message: { chat: { id: 99999 }, message_id: 17 },
+    });
+    await flushPromises();
+
+    // Verify no database query was made for invalid ID
+    expect(fakePool.query).not.toHaveBeenCalled();
+  });
+
+  it("rejects intent ID exceeding max 32-bit signed integer", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-yes-toolarge",
+      data: "voice_yes_2147483648", // Max 32-bit + 1
+      message: { chat: { id: 99999 }, message_id: 18 },
+    });
+    await flushPromises();
+
+    // Verify no database query was made for out-of-range ID
+    expect(fakePool.query).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// T-7b AC-1: voice_no callback handler deletes pending intent and sends cancellation message
+// ---------------------------------------------------------------------------
+
+describe("T-7b AC-1: voice_no callback handler deletes pending intent and sends cancellation message", () => {
+  it("parses intent ID from voice_no callback data", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 500,
+              chat_id: 99999,
+              transcription: "test",
+              telegram_file_id: "file_500",
+              expires_at: new Date(Date.now() + 3600000),
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-no",
+      data: "voice_no_500",
+      message: { chat: { id: 99999 }, message_id: 20 },
+    });
+    await flushPromises();
+
+    // Verify database query was called with the parsed intent ID
+    expect(fakePool.query).toHaveBeenCalledWith(
+      expect.stringContaining("SELECT id, chat_id, transcription"),
+      [500],
+    );
+  });
+
+  it("loads pending intent from database for voice_no", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 501,
+              chat_id: 99999,
+              transcription: "cancel this",
+              telegram_file_id: "file_501",
+              expires_at: new Date(Date.now() + 3600000),
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-no-load",
+      data: "voice_no_501",
+      message: { chat: { id: 99999 }, message_id: 21 },
+    });
+    await flushPromises();
+
+    expect(fakePool.query).toHaveBeenCalledWith(
+      expect.stringContaining("SELECT id, chat_id, transcription"),
+      [501],
+    );
+  });
+
+  it("deletes pending intent when voice_no is clicked", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 502,
+              chat_id: 99999,
+              transcription: "delete me",
+              telegram_file_id: "file_502",
+              expires_at: new Date(Date.now() + 3600000),
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-no-delete",
+      data: "voice_no_502",
+      message: { chat: { id: 99999 }, message_id: 22 },
+    });
+    await flushPromises();
+
+    // Verify DELETE query was called
+    expect(fakePool.query).toHaveBeenCalledWith(
+      expect.stringContaining("DELETE FROM pending_voice_intents"),
+      [502],
+    );
+  });
+
+  it("sends cancellation message when voice_no is clicked", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 503,
+              chat_id: 99999,
+              transcription: "cancel",
+              telegram_file_id: "file_503",
+              expires_at: new Date(Date.now() + 3600000),
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-no-msg",
+      data: "voice_no_503",
+      message: { chat: { id: 99999 }, message_id: 23 },
+    });
+    await flushPromises();
+
+    // Verify cancellation message was sent
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/cancel|discard|dismiss/i);
+  });
+
+  it("checks expiration for voice_no intent", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    const expiredDate = new Date(Date.now() - 1000);
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 504,
+              chat_id: 99999,
+              transcription: "expired",
+              telegram_file_id: "file_504",
+              expires_at: expiredDate,
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-no-expired",
+      data: "voice_no_504",
+      message: { chat: { id: 99999 }, message_id: 24 },
+    });
+    await flushPromises();
+
+    // Verify expiry message was sent
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/expired/i);
+  });
+
+  it("handles voice_no intent not found gracefully", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({ rowCount: 0, rows: [] });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-no-notfound",
+      data: "voice_no_505",
+      message: { chat: { id: 99999 }, message_id: 25 },
+    });
+    await flushPromises();
+
+    // Verify error reply was sent
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/something went wrong/i);
+  });
+
+  it("rejects invalid voice_no intent ID", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-no-invalid",
+      data: "voice_no_0",
+      message: { chat: { id: 99999 }, message_id: 26 },
+    });
+    await flushPromises();
+
+    // Verify no database query was made
+    expect(fakePool.query).not.toHaveBeenCalled();
+  });
+
+  it("does not forward voice_no to orchestrator", async () => {
+    const calls: CapturedCall[] = [];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200 });
+    });
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 506,
+              chat_id: 99999,
+              transcription: "test",
+              telegram_file_id: "file_506",
+              expires_at: new Date(Date.now() + 3600000),
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-no-no-forward",
+      data: "voice_no_506",
+      message: { chat: { id: 99999 }, message_id: 27 },
+    });
+    await flushPromises();
+
+    // Verify no /callback POST was made to orchestrator
+    const callbackCalls = calls.filter((c) => c.url.includes("/callback"));
+    expect(callbackCalls).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// T-7b AC-2: Both handlers properly parse intent ID from callback data
+// ---------------------------------------------------------------------------
+
+describe("T-7b AC-2: Both handlers properly parse intent ID from callback data", () => {
+  it("voice_yes parses single-digit intent ID", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 5,
+              chat_id: 99999,
+              transcription: "test",
+              telegram_file_id: "file_5",
+              expires_at: new Date(Date.now() + 3600000),
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-single-digit",
+      data: "voice_yes_5",
+      message: { chat: { id: 99999 }, message_id: 30 },
+    });
+    await flushPromises();
+
+    expect(fakePool.query).toHaveBeenCalledWith(
+      expect.stringContaining("SELECT id, chat_id, transcription"),
+      [5],
+    );
+  });
+
+  it("voice_yes parses large intent ID", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 2147483647,
+              chat_id: 99999,
+              transcription: "test",
+              telegram_file_id: "file_max",
+              expires_at: new Date(Date.now() + 3600000),
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-large-id",
+      data: "voice_yes_2147483647",
+      message: { chat: { id: 99999 }, message_id: 31 },
+    });
+    await flushPromises();
+
+    expect(fakePool.query).toHaveBeenCalledWith(
+      expect.stringContaining("SELECT id, chat_id, transcription"),
+      [2147483647],
+    );
+  });
+
+  it("voice_no parses single-digit intent ID", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 7,
+              chat_id: 99999,
+              transcription: "test",
+              telegram_file_id: "file_7",
+              expires_at: new Date(Date.now() + 3600000),
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-no-single",
+      data: "voice_no_7",
+      message: { chat: { id: 99999 }, message_id: 32 },
+    });
+    await flushPromises();
+
+    expect(fakePool.query).toHaveBeenCalledWith(
+      expect.stringContaining("SELECT id, chat_id, transcription"),
+      [7],
+    );
+  });
+
+  it("voice_no parses large intent ID", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 2147483647,
+              chat_id: 99999,
+              transcription: "test",
+              telegram_file_id: "file_max",
+              expires_at: new Date(Date.now() + 3600000),
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-no-large",
+      data: "voice_no_2147483647",
+      message: { chat: { id: 99999 }, message_id: 33 },
+    });
+    await flushPromises();
+
+    expect(fakePool.query).toHaveBeenCalledWith(
+      expect.stringContaining("SELECT id, chat_id, transcription"),
+      [2147483647],
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// T-7b AC-3: Tests verify intent loading and expiration checking
+// ---------------------------------------------------------------------------
+
+describe("T-7b AC-3: Tests verify intent loading and expiration checking", () => {
+  it("loads intent with all required fields from database", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 600,
+              chat_id: 99999,
+              transcription: "full transcription",
+              telegram_file_id: "file_600",
+              expires_at: new Date(Date.now() + 3600000),
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-full-load",
+      data: "voice_yes_600",
+      message: { chat: { id: 99999 }, message_id: 40 },
+    });
+    await flushPromises();
+
+    // Verify the query includes all required fields
+    expect(fakePool.query).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "id, chat_id, transcription, telegram_file_id, expires_at, created_at",
+      ),
+      [600],
+    );
+  });
+
+  it("compares expires_at with current time to check expiration", async () => {
+    const calls: CapturedCall[] = [];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200 });
+    });
+
+    const futureDate = new Date(Date.now() + 3600000); // 1 hour from now
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 601,
+              chat_id: 99999,
+              transcription: "future",
+              telegram_file_id: "file_601",
+              expires_at: futureDate,
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-future-check",
+      data: "voice_yes_601",
+      message: { chat: { id: 99999 }, message_id: 41 },
+    });
+    await flushPromises();
+
+    // Verify intent was not treated as expired
+    const callbackCalls = calls.filter((c) => c.url.includes("/callback"));
+    expect(callbackCalls.length).toBeGreaterThan(0);
+  });
+
+  it("treats intent as expired when expires_at <= now", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    const pastDate = new Date(Date.now() - 1); // Just now or in the past
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 602,
+              chat_id: 99999,
+              transcription: "past",
+              telegram_file_id: "file_602",
+              expires_at: pastDate,
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-past-check",
+      data: "voice_yes_602",
+      message: { chat: { id: 99999 }, message_id: 42 },
+    });
+    await flushPromises();
+
+    // Verify expiry message was sent
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/expired/i);
+  });
+
+  it("does not forward expired intent to orchestrator", async () => {
+    const calls: CapturedCall[] = [];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200 });
+    });
+
+    const pastDate = new Date(Date.now() - 1000);
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 603,
+              chat_id: 99999,
+              transcription: "expired",
+              telegram_file_id: "file_603",
+              expires_at: pastDate,
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-no-forward-expired",
+      data: "voice_yes_603",
+      message: { chat: { id: 99999 }, message_id: 43 },
+    });
+    await flushPromises();
+
+    // Verify no /callback POST was made to orchestrator
+    const callbackCalls = calls.filter((c) => c.url.includes("/callback"));
+    expect(callbackCalls).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// T-7b AC-4: Tests verify message sending and intent deletion
+// ---------------------------------------------------------------------------
+
+describe("T-7b AC-4: Tests verify message sending and intent deletion", () => {
+  it("sends message to correct chat_id after voice_yes", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 700,
+              chat_id: 99999,
+              transcription: "test",
+              telegram_file_id: "file_700",
+              expires_at: new Date(Date.now() + 3600000),
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-msg-chat",
+      data: "voice_yes_700",
+      message: { chat: { id: 99999 }, message_id: 50 },
+    });
+    await flushPromises();
+
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.chatId).toBe(99999);
+  });
+
+  it("sends message to correct chat_id after voice_no", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 701,
+              chat_id: 99999,
+              transcription: "test",
+              telegram_file_id: "file_701",
+              expires_at: new Date(Date.now() + 3600000),
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-voice-no-chat",
+      data: "voice_no_701",
+      message: { chat: { id: 99999 }, message_id: 51 },
+    });
+    await flushPromises();
+
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.chatId).toBe(99999);
+  });
+
+  it("deletes intent from database after voice_yes", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 702,
+              chat_id: 99999,
+              transcription: "test",
+              telegram_file_id: "file_702",
+              expires_at: new Date(Date.now() + 3600000),
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-delete-yes",
+      data: "voice_yes_702",
+      message: { chat: { id: 99999 }, message_id: 52 },
+    });
+    await flushPromises();
+
+    // Verify DELETE was called
+    expect(fakePool.query).toHaveBeenCalledWith(
+      expect.stringContaining("DELETE FROM pending_voice_intents"),
+      [702],
+    );
+  });
+
+  it("deletes intent from database after voice_no", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 703,
+              chat_id: 99999,
+              transcription: "test",
+              telegram_file_id: "file_703",
+              expires_at: new Date(Date.now() + 3600000),
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-delete-no",
+      data: "voice_no_703",
+      message: { chat: { id: 99999 }, message_id: 53 },
+    });
+    await flushPromises();
+
+    // Verify DELETE was called
+    expect(fakePool.query).toHaveBeenCalledWith(
+      expect.stringContaining("DELETE FROM pending_voice_intents"),
+      [703],
+    );
+  });
+
+  it("sends expiry message and deletes intent when expired", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    const pastDate = new Date(Date.now() - 1000);
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 704,
+              chat_id: 99999,
+              transcription: "expired",
+              telegram_file_id: "file_704",
+              expires_at: pastDate,
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.resolve({ rowCount: 1 });
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-expire-delete",
+      data: "voice_yes_704",
+      message: { chat: { id: 99999 }, message_id: 54 },
+    });
+    await flushPromises();
+
+    // Verify both message was sent and DELETE was called
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(fakePool.query).toHaveBeenCalledWith(
+      expect.stringContaining("DELETE FROM pending_voice_intents"),
+      [704],
+    );
+  });
+
+  it("handles database error during intent deletion gracefully", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.resolve({
+          rowCount: 1,
+          rows: [
+            {
+              id: 705,
+              chat_id: 99999,
+              transcription: "test",
+              telegram_file_id: "file_705",
+              expires_at: new Date(Date.now() + 3600000),
+              created_at: new Date(),
+            },
+          ],
+        });
+      }
+      if (query.includes("DELETE FROM pending_voice_intents")) {
+        return Promise.reject(new Error("Database error"));
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-db-error",
+      data: "voice_yes_705",
+      message: { chat: { id: 99999 }, message_id: 55 },
+    });
+    await flushPromises();
+
+    // Verify error reply was sent
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/something went wrong/i);
+  });
+
+  it("handles database error during intent loading gracefully", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    fakePool.query.mockImplementation((query: string, _params: unknown[]) => {
+      if (query.includes("SELECT id, chat_id, transcription")) {
+        return Promise.reject(new Error("Database connection failed"));
+      }
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerEvent("callback_query", {
+      id: "cbq-load-error",
+      data: "voice_yes_706",
+      message: { chat: { id: 99999 }, message_id: 56 },
+    });
+    await flushPromises();
+
+    // Verify error reply was sent
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/something went wrong/i);
+  });
+});

@@ -1,0 +1,66 @@
+=== pnpm test ===
+
+> @lifeos/bot@0.0.1 test /home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot
+> vitest run --config vitest.config.ts
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot[39m
+
+ [31m❯[39m src/__tests__/voice-yes-callback.test.ts [2m([22m[2m17 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 634[2mms[22m[39m
+     [32m✓[39m extracts intent ID from callback_data format 'voice_yes_<id>'[32m 90[2mms[22m[39m
+     [32m✓[39m queries database for pending_voice_intents table by ID[32m 35[2mms[22m[39m
+     [32m✓[39m handles callback_data with different intent IDs correctly[32m 34[2mms[22m[39m
+     [32m✓[39m detects expired intent when expires_at is in the past[32m 34[2mms[22m[39m
+     [32m✓[39m sends expiry message when intent has expired[32m 34[2mms[22m[39m
+     [32m✓[39m does not forward to orchestrator when intent is expired[32m 33[2mms[22m[39m
+     [32m✓[39m compares expires_at with current time to determine expiry[32m 33[2mms[22m[39m
+     [32m✓[39m deletes expired intent from database[32m 33[2mms[22m[39m
+     [32m✓[39m executes DELETE query with correct intent ID[32m 34[2mms[22m[39m
+     [32m✓[39m stops processing after deleting expired intent[32m 33[2mms[22m[39m
+     [32m✓[39m does not forward transcription when intent is deleted[32m 33[2mms[22m[39m
+     [32m✓[39m forwards valid intent to orchestrator /callback endpoint[32m 33[2mms[22m[39m
+     [32m✓[39m prefixes transcription with [voice] when forwarding to orchestrator[32m 34[2mms[22m[39m
+     [32m✓[39m includes full transcription text after [voice] prefix[32m 33[2mms[22m[39m
+     [32m✓[39m forwards with correct chat_id and callback_query_id[32m 34[2mms[22m[39m
+[31m     [31m×[31m does not delete valid intent from database[39m[32m 40[2mms[22m[39m
+     [32m✓[39m handles transcription with special characters correctly[32m 32[2mms[22m[39m
+ [32m✓[39m src/__tests__/dismiss-nudge-api.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 1268[2mms[22m[39m
+ [32m✓[39m src/__tests__/dismiss-nudge.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 868[2mms[22m[39m
+ [32m✓[39m src/__tests__/voice-message.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 507[2mms[22m[39m
+ [32m✓[39m src/__tests__/keyboard.test.ts [2m([22m[2m62 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m96 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 2564[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m5 passed[39m[22m[90m (6)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m241 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (243)[39m
+[2m   Start at [22m 10:53:14
+[2m   Duration [22m 3.04s[2m (transform 525ms, setup 0ms, import 708ms, tests 5.86s, environment 1ms)[22m
+
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/voice-yes-callback.test.ts,title=src/__tests__/voice-yes-callback.test.ts > AC-4%3A Handler forwards valid transcription to orchestrator with [voice] prefix > does not delete valid intent from database,line=846,column=29::AssertionError: expected true to be false // Object.is equality%0A%0A- Expected%0A+ Received%0A%0A- false%0A+ true%0A%0A ❯ src/__tests__/voice-yes-callback.test.ts:846:29%0A%0A
+/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/bot@0.0.1 test: `vitest run --config vitest.config.ts`
+Exit status 1
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/voice-yes-callback.test.ts[2m > [22mAC-4: Handler forwards valid transcription to orchestrator with [voice] prefix[2m > [22mdoes not delete valid intent from database
+[31m[1mAssertionError[22m: expected true to be false // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+[36m [2m❯[22m src/__tests__/voice-yes-callback.test.ts:[2m846:29[22m[39m
+    [90m844|[39m
+    [90m845|[39m     [90m// Should NOT delete valid intent[39m
+    [90m846|[39m     [34mexpect[39m(deleteWasCalled)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m   |[39m                             [31m^[39m
+    [90m847|[39m   })[33m;[39m
+    [90m848|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+

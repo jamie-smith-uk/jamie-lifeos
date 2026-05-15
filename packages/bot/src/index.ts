@@ -587,9 +587,139 @@ bot.onText(/.*/, (msg) => {
 });
 
 // ---------------------------------------------------------------------------
+// Helper: PendingVoiceIntent type definition
+// ---------------------------------------------------------------------------
+
+interface PendingVoiceIntent {
+  id: number;
+  chat_id: number;
+  transcription: string;
+  telegram_file_id: string;
+  expires_at: Date;
+  created_at: Date;
+}
+
+// ---------------------------------------------------------------------------
+// Helper: handle valid voice intent processing
+// ---------------------------------------------------------------------------
+
+async function handleValidVoiceIntent(
+  intent: { transcription: string },
+  chatId: number,
+  messageId: number,
+  callbackQueryId: string,
+  intentId: number,
+): Promise<void> {
+  const prefixedTranscription = `[voice] <untrusted>${intent.transcription}</untrusted>`;
+  const forwardBody = {
+    chat_id: chatId,
+    callback_query_id: callbackQueryId,
+    callback_data: prefixedTranscription,
+    message_id: messageId,
+  };
+
+  try {
+    // Forward to orchestrator
+    const orchestratorReply = await postToOrchestrator("/callback", forwardBody);
+
+    // Delete the intent after successful processing
+    const deleteQuery = "DELETE FROM pending_voice_intents WHERE id = $1";
+    await pool.query(deleteQuery, [intentId]);
+
+    // Answer the callback query to dismiss the loading spinner
+    void answerCallbackQuerySafely(callbackQueryId);
+
+    // Send orchestrator reply if it has text, otherwise send confirmation
+    const replyText = typeof orchestratorReply.text === "string" ? orchestratorReply.text : "";
+    if (replyText) {
+      void bot.sendMessage(chatId, replyText).catch((sendErr: unknown) => {
+        botLogger.error({ err: sendErr, chat_id: chatId }, "Failed to send orchestrator reply");
+      });
+    } else {
+      void bot.sendMessage(chatId, "Voice message processed.").catch((sendErr: unknown) => {
+        botLogger.error({ err: sendErr, chat_id: chatId }, "Failed to send confirmation message");
+      });
+    }
+  } catch (err: unknown) {
+    botLogger.error(
+      { err, chat_id: chatId, intent_id: intentId, callback_query_id: callbackQueryId },
+      "Failed to process voice intent",
+    );
+    // Answer the callback query even on error to dismiss the spinner
+    void answerCallbackQuerySafely(callbackQueryId, "Something went wrong.");
+    void sendErrorReply(chatId);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Helper: handle expired voice intent
+// ---------------------------------------------------------------------------
+
+function handleExpiredVoiceIntent(chatId: number, intentId: number, callbackQueryId: string): void {
+  botLogger.info(
+    { chat_id: chatId, intent_id: intentId },
+    "Voice intent has expired, deleting and sending expiry message",
+  );
+
+  const deleteQuery = "DELETE FROM pending_voice_intents WHERE id = $1";
+  pool
+    .query(deleteQuery, [intentId])
+    .then(() => {
+      // Send expiry message to user
+      void bot
+        .sendMessage(
+          chatId,
+          "This voice message confirmation has expired. Please send your voice message again.",
+        )
+        .catch((sendErr: unknown) => {
+          botLogger.error({ err: sendErr, chat_id: chatId }, "Failed to send expiry message");
+        });
+
+      // Answer the callback query
+      void answerCallbackQuerySafely(callbackQueryId);
+    })
+    .catch((deleteErr: unknown) => {
+      botLogger.error(
+        { err: deleteErr, chat_id: chatId, intent_id: intentId },
+        "Failed to delete expired voice intent",
+      );
+      void answerCallbackQuerySafely(callbackQueryId, "Something went wrong.");
+      void sendErrorReply(chatId);
+    });
+}
+
+// ---------------------------------------------------------------------------
+// Helper: handle voice_no callback (delete intent and send cancellation)
+// ---------------------------------------------------------------------------
+
+function handleVoiceNoIntent(chatId: number, intentId: number, callbackQueryId: string): void {
+  const deleteQuery = "DELETE FROM pending_voice_intents WHERE id = $1";
+  pool
+    .query(deleteQuery, [intentId])
+    .then(() => {
+      // Send cancellation message to user
+      void bot.sendMessage(chatId, "Voice message cancelled.").catch((sendErr: unknown) => {
+        botLogger.error({ err: sendErr, chat_id: chatId }, "Failed to send cancellation message");
+      });
+
+      // Answer the callback query
+      void answerCallbackQuerySafely(callbackQueryId);
+    })
+    .catch((deleteErr: unknown) => {
+      botLogger.error(
+        { err: deleteErr, chat_id: chatId, intent_id: intentId },
+        "Failed to delete voice intent",
+      );
+      void answerCallbackQuerySafely(callbackQueryId, "Something went wrong.");
+      void sendErrorReply(chatId);
+    });
+}
+
+// ---------------------------------------------------------------------------
 // Callback query handler
 // ---------------------------------------------------------------------------
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: callback handler must handle multiple callback types
 bot.on("callback_query", (query) => {
   const chatId = query.message?.chat.id;
   if (chatId === undefined) {
@@ -704,14 +834,70 @@ bot.on("callback_query", (query) => {
       WHERE id = $1
     `;
 
-    interface PendingVoiceIntent {
-      id: number;
-      chat_id: number;
-      transcription: string;
-      telegram_file_id: string;
-      expires_at: Date;
-      created_at: Date;
+    pool
+      .query(selectQuery, [intentId])
+      .then((result) => {
+        if (result.rowCount === 0) {
+          botLogger.warn(
+            { chat_id: chatId, intent_id: intentId },
+            "Voice intent not found in database",
+          );
+          void answerCallbackQuerySafely(callbackQueryId);
+          void sendErrorReply(chatId);
+          return;
+        }
+
+        const intent = result.rows[0] as PendingVoiceIntent;
+
+        // Check if intent is expired
+        const now = new Date();
+        const isExpired = intent.expires_at <= now;
+
+        if (isExpired) {
+          handleExpiredVoiceIntent(chatId, intentId, callbackQueryId);
+          return;
+        }
+
+        // Intent is valid, forward to orchestrator with [voice] prefix
+        void handleValidVoiceIntent(intent, chatId, messageId, callbackQueryId, intentId);
+      })
+      .catch((err: unknown) => {
+        botLogger.error(
+          { err, chat_id: chatId, intent_id: intentId, callback_query_id: callbackQueryId },
+          "Failed to query voice intent from database",
+        );
+        // Answer the callback query even on error to dismiss the spinner
+        void answerCallbackQuerySafely(callbackQueryId, "Something went wrong.");
+        void sendErrorReply(chatId);
+      });
+
+    return;
+  }
+
+  // Check if this is a voice_no callback (format: "voice_no_123")
+  const voiceNoMatch = callbackData.match(/^voice_no_(\d+)$/);
+  if (voiceNoMatch) {
+    const intentId = parseInt(voiceNoMatch[1], 10);
+
+    // Validate intent ID bounds
+    const MAX_INTENT_ID = 2147483647; // Max 32-bit signed integer
+    if (intentId <= 0 || intentId > MAX_INTENT_ID) {
+      botLogger.warn({ chat_id: chatId, intent_id: intentId }, "Invalid intent ID");
+      void answerCallbackQuerySafely(callbackQueryId, "Invalid request");
+      return;
     }
+
+    botLogger.info(
+      { chat_id: chatId, intent_id: intentId, callback_query_id: callbackQueryId },
+      "Processing voice_no callback",
+    );
+
+    // Query database for the pending voice intent
+    const selectQuery = `
+      SELECT id, chat_id, transcription, telegram_file_id, expires_at, created_at
+      FROM pending_voice_intents
+      WHERE id = $1
+    `;
 
     pool
       .query(selectQuery, [intentId])
@@ -733,68 +919,12 @@ bot.on("callback_query", (query) => {
         const isExpired = intent.expires_at <= now;
 
         if (isExpired) {
-          botLogger.info(
-            { chat_id: chatId, intent_id: intentId, expires_at: intent.expires_at },
-            "Voice intent has expired, deleting and sending expiry message",
-          );
-
-          // Delete expired intent
-          const deleteQuery = "DELETE FROM pending_voice_intents WHERE id = $1";
-          pool
-            .query(deleteQuery, [intentId])
-            .then(() => {
-              // Send expiry message to user
-              void bot
-                .sendMessage(
-                  chatId,
-                  "This voice message confirmation has expired. Please send your voice message again.",
-                )
-                .catch((sendErr: unknown) => {
-                  botLogger.error(
-                    { err: sendErr, chat_id: chatId },
-                    "Failed to send expiry message",
-                  );
-                });
-
-              // Answer the callback query
-              void answerCallbackQuerySafely(callbackQueryId);
-            })
-            .catch((deleteErr: unknown) => {
-              botLogger.error(
-                { err: deleteErr, chat_id: chatId, intent_id: intentId },
-                "Failed to delete expired voice intent",
-              );
-              void answerCallbackQuerySafely(callbackQueryId, "Something went wrong.");
-              void sendErrorReply(chatId);
-            });
-
+          handleExpiredVoiceIntent(chatId, intentId, callbackQueryId);
           return;
         }
 
-        // Intent is valid, forward to orchestrator with [voice] prefix
-        const prefixedTranscription = `[voice] <untrusted>${intent.transcription}</untrusted>`;
-        const forwardBody = {
-          chat_id: chatId,
-          callback_query_id: callbackQueryId,
-          callback_data: prefixedTranscription,
-          message_id: messageId,
-        };
-
-        postToOrchestrator("/callback", forwardBody)
-          .then((orchestratorReply) => {
-            // Answer the callback query to dismiss the loading spinner
-            void answerCallbackQuerySafely(callbackQueryId);
-            void sendOrchestratorReply(chatId, orchestratorReply);
-          })
-          .catch((err: unknown) => {
-            botLogger.error(
-              { err, chat_id: chatId, intent_id: intentId, callback_query_id: callbackQueryId },
-              "Failed to forward voice intent to orchestrator",
-            );
-            // Answer the callback query even on error to dismiss the spinner
-            void answerCallbackQuerySafely(callbackQueryId, "Something went wrong.");
-            void sendErrorReply(chatId);
-          });
+        // Intent is valid, delete it and send cancellation message
+        handleVoiceNoIntent(chatId, intentId, callbackQueryId);
       })
       .catch((err: unknown) => {
         botLogger.error(

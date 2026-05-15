@@ -1,0 +1,179 @@
+=== pnpm test ===
+
+> @lifeos/bot@0.0.1 test /home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot
+> vitest run --config vitest.config.ts
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot[39m
+
+ [32m✓[39m src/__tests__/dismiss-nudge.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 888[2mms[22m[39m
+ [32m✓[39m src/__tests__/dismiss-nudge-api.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 1195[2mms[22m[39m
+ [32m✓[39m src/__tests__/voice-yes-callback.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 610[2mms[22m[39m
+ [32m✓[39m src/__tests__/voice-message.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 508[2mms[22m[39m
+ [32m✓[39m src/__tests__/keyboard.test.ts [2m([22m[2m62 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [31m❯[39m src/__tests__/index.test.ts [2m([22m[2m96 tests[22m[2m | [22m[31m2 failed[39m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 2579[2mms[22m[39m
+     [32m✓[39m imports without throwing[32m 21[2mms[22m[39m
+     [32m✓[39m constructs TelegramBot with the configured token[32m 5[2mms[22m[39m
+     [32m✓[39m starts in polling mode when BOT_MODE=polling[32m 5[2mms[22m[39m
+     [2m[90m↓[39m[22m starts in webhook mode when BOT_MODE=webhook
+     [32m✓[39m registers at least one onText handler for all messages[32m 4[2mms[22m[39m
+     [32m✓[39m registers a callback_query event handler[32m 4[2mms[22m[39m
+     [32m✓[39m calls fetch with the /message path[32m 53[2mms[22m[39m
+     [32m✓[39m uses the POST method[32m 33[2mms[22m[39m
+     [32m✓[39m sends application/json content-type[32m 33[2mms[22m[39m
+     [32m✓[39m includes chat_id, text, message_id and from_username in the body[32m 34[2mms[22m[39m
+     [32m✓[39m omits from_username when message has no from field[32m 34[2mms[22m[39m
+     [32m✓[39m calls fetch with the /callback path[32m 34[2mms[22m[39m
+     [32m✓[39m uses the POST method for /callback[32m 34[2mms[22m[39m
+     [32m✓[39m includes chat_id, callback_query_id, callback_data, message_id in body[32m 34[2mms[22m[39m
+     [32m✓[39m ignores callback_query with no associated message/chat (no fetch call)[32m 33[2mms[22m[39m
+     [32m✓[39m sends error reply when fetch throws on /message[32m 34[2mms[22m[39m
+     [32m✓[39m error reply text contains 'Something went wrong' for /message[32m 33[2mms[22m[39m
+     [32m✓[39m sends error reply when orchestrator returns HTTP 500 on /message[32m 34[2mms[22m[39m
+     [32m✓[39m sends error reply when fetch throws on /callback[32m 33[2mms[22m[39m
+     [32m✓[39m error reply text contains 'Something went wrong' for /callback[32m 33[2mms[22m[39m
+     [32m✓[39m sends error reply when orchestrator returns HTTP 502 on /callback[32m 34[2mms[22m[39m
+     [32m✓[39m does not crash if sendMessage itself throws during error reply[32m 33[2mms[22m[39m
+     [32m✓[39m logs an error when orchestrator call fails for /message[32m 33[2mms[22m[39m
+     [32m✓[39m logs an error when orchestrator call fails for /callback[32m 33[2mms[22m[39m
+     [32m✓[39m returns true when chatId matches TELEGRAM_ALLOWED_CHAT_ID[32m 2[2mms[22m[39m
+     [32m✓[39m returns false when chatId does not match TELEGRAM_ALLOWED_CHAT_ID[32m 2[2mms[22m[39m
+     [32m✓[39m returns false for chat_id 0[32m 2[2mms[22m[39m
+     [32m✓[39m returns false for negative chat_id[32m 2[2mms[22m[39m
+     [32m✓[39m forwards text message from allowed chat_id to orchestrator[32m 32[2mms[22m[39m
+     [32m✓[39m forwards callback_query from allowed chat_id to orchestrator[32m 33[2mms[22m[39m
+     [32m✓[39m does not call fetch for a text message from an unknown chat_id[32m 33[2mms[22m[39m
+     [32m✓[39m does not send a reply to an unauthorised text sender[32m 32[2mms[22m[39m
+     [32m✓[39m does not call fetch for a callback_query from an unknown chat_id[32m 33[2mms[22m[39m
+     [32m✓[39m does not send a reply to an unauthorised callback_query sender[32m 33[2mms[22m[39m
+     [32m✓[39m emits a WARN log with the offending chat_id for a text message[32m 33[2mms[22m[39m
+     [32m✓[39m emits a WARN log with the offending chat_id for a callback_query[32m 33[2mms[22m[39m
+     [32m✓[39m accepts a valid authorization code parameter[32m 29[2mms[22m[39m
+     [32m✓[39m validates state token against database before processing authorization code[32m 5[2mms[22m[39m
+     [32m✓[39m rejects callback with missing state parameter[32m 4[2mms[22m[39m
+     [32m✓[39m rejects callback with missing authorization code parameter[32m 5[2mms[22m[39m
+     [32m✓[39m rejects callback with empty state parameter[32m 6[2mms[22m[39m
+     [32m✓[39m rejects callback with empty authorization code parameter[32m 4[2mms[22m[39m
+     [32m✓[39m returns 401 when state token is not found in database[32m 4[2mms[22m[39m
+     [32m✓[39m returns 401 when state token has expired[32m 4[2mms[22m[39m
+     [32m✓[39m returns 400 when authorization code is invalid[32m 6[2mms[22m[39m
+     [32m✓[39m logs error when state token validation fails[32m 9[2mms[22m[39m
+     [32m✓[39m extracts authorization code from query parameters[32m 5[2mms[22m[39m
+     [32m✓[39m accepts authorization code with special characters[32m 4[2mms[22m[39m
+     [32m✓[39m accepts authorization code with alphanumeric characters[32m 4[2mms[22m[39m
+     [32m✓[39m passes authorization code to token exchange process[32m 4[2mms[22m[39m
+     [32m✓[39m sends confirmation message when orchestrator returns transcription_text[32m 36[2mms[22m[39m
+     [32m✓[39m includes transcription text in the confirmation message[32m 35[2mms[22m[39m
+     [32m✓[39m sends message to correct chat_id[32m 34[2mms[22m[39m
+     [32m✓[39m includes voice confirmation keyboard when show_voice_confirmation_keyboard is true[32m 36[2mms[22m[39m
+     [32m✓[39m does not include keyboard when show_voice_confirmation_keyboard is false[32m 34[2mms[22m[39m
+     [32m✓[39m includes voice_intent_id in keyboard callback data[32m 32[2mms[22m[39m
+     [32m✓[39m verifies message text is a string[32m 37[2mms[22m[39m
+     [32m✓[39m verifies keyboard structure when present[32m 33[2mms[22m[39m
+     [32m✓[39m verifies transcription text is included in message[32m 34[2mms[22m[39m
+     [32m✓[39m sends error reply when orchestrator returns HTTP 500 for voice message[32m 33[2mms[22m[39m
+     [32m✓[39m sends error reply when fetch throws for voice message[32m 33[2mms[22m[39m
+     [32m✓[39m logs error when voice message processing fails[32m 33[2mms[22m[39m
+     [32m✓[39m handles missing text field in orchestrator response gracefully[32m 33[2mms[22m[39m
+     [32m✓[39m sends error reply when voice file size exceeds maximum[32m 33[2mms[22m[39m
+     [32m✓[39m parses intent ID from voice_yes callback data[32m 36[2mms[22m[39m
+     [32m✓[39m loads pending intent from database using intent ID[32m 33[2mms[22m[39m
+     [32m✓[39m checks if intent has expired before processing[32m 33[2mms[22m[39m
+     [32m✓[39m deletes expired intent from database[32m 33[2mms[22m[39m
+     [32m✓[39m sends expiry message when intent is expired[32m 33[2mms[22m[39m
+     [32m✓[39m forwards valid intent to orchestrator with [voice] prefix[32m 33[2mms[22m[39m
+     [32m✓[39m handles intent not found in database gracefully[32m 33[2mms[22m[39m
+     [32m✓[39m rejects invalid intent ID (zero or negative)[32m 33[2mms[22m[39m
+     [32m✓[39m rejects intent ID exceeding max 32-bit signed integer[32m 33[2mms[22m[39m
+     [32m✓[39m parses intent ID from voice_no callback data[32m 33[2mms[22m[39m
+     [32m✓[39m loads pending intent from database for voice_no[32m 34[2mms[22m[39m
+     [32m✓[39m deletes pending intent when voice_no is clicked[32m 33[2mms[22m[39m
+     [32m✓[39m sends cancellation message when voice_no is clicked[32m 33[2mms[22m[39m
+     [32m✓[39m checks expiration for voice_no intent[32m 34[2mms[22m[39m
+     [32m✓[39m handles voice_no intent not found gracefully[32m 33[2mms[22m[39m
+     [32m✓[39m rejects invalid voice_no intent ID[32m 33[2mms[22m[39m
+     [32m✓[39m does not forward voice_no to orchestrator[32m 33[2mms[22m[39m
+     [32m✓[39m voice_yes parses single-digit intent ID[32m 33[2mms[22m[39m
+     [32m✓[39m voice_yes parses large intent ID[32m 32[2mms[22m[39m
+     [32m✓[39m voice_no parses single-digit intent ID[32m 33[2mms[22m[39m
+     [32m✓[39m voice_no parses large intent ID[32m 33[2mms[22m[39m
+     [32m✓[39m loads intent with all required fields from database[32m 33[2mms[22m[39m
+     [32m✓[39m compares expires_at with current time to check expiration[32m 32[2mms[22m[39m
+     [32m✓[39m treats intent as expired when expires_at <= now[32m 33[2mms[22m[39m
+     [32m✓[39m does not forward expired intent to orchestrator[32m 33[2mms[22m[39m
+     [32m✓[39m sends message to correct chat_id after voice_yes[32m 33[2mms[22m[39m
+     [32m✓[39m sends message to correct chat_id after voice_no[32m 33[2mms[22m[39m
+[31m     [31m×[31m deletes intent from database after voice_yes[39m[32m 43[2mms[22m[39m
+     [32m✓[39m deletes intent from database after voice_no[32m 33[2mms[22m[39m
+     [32m✓[39m sends expiry message and deletes intent when expired[32m 35[2mms[22m[39m
+[31m     [31m×[31m handles database error during intent deletion gracefully[39m[32m 39[2mms[22m[39m
+     [32m✓[39m handles database error during intent loading gracefully[32m 33[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m5 passed[39m[22m[90m (6)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m240 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (243)[39m
+[2m   Start at [22m 10:59:54
+[2m   Duration [22m 3.04s[2m (transform 490ms, setup 0ms, import 684ms, tests 5.80s, environment 1ms)[22m
+
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/index.test.ts,title=src/__tests__/index.test.ts > T-7b AC-4%3A Tests verify message sending and intent deletion > deletes intent from database after voice_yes,line=2557,column=28::AssertionError: expected "vi.fn()" to be called with arguments: [ StringContaining{…}, [ 702 ] ]%0A%0AReceived:%0A%0A  1st vi.fn() call:%0A%0A  [%0A-   StringContaining "DELETE FROM pending_voice_intents",%0A+   "%0A+       SELECT id, chat_id, transcription, telegram_file_id, expires_at, created_at%0A+       FROM pending_voice_intents%0A+       WHERE id = $1%0A+     ",%0A    [%0A      702,%0A    ],%0A  ]%0A%0A%0ANumber of calls: 1%0A%0A ❯ src/__tests__/index.test.ts:2557:28%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/index.test.ts,title=src/__tests__/index.test.ts > T-7b AC-4%3A Tests verify message sending and intent deletion > handles database error during intent deletion gracefully,line=2681,column=51::AssertionError: expected 'Voice message processed.' to match /something went wrong/i%0A%0A- Expected:%0A/something went wrong/i%0A%0A+ Received:%0A"Voice message processed."%0A%0A ❯ src/__tests__/index.test.ts:2681:51%0A%0A
+/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/bot@0.0.1 test: `vitest run --config vitest.config.ts`
+Exit status 1
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/index.test.ts[2m > [22mT-7b AC-4: Tests verify message sending and intent deletion[2m > [22mdeletes intent from database after voice_yes
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called with arguments: [ StringContaining{…}, [ 702 ] ][90m
+
+Received:
+
+[1m  1st vi.fn() call:
+
+[22m[2m  [[22m
+[32m-   StringContaining "DELETE FROM pending_voice_intents",[90m
+[31m+   "[90m
+[31m+       SELECT id, chat_id, transcription, telegram_file_id, expires_at, created_at[90m
+[31m+       FROM pending_voice_intents[90m
+[31m+       WHERE id = $1[90m
+[31m+     ",[90m
+[2m    [[22m
+[2m      702,[22m
+[2m    ],[22m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m1[22m
+[31m[39m
+[36m [2m❯[22m src/__tests__/index.test.ts:[2m2557:28[22m[39m
+    [90m2555|[39m
+    [90m2556|[39m     [90m// Verify DELETE was called[39m
+    [90m2557|[39m     [34mexpect[39m(fakePool[33m.[39mquery)[33m.[39m[34mtoHaveBeenCalledWith[39m(
+    [90m   |[39m                            [31m^[39m
+    [90m2558|[39m       expect[33m.[39m[34mstringContaining[39m([32m"DELETE FROM pending_voice_intents"[39m)[33m,[39m
+    [90m2559|[39m       [[34m702[39m][33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/index.test.ts[2m > [22mT-7b AC-4: Tests verify message sending and intent deletion[2m > [22mhandles database error during intent deletion gracefully
+[31m[1mAssertionError[22m: expected 'Voice message processed.' to match /something went wrong/i[39m
+
+[32m- Expected:[39m
+/something went wrong/i
+
+[31m+ Received:[39m
+"Voice message processed."
+
+[36m [2m❯[22m src/__tests__/index.test.ts:[2m2681:51[22m[39m
+    [90m2679|[39m     [90m// Verify error reply was sent[39m
+    [90m2680|[39m     [34mexpect[39m(holder[33m.[39mbot[33m?.[39msendMessageCalls)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+    [90m2681|[39m     expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/something w…
+    [90m   |[39m                                                   [31m^[39m
+    [90m2682|[39m   })[33m;[39m
+    [90m2683|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+
+
