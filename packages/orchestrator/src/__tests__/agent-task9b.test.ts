@@ -204,7 +204,7 @@ function buildMocks() {
   }));
 
   return {
-    pool: { 
+    pool: {
       query: poolQueryMock,
       connect: connectMock,
     },

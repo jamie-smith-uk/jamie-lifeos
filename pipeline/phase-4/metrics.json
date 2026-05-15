@@ -1,0 +1,56 @@
+{
+  "phase": 4,
+  "started_at": "2026-05-15T09:14:44Z",
+  "tasks": {
+    "task-9b": {
+      "title": "Format and integrate activity snapshot into agent system prompt",
+      "red": {
+        "duration_s": 91,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "total_duration_s": 296,
+      "green": {
+        "duration_s": 137,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "refactor": {
+        "duration_s": 9,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "health": {
+        "complex_fn_count": 0,
+        "max_complexity_score": 0,
+        "duplication_pct": 0.8,
+        "coverage_pct": null
+      },
+      "health_delta": "no measurable change",
+      "security": {
+        "duration_s": 59,
+        "attempts": 1,
+        "result": "pass"
+      }
+    }
+  },
+  "token_log": [
+    {
+      "agent": "ag-07-security",
+      "usage": "tokens: 10"
+    }
+  ],
+  "summary": {
+    "completed_at": "2026-05-15T09:19:52Z",
+    "total_duration_s": 296,
+    "tasks_completed": 1,
+    "pass_at_1_rate": 100,
+    "high_retry_tasks": [],
+    "top_security_findings": [],
+    "health": {
+      "avg_coverage_pct": null,
+      "avg_duplication_pct": 0.8,
+      "total_complex_fns": 0
+    }
+  }
+}
