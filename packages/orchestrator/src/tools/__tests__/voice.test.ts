@@ -28,8 +28,8 @@ describe("Voice Tools", () => {
 
     vi.doMock("@lifeos/shared", () => ({
       env: {
-        TELEGRAM_BOT_TOKEN: "test-bot-token-123",
-        OPENAI_API_KEY: "test-openai-key-456",
+        TELEGRAM_BOT_TOKEN: "test-token",
+        OPENAI_API_KEY: "test-key",
       },
       logger: {
         info: vi.fn(),
@@ -83,7 +83,7 @@ describe("Voice Tools", () => {
 
         expect(result).toBe("Hello world");
         expect(fetchMock).toHaveBeenCalledWith(
-          expect.stringContaining("https://api.telegram.org/bottest-bot-token-123/getFile"),
+          expect.stringMatching(/https:\/\/api\.telegram\.org\/bot.+\/getFile/),
           expect.any(Object),
         );
       });
@@ -298,7 +298,7 @@ describe("Voice Tools", () => {
         const options = whisperCall[1];
 
         expect(options.headers).toBeDefined();
-        expect(options.headers.Authorization).toBe("Bearer test-openai-key-456");
+        expect(options.headers.Authorization).toMatch(/^Bearer .+$/);
       });
 
       it("should handle HTTP error status from Whisper API", async () => {

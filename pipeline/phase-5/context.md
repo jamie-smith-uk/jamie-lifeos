@@ -27,3 +27,14 @@
 - **API integration ready**: The function handles all network operations (Telegram file download, OpenAI Whisper API) with proper error handling and is ready to be added to the agent's tool definitions
 
 ---
+## task-3b — Add voice transcription tool tests and validation
+
+**Files:** packages/orchestrator/src/tools/__tests__/voice.test.ts, packages/orchestrator/tsconfig.json, packages/orchestrator/vitest.config.ts
+
+- **Voice transcription tests are comprehensive** — The voice.test.ts file covers all major scenarios including successful transcription, network errors, API failures, and response validation. Future voice-related features should follow this testing pattern.
+- **Mock structure for external APIs** — The test file demonstrates proper mocking of both Telegram Bot API and OpenAI Whisper API using vitest mocks. Use this pattern for testing other external API integrations.
+- **Error handling validation** — All voice transcription errors return strings prefixed with "error:" to distinguish from successful transcriptions. Tests verify this pattern is followed consistently.
+- **Logger context testing** — Tests verify that `logger.child({ tool: "voice", file_id: params.file_id })` is called correctly for structured logging. This pattern should be maintained for all tool implementations.
+- **FormData and file handling** — Tests verify proper FormData construction for OpenAI API requests including model parameter ("whisper-1") and file blob creation. This approach should be used for other file upload scenarios.
+
+---

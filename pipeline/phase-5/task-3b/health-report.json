@@ -1,0 +1,11 @@
+{
+  "task_id": "task-3b",
+  "files_checked": [
+    "packages/orchestrator/src/tools/__tests__/voice.test.ts",
+    "packages/orchestrator/tsconfig.json",
+    "packages/orchestrator/vitest.config.ts"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 42.4,
+  "coverage_pct": null
+}
