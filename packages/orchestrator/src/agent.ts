@@ -266,14 +266,55 @@ const todoistToolDefinitions: Anthropic.Tool[] = [
   {
     name: "get_tasks",
     description:
-      "Retrieve tasks from Todoist. Optionally filter by a Todoist filter string (e.g. 'today', 'overdue', 'p1').",
+      "Retrieve tasks from Todoist. Filter by a Todoist filter string (e.g. 'today', 'overdue', 'p1', '@label') or by project ID. When a project_id is supplied, tasks are grouped by section (board columns). Call get_projects first to resolve project names to IDs.",
     input_schema: {
       type: "object",
       properties: {
         filter: {
           type: "string",
           description:
-            "Todoist filter query string (e.g. 'today', 'overdue', 'p1'). If omitted, all tasks are returned.",
+            "Todoist filter query (e.g. 'today', 'overdue', 'p1', '@waiting', '#Work'). If omitted, all incomplete tasks are returned.",
+        },
+        project_id: {
+          type: "string",
+          description:
+            "Return only tasks in this project, grouped by section. Use get_projects to find project IDs.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "get_projects",
+    description:
+      "List all Todoist projects with their names and IDs. Call this first when the user asks about a specific project or wants tasks grouped by project.",
+    input_schema: {
+      type: "object",
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "get_labels",
+    description:
+      "List all Todoist labels. Use this to show what labels exist before filtering tasks by label.",
+    input_schema: {
+      type: "object",
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "get_sections",
+    description:
+      "List all sections (board columns) within a Todoist project. Use get_projects first to get the project ID.",
+    input_schema: {
+      type: "object",
+      properties: {
+        project_id: {
+          type: "string",
+          description:
+            "The project ID to list sections for. If omitted, returns sections from all projects.",
         },
       },
       required: [],
@@ -281,7 +322,8 @@ const todoistToolDefinitions: Anthropic.Tool[] = [
   },
   {
     name: "create_task",
-    description: "Create a new task in Todoist with an optional due date and priority.",
+    description:
+      "Create a new task in Todoist. Can optionally place it in a project, section, and add labels.",
     input_schema: {
       type: "object",
       properties: {
@@ -297,6 +339,20 @@ const todoistToolDefinitions: Anthropic.Tool[] = [
           type: "number",
           description:
             "Task priority: 1 (normal/p4), 2 (medium/p3), 3 (high/p2), 4 (urgent/p1). Optional.",
+        },
+        project_id: {
+          type: "string",
+          description: "Project ID to place the task in. Use get_projects to find IDs. Optional.",
+        },
+        section_id: {
+          type: "string",
+          description:
+            "Section (board column) ID within the project. Use get_sections to find IDs. Optional.",
+        },
+        labels: {
+          type: "array",
+          items: { type: "string" },
+          description: "Array of label names to apply (e.g. ['waiting', 'review']). Optional.",
         },
       },
       required: ["content"],
@@ -332,7 +388,8 @@ const todoistToolDefinitions: Anthropic.Tool[] = [
   },
   {
     name: "update_task",
-    description: "Update the due date and/or priority of an existing Todoist task.",
+    description:
+      "Update an existing Todoist task — change its due date, priority, project, section, or labels.",
     input_schema: {
       type: "object",
       properties: {
@@ -348,6 +405,19 @@ const todoistToolDefinitions: Anthropic.Tool[] = [
           type: "number",
           description:
             "New priority: 1 (normal/p4), 2 (medium/p3), 3 (high/p2), 4 (urgent/p1). Optional.",
+        },
+        project_id: {
+          type: "string",
+          description: "Move task to this project ID. Optional.",
+        },
+        section_id: {
+          type: "string",
+          description: "Move task to this section ID within its project. Optional.",
+        },
+        labels: {
+          type: "array",
+          items: { type: "string" },
+          description: "Replace task labels with this array of label names. Optional.",
         },
       },
       required: ["task_id"],
@@ -692,6 +762,9 @@ const CALENDAR_TOOL_NAMES = new Set<string>([
  */
 const TODOIST_TOOL_NAMES = new Set<string>([
   "get_tasks",
+  "get_projects",
+  "get_labels",
+  "get_sections",
   "create_task",
   "complete_task",
   "delete_task",

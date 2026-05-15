@@ -2,7 +2,8 @@
  * todoist.ts — Todoist API v1 tool implementations.
  *
  * Uses the Todoist unified API v1 with Bearer token authentication.
- * Supports get_tasks, create_task, complete_task, delete_task, and update_task.
+ * Supports get_tasks, get_projects, get_labels, get_sections,
+ * create_task, complete_task, delete_task, and update_task.
  *
  * Authentication:
  *   TODOIST_API_TOKEN — Bearer token for Todoist API v1.
@@ -18,8 +19,6 @@ import { env, logger } from "@lifeos/shared";
 
 const log = logger.child({ service: "todoist-tools" });
 
-// TODOIST_API_TOKEN is declared in EnvConfig and populated by the shared env
-// loader (with an empty-string default when unset).  Read it directly.
 function getTodoistToken(): string {
   return env.TODOIST_API_TOKEN;
 }
@@ -39,6 +38,26 @@ interface TodoistTask {
   due?: { date?: string; datetime?: string; string?: string } | null;
   url?: string;
   project_id?: string;
+  section_id?: string | null;
+  labels?: string[];
+}
+
+interface TodoistProject {
+  id: string;
+  name: string;
+  is_inbox_project?: boolean;
+}
+
+interface TodoistLabel {
+  id: string;
+  name: string;
+}
+
+interface TodoistSection {
+  id: string;
+  project_id: string;
+  name: string;
+  order?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -52,10 +71,6 @@ function buildAuthHeaders(token: string): Record<string, string> {
   };
 }
 
-/**
- * Handle a non-OK HTTP response: reads the body text, logs the status, and
- * returns a JSON-serialised error string.  Never throws.
- */
 async function httpErrorResponse(
   response: Response,
   operation: string,
@@ -66,13 +81,48 @@ async function httpErrorResponse(
   return JSON.stringify({ error: `Todoist API error ${response.status}: ${errorText}` });
 }
 
+function extractResults<T>(body: T[] | { results: T[] }): T[] {
+  return Array.isArray(body) ? body : body.results;
+}
+
 // ---------------------------------------------------------------------------
-// Response formatting
+// Project map (used by get_tasks to resolve project IDs to names)
 // ---------------------------------------------------------------------------
 
-/** Convert Todoist priority number to human-readable label.
- * Todoist API: 1=normal (p4 in UI), 2=medium (p3), 3=high (p2), 4=urgent (p1).
- */
+async function fetchProjectMap(token: string): Promise<Map<string, string>> {
+  try {
+    const response = await fetch(`${TODOIST_API_BASE}/projects`, {
+      headers: buildAuthHeaders(token),
+    });
+    if (!response.ok) return new Map();
+    const projects = extractResults(
+      (await response.json()) as TodoistProject[] | { results: TodoistProject[] },
+    );
+    return new Map(projects.map((p) => [p.id, p.name]));
+  } catch {
+    return new Map();
+  }
+}
+
+async function fetchSectionMap(token: string, projectId: string): Promise<Map<string, string>> {
+  try {
+    const url = new URL(`${TODOIST_API_BASE}/sections`);
+    url.searchParams.set("project_id", projectId);
+    const response = await fetch(url.toString(), { headers: buildAuthHeaders(token) });
+    if (!response.ok) return new Map();
+    const sections = extractResults(
+      (await response.json()) as TodoistSection[] | { results: TodoistSection[] },
+    );
+    return new Map(sections.map((s) => [s.id, s.name]));
+  } catch {
+    return new Map();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Formatting
+// ---------------------------------------------------------------------------
+
 function priorityLabel(priority: number | undefined): string {
   switch (priority) {
     case 4:
@@ -86,17 +136,58 @@ function priorityLabel(priority: number | undefined): string {
   }
 }
 
-function formatTask(task: TodoistTask): string {
+function formatTask(task: TodoistTask, projectMap?: Map<string, string>): string {
   const due = task.due?.date ?? task.due?.datetime ?? null;
-  const priority =
-    task.priority !== undefined ? ` | Priority: ${priorityLabel(task.priority)}` : "";
+  const projectName = task.project_id && projectMap ? projectMap.get(task.project_id) : undefined;
+  const projectStr = projectName ? ` | Project: ${projectName}` : "";
+  const labelsStr = task.labels?.length
+    ? ` | Labels: ${task.labels.map((l) => `@${l}`).join(", ")}`
+    : "";
   const dueStr = due ? ` | Due: ${due}` : "";
-  return `• [${task.id}] ${task.content}${dueStr}${priority}`;
+  const priorityStr =
+    task.priority !== undefined ? ` | Priority: ${priorityLabel(task.priority)}` : "";
+  return `• [${task.id}] ${task.content}${projectStr}${labelsStr}${dueStr}${priorityStr}`;
 }
 
-function formatTasks(tasks: TodoistTask[]): string {
-  if (tasks.length === 0) return "No tasks found matching the filter.";
-  return tasks.map(formatTask).join("\n");
+function formatTasks(tasks: TodoistTask[], projectMap?: Map<string, string>): string {
+  if (tasks.length === 0) return "No tasks found.";
+  return tasks.map((t) => formatTask(t, projectMap)).join("\n");
+}
+
+function groupBySectionId(tasks: TodoistTask[]): Map<string | null, TodoistTask[]> {
+  const groups = new Map<string | null, TodoistTask[]>();
+  for (const task of tasks) {
+    const key = task.section_id ?? null;
+    const group = groups.get(key) ?? [];
+    group.push(task);
+    groups.set(key, group);
+  }
+  return groups;
+}
+
+function formatTasksBySection(
+  tasks: TodoistTask[],
+  sectionMap: Map<string, string>,
+  projectMap?: Map<string, string>,
+): string {
+  if (tasks.length === 0) return "No tasks found.";
+
+  const groups = groupBySectionId(tasks);
+  const lines: string[] = [];
+
+  const unsectioned = groups.get(null);
+  if (unsectioned?.length) {
+    for (const t of unsectioned) lines.push(formatTask(t, projectMap));
+  }
+
+  for (const [sectionId, sectionTasks] of groups) {
+    if (sectionId === null) continue;
+    const sectionName = sectionMap.get(sectionId) ?? sectionId;
+    lines.push(`\n── ${sectionName} (${sectionTasks.length}) ──`);
+    for (const t of sectionTasks) lines.push(formatTask(t, projectMap));
+  }
+
+  return lines.join("\n").trim();
 }
 
 // ---------------------------------------------------------------------------
@@ -106,28 +197,123 @@ function formatTasks(tasks: TodoistTask[]): string {
 async function getTasks(input: Record<string, unknown>): Promise<string> {
   const token = getTodoistToken();
   const filter = typeof input.filter === "string" ? input.filter : undefined;
+  const projectId = typeof input.project_id === "string" ? input.project_id : undefined;
 
-  const url = new URL(`${TODOIST_API_BASE}/tasks`);
-  if (filter) {
-    url.searchParams.set("filter", filter);
-  }
+  const tasksUrl = new URL(`${TODOIST_API_BASE}/tasks`);
+  if (filter) tasksUrl.searchParams.set("filter", filter);
+  if (projectId) tasksUrl.searchParams.set("project_id", projectId);
+
+  // When browsing a specific project, also fetch its sections so we can group
+  // tasks by section (board/column view). Otherwise just resolve project names.
+  const sectionsPromise = projectId ? fetchSectionMap(token, projectId) : Promise.resolve(null);
 
   try {
-    const response = await fetch(url.toString(), {
-      headers: buildAuthHeaders(token),
-    });
+    const [tasksResponse, projectMap, sectionMap] = await Promise.all([
+      fetch(tasksUrl.toString(), { headers: buildAuthHeaders(token) }),
+      fetchProjectMap(token),
+      sectionsPromise,
+    ]);
 
-    if (!response.ok) {
-      return httpErrorResponse(response, "get_tasks");
+    if (!tasksResponse.ok) return httpErrorResponse(tasksResponse, "get_tasks");
+
+    const tasks = extractResults(
+      (await tasksResponse.json()) as TodoistTask[] | { results: TodoistTask[] },
+    );
+
+    if (sectionMap && sectionMap.size > 0) {
+      return formatTasksBySection(tasks, sectionMap, projectMap);
     }
-
-    const body = (await response.json()) as TodoistTask[] | { results: TodoistTask[] };
-    const tasks = Array.isArray(body) ? body : body.results;
-    return formatTasks(tasks);
+    return formatTasks(tasks, projectMap);
   } catch (err) {
     log.error({ err }, "get_tasks failed");
     return JSON.stringify({ error: `get_tasks failed: ${String(err)}` });
   }
+}
+
+// ---------------------------------------------------------------------------
+// get_projects
+// ---------------------------------------------------------------------------
+
+async function getProjects(): Promise<string> {
+  const token = getTodoistToken();
+  try {
+    const response = await fetch(`${TODOIST_API_BASE}/projects`, {
+      headers: buildAuthHeaders(token),
+    });
+    if (!response.ok) return httpErrorResponse(response, "get_projects");
+    const projects = extractResults(
+      (await response.json()) as TodoistProject[] | { results: TodoistProject[] },
+    );
+    if (projects.length === 0) return "No projects found.";
+    return projects
+      .map((p) => `• [${p.id}] ${p.name}${p.is_inbox_project ? " (Inbox)" : ""}`)
+      .join("\n");
+  } catch (err) {
+    log.error({ err }, "get_projects failed");
+    return JSON.stringify({ error: `get_projects failed: ${String(err)}` });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// get_labels
+// ---------------------------------------------------------------------------
+
+async function getLabels(): Promise<string> {
+  const token = getTodoistToken();
+  try {
+    const response = await fetch(`${TODOIST_API_BASE}/labels`, {
+      headers: buildAuthHeaders(token),
+    });
+    if (!response.ok) return httpErrorResponse(response, "get_labels");
+    const labels = extractResults(
+      (await response.json()) as TodoistLabel[] | { results: TodoistLabel[] },
+    );
+    if (labels.length === 0) return "No labels found.";
+    return labels.map((l) => `• @${l.name}`).join("\n");
+  } catch (err) {
+    log.error({ err }, "get_labels failed");
+    return JSON.stringify({ error: `get_labels failed: ${String(err)}` });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// get_sections
+// ---------------------------------------------------------------------------
+
+async function getSections(input: Record<string, unknown>): Promise<string> {
+  const token = getTodoistToken();
+  const projectId = typeof input.project_id === "string" ? input.project_id : undefined;
+
+  const url = new URL(`${TODOIST_API_BASE}/sections`);
+  if (projectId) url.searchParams.set("project_id", projectId);
+
+  try {
+    const response = await fetch(url.toString(), { headers: buildAuthHeaders(token) });
+    if (!response.ok) return httpErrorResponse(response, "get_sections");
+    const sections = extractResults(
+      (await response.json()) as TodoistSection[] | { results: TodoistSection[] },
+    );
+    if (sections.length === 0)
+      return projectId ? "No sections found in that project." : "No sections found.";
+    return sections.map((s) => `• [${s.id}] ${s.name}`).join("\n");
+  } catch (err) {
+    log.error({ err }, "get_sections failed");
+    return JSON.stringify({ error: `get_sections failed: ${String(err)}` });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Shared optional-field parser for create/update
+function parseTaskFields(input: Record<string, unknown>): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
+  if (typeof input.due_date === "string") fields.due_date = input.due_date;
+  if (typeof input.priority === "number") fields.priority = input.priority;
+  if (typeof input.project_id === "string") fields.project_id = input.project_id;
+  if (typeof input.section_id === "string") fields.section_id = input.section_id;
+  if (Array.isArray(input.labels)) {
+    fields.labels = input.labels.filter((l): l is string => typeof l === "string");
+  }
+  return fields;
 }
 
 // ---------------------------------------------------------------------------
@@ -142,17 +328,7 @@ async function createTask(input: Record<string, unknown>): Promise<string> {
     return JSON.stringify({ error: "create_task: 'content' is required" });
   }
 
-  const body: Record<string, unknown> = { content };
-
-  const dueDate = typeof input.due_date === "string" ? input.due_date : undefined;
-  if (dueDate !== undefined) {
-    body.due_date = dueDate;
-  }
-
-  const priority = typeof input.priority === "number" ? input.priority : undefined;
-  if (priority !== undefined) {
-    body.priority = priority;
-  }
+  const body: Record<string, unknown> = { content, ...parseTaskFields(input) };
 
   try {
     const response = await fetch(`${TODOIST_API_BASE}/tasks`, {
@@ -161,9 +337,7 @@ async function createTask(input: Record<string, unknown>): Promise<string> {
       body: JSON.stringify(body),
     });
 
-    if (!response.ok) {
-      return httpErrorResponse(response, "create_task");
-    }
+    if (!response.ok) return httpErrorResponse(response, "create_task");
 
     const task = (await response.json()) as TodoistTask;
     return `Task created successfully (id: ${task.id}): ${task.content}`;
@@ -191,9 +365,7 @@ async function completeTask(input: Record<string, unknown>): Promise<string> {
       headers: buildAuthHeaders(token),
     });
 
-    if (!response.ok) {
-      return httpErrorResponse(response, "complete_task", { taskId });
-    }
+    if (!response.ok) return httpErrorResponse(response, "complete_task", { taskId });
 
     return `Task ${taskId} completed successfully.`;
   } catch (err) {
@@ -220,9 +392,7 @@ async function deleteTask(input: Record<string, unknown>): Promise<string> {
       headers: buildAuthHeaders(token),
     });
 
-    if (!response.ok) {
-      return httpErrorResponse(response, "delete_task", { taskId });
-    }
+    if (!response.ok) return httpErrorResponse(response, "delete_task", { taskId });
 
     return `Task ${taskId} deleted successfully.`;
   } catch (err) {
@@ -243,17 +413,7 @@ async function updateTask(input: Record<string, unknown>): Promise<string> {
     return JSON.stringify({ error: "update_task: 'task_id' is required" });
   }
 
-  const body: Record<string, unknown> = {};
-
-  const dueDate = typeof input.due_date === "string" ? input.due_date : undefined;
-  if (dueDate !== undefined) {
-    body.due_date = dueDate;
-  }
-
-  const priority = typeof input.priority === "number" ? input.priority : undefined;
-  if (priority !== undefined) {
-    body.priority = priority;
-  }
+  const body: Record<string, unknown> = parseTaskFields(input);
 
   try {
     const response = await fetch(`${TODOIST_API_BASE}/tasks/${encodeURIComponent(taskId)}`, {
@@ -262,9 +422,7 @@ async function updateTask(input: Record<string, unknown>): Promise<string> {
       body: JSON.stringify(body),
     });
 
-    if (!response.ok) {
-      return httpErrorResponse(response, "update_task", { taskId });
-    }
+    if (!response.ok) return httpErrorResponse(response, "update_task", { taskId });
 
     const task = (await response.json()) as TodoistTask;
     return `Task ${task.id ?? taskId} updated successfully.`;
@@ -278,12 +436,6 @@ async function updateTask(input: Record<string, unknown>): Promise<string> {
 // Unified executor
 // ---------------------------------------------------------------------------
 
-/**
- * executeToDoistTool — routes Todoist tool calls by operation name.
- *
- * Always returns a string; never throws.
- * Error responses are JSON-serialised with an "error" key.
- */
 export async function executeToDoistTool(
   operation: string,
   input: Record<string, unknown>,
@@ -291,19 +443,20 @@ export async function executeToDoistTool(
   switch (operation) {
     case "get_tasks":
       return getTasks(input);
-
+    case "get_projects":
+      return getProjects();
+    case "get_labels":
+      return getLabels();
+    case "get_sections":
+      return getSections(input);
     case "create_task":
       return createTask(input);
-
     case "complete_task":
       return completeTask(input);
-
     case "delete_task":
       return deleteTask(input);
-
     case "update_task":
       return updateTask(input);
-
     default:
       return JSON.stringify({ error: `Unknown Todoist operation: ${operation}` });
   }
