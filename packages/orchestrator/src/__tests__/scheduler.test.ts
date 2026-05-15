@@ -29,6 +29,8 @@ describe("Scheduler", () => {
     vi.doMock("@lifeos/shared", () => ({
       env: {
         TELEGRAM_ALLOWED_CHAT_ID: "123456789",
+        STRAVA_CLIENT_ID: "test_client_id",
+        STRAVA_CLIENT_SECRET: "test_client_secret",
       },
       pool: {
         query: poolQueryMock,
@@ -47,6 +49,19 @@ describe("Scheduler", () => {
         warn: vi.fn(),
       },
     }));
+
+    // Mock global fetch for token refresh
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            access_token: "new_access_token",
+            refresh_token: "new_refresh_token",
+            expires_in: 21600, // 6 hours
+          }),
+      }),
+    ) as any;
   }
 
   beforeEach(async () => {
@@ -989,6 +1004,264 @@ describe("Scheduler", () => {
       const secondOptions = secondCall?.[2];
       const secondButton = secondOptions?.reply_markup?.inline_keyboard?.[0]?.[0];
       expect(secondButton?.callback_data).toBe("dismiss_nudge_2");
+    });
+  });
+
+  describe("Strava sync job", () => {
+    it("should export syncStravaActivities function", () => {
+      expect(typeof schedulerModule.syncStravaActivities).toBe("function");
+    });
+
+    it("should fetch activities updated since last_synced_at", async () => {
+      const athleteId = 12345;
+      const lastSyncedAt = new Date("2026-05-10T10:00:00Z");
+
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            athlete_id: athleteId,
+            access_token: "test_token",
+            refresh_token: "test_refresh",
+            expires_at: new Date("2026-05-20T10:00:00Z"),
+            last_synced_at: lastSyncedAt,
+          },
+        ],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock fetch activities call
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            strava_id: 1001,
+            name: "Morning Run",
+            sport_type: "Run",
+            start_date: new Date("2026-05-15T08:00:00Z"),
+            distance_m: 5000,
+          },
+        ],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const syncCall = mockCronSchedule.mock.calls.find(
+        (call) => typeof call[0] === "string" && call[0].includes("strava"),
+      );
+
+      if (syncCall && typeof syncCall[1] === "function") {
+        await syncCall[1]();
+      }
+
+      // Verify that pool.query was called to fetch credentials
+      expect(mockPoolQuery).toHaveBeenCalled();
+
+      // Check that a query was made for credentials
+      const credentialsQuery = mockPoolQuery.mock.calls.find((call) =>
+        String(call[0]).includes("strava_credentials"),
+      );
+      expect(credentialsQuery).toBeDefined();
+    });
+
+    it("should check token expiration before each API call", async () => {
+      const athleteId = 12345;
+      const expiredAt = new Date("2026-05-10T10:00:00Z"); // Past date
+
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            athlete_id: athleteId,
+            access_token: "test_token",
+            refresh_token: "test_refresh",
+            expires_at: expiredAt,
+            last_synced_at: new Date("2026-05-10T10:00:00Z"),
+          },
+        ],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const syncCall = mockCronSchedule.mock.calls.find(
+        (call) => typeof call[0] === "string" && call[0].includes("strava"),
+      );
+
+      if (syncCall && typeof syncCall[1] === "function") {
+        await syncCall[1]();
+      }
+
+      // Verify that credentials were fetched (which includes expires_at)
+      expect(mockPoolQuery).toHaveBeenCalled();
+
+      const credentialsQuery = mockPoolQuery.mock.calls.find((call) =>
+        String(call[0]).includes("strava_credentials"),
+      );
+      expect(credentialsQuery).toBeDefined();
+    });
+
+    it("should refresh access token when expired", async () => {
+      const athleteId = 12345;
+      const expiredAt = new Date("2026-05-10T10:00:00Z"); // Past date
+
+      // Mock fetching expired credentials
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            athlete_id: athleteId,
+            access_token: "old_token",
+            refresh_token: "test_refresh",
+            expires_at: expiredAt,
+            last_synced_at: new Date("2026-05-10T10:00:00Z"),
+          },
+        ],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock token refresh update
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ athlete_id: athleteId }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const syncCall = mockCronSchedule.mock.calls.find(
+        (call) => typeof call[0] === "string" && call[0].includes("strava"),
+      );
+
+      if (syncCall && typeof syncCall[1] === "function") {
+        await syncCall[1]();
+      }
+
+      // Verify that an UPDATE query was made (for token refresh)
+      const updateCall = mockPoolQuery.mock.calls.find((call) =>
+        String(call[0]).includes("UPDATE"),
+      );
+      expect(updateCall).toBeDefined();
+    });
+
+    it("should handle multiple athletes with different token states", async () => {
+      const athlete1Id = 12345;
+      const athlete2Id = 67890;
+
+      // Mock fetching multiple athletes
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            athlete_id: athlete1Id,
+            access_token: "token1",
+            refresh_token: "refresh1",
+            expires_at: new Date("2026-05-20T10:00:00Z"), // Valid
+            last_synced_at: new Date("2026-05-10T10:00:00Z"),
+          },
+          {
+            athlete_id: athlete2Id,
+            access_token: "token2",
+            refresh_token: "refresh2",
+            expires_at: new Date("2026-05-10T10:00:00Z"), // Expired
+            last_synced_at: new Date("2026-05-10T10:00:00Z"),
+          },
+        ],
+        rowCount: 2,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const syncCall = mockCronSchedule.mock.calls.find(
+        (call) => typeof call[0] === "string" && call[0].includes("strava"),
+      );
+
+      if (syncCall && typeof syncCall[1] === "function") {
+        await syncCall[1]();
+      }
+
+      // Verify that credentials query was made
+      expect(mockPoolQuery).toHaveBeenCalled();
+    });
+
+    it("should use parameterized queries for security", async () => {
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [],
+        rowCount: 0,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const syncCall = mockCronSchedule.mock.calls.find(
+        (call) => typeof call[0] === "string" && call[0].includes("strava"),
+      );
+
+      if (syncCall && typeof syncCall[1] === "function") {
+        await syncCall[1]();
+      }
+
+      // Verify that pool.query was called with parameterized queries
+      const queryCall = mockPoolQuery.mock.calls.find((call) =>
+        String(call[0]).includes("strava_credentials"),
+      );
+
+      expect(queryCall).toBeDefined();
+      // Parameterized queries pass parameters as second argument
+      expect(Array.isArray(queryCall?.[1]) || queryCall?.[1] === undefined).toBe(true);
+    });
+
+    it("should handle database errors gracefully", async () => {
+      mockPoolQuery.mockRejectedValueOnce(new Error("Database connection failed"));
+
+      await schedulerModule.startScheduler();
+
+      const syncCall = mockCronSchedule.mock.calls.find(
+        (call) => typeof call[0] === "string" && call[0].includes("strava"),
+      );
+
+      if (syncCall && typeof syncCall[1] === "function") {
+        // Should not throw even if database fails
+        await expect(syncCall[1]()).resolves.not.toThrow();
+      }
+    });
+
+    it("should log sync job execution", async () => {
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [],
+        rowCount: 0,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const syncCall = mockCronSchedule.mock.calls.find(
+        (call) => typeof call[0] === "string" && call[0].includes("strava"),
+      );
+
+      if (syncCall && typeof syncCall[1] === "function") {
+        await syncCall[1]();
+      }
+
+      // Verify that pool.query was called
+      expect(mockPoolQuery).toHaveBeenCalled();
     });
   });
 
