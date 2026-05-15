@@ -16,3 +16,14 @@
 - **Consistent error messaging** — Missing OPENAI_API_KEY follows the same error pattern as other required variables, directing users to check .env.example
 
 ---
+## task-3a — Implement voice transcription tool core function
+
+**Files:** packages/orchestrator/src/tools/voice.ts
+
+- **Voice transcription function**: The `transcribe_voice_message` function is fully implemented in `packages/orchestrator/src/tools/voice.ts` and ready for integration into the agent tool system
+- **Error handling pattern**: All voice transcription errors return strings prefixed with "error:" to distinguish from successful transcriptions
+- **Environment dependencies**: Voice transcription requires both `TELEGRAM_BOT_TOKEN` and `OPENAI_API_KEY` environment variables (already configured in task-2)
+- **Logging pattern**: Use `logger.child({ tool: "voice", file_id: params.file_id })` for voice-related operations to maintain consistent structured logging
+- **API integration ready**: The function handles all network operations (Telegram file download, OpenAI Whisper API) with proper error handling and is ready to be added to the agent's tool definitions
+
+---
