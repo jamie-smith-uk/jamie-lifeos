@@ -24,6 +24,7 @@ Life OS is structured in four layers:
 | Gmail MCP | gmail.mcp.claude.com | Read inbox and extract implied actions |
 | Todoist integration | Todoist REST API v2 | Full task CRUD |
 | Voice transcription | OpenAI Whisper API (whisper-1) | Speech-to-text for Telegram voice messages |
+| Voice synthesis | ElevenLabs TTS API (eleven_multilingual_v2) | Text-to-speech for persona voice replies |
 | PostgreSQL | Railway managed | All persistent state |
 | Scheduler | node-cron inside orchestrator | Digest, nudge, and automation execution |
 
@@ -147,6 +148,17 @@ Life OS is structured in four layers:
         updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
+### user_settings
+
+    CREATE TABLE user_settings (
+        key        TEXT PRIMARY KEY,
+        value      TEXT        NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+Keys used:
+- `current_persona` — active persona name: `goggins`, `ferguson`, `stoic`, or `default` (default if absent)
+
 ### pending_voice_intents
 
     CREATE TABLE pending_voice_intents (
@@ -189,13 +201,14 @@ Life OS is structured in four layers:
 
 ## Agent system prompt structure
 
-Each request to the Anthropic API is assembled from five blocks in this order:
+Each request to the Anthropic API is assembled from six blocks in this order:
 
-1. **Identity** — who the agent is, what it does, its tone, and its hard constraints (security rules, confirmation pattern, never reveal env vars).
-2. **Live context** — current datetime, timezone, and a brief snapshot of today's calendar if relevant to the message.
-3. **People index** — names and relationship types of all known people, so the agent recognises references without a tool call.
-4. **Pending nudges** — any nudges that are due or overdue, so the agent can surface them if relevant.
-5. **Activity snapshot** — last 7 days of Strava activity (count, total moving time, last activity sport and date) so the agent can factor in exercise load when answering day planning questions.
+1. **Persona** — the active persona's `systemPromptBlock` (tone, vocabulary, sentence structure rules). Omitted if persona is `default`.
+2. **Identity** — who the agent is, what it does, its hard constraints (security rules, confirmation pattern, never reveal env vars).
+3. **Live context** — current datetime, timezone, and a brief snapshot of today's calendar if relevant to the message.
+4. **People index** — names and relationship types of all known people, so the agent recognises references without a tool call.
+5. **Pending nudges** — any nudges that are due or overdue, so the agent can surface them if relevant.
+6. **Activity snapshot** — last 7 days of Strava activity (count, total moving time, last activity sport and date) so the agent can factor in exercise load when answering day planning questions.
 
 The conversation history (last 20 messages) is appended as the `messages` array in the API request, separate from the system prompt.
 
@@ -237,6 +250,23 @@ The conversation history (last 20 messages) is appended as the `messages` array 
 ### Nudge tools (internal DB)
 - `create_nudge` — inserts a nudges record with trigger_at and message
 - `dismiss_nudge` — sets status to dismissed by nudge ID
+
+### Persona tools (internal config + ElevenLabs TTS API)
+- `get_current_persona` — reads `current_persona` from `user_settings`; returns persona config object from `personas.ts`
+- `set_persona` — upserts `current_persona` in `user_settings`; returns display name and description
+- `synthesise_speech` — POSTs text to ElevenLabs TTS with the persona's voice ID; returns mp3 Buffer; falls back gracefully on error
+
+### Persona config (`packages/orchestrator/src/personas.ts`)
+
+Each persona object:
+
+    {
+      id: string                 // "goggins" | "ferguson" | "stoic" | "default"
+      displayName: string        // "The Relentless"
+      description: string        // one-line shown on /persona switch
+      systemPromptBlock: string  // injected into Claude system prompt Identity section
+      elevenLabsVoiceId: string  // ElevenLabs voice ID; empty string = no TTS
+    }
 
 ### Voice tools (OpenAI Whisper API + internal DB)
 - `transcribe_voice_message` — downloads Telegram voice file, POSTs to Whisper API, returns transcription text

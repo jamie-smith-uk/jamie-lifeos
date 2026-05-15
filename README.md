@@ -25,6 +25,7 @@ Built on Telegram, Claude, and PostgreSQL. Deployed on Railway.
 | Interface | Telegram (node-telegram-bot-api) |
 | AI | Claude (claude-sonnet-4-20250514 default, configurable via `ANTHROPIC_MODEL`) |
 | Voice transcription | OpenAI Whisper API (whisper-1) |
+| Voice synthesis | ElevenLabs TTS (eleven_multilingual_v2) |
 | Calendar | Google Calendar MCP |
 | Email | Gmail MCP |
 | Tasks | Todoist API v1 |
@@ -77,6 +78,7 @@ pipeline/       — Pipeline working files and phase artifacts (tracked in git)
 | 4 | Strava Integration | 🔄 In progress (6/11 tasks done) |
 | 5 | Voice Message Input | Pending |
 | 6 | Morning Digest and Day Planning | Pending |
+| 7 | Personality and Voice Output | Pending |
 
 ---
 
@@ -157,6 +159,7 @@ STRAVA_CLIENT_ID             — from strava.com/settings/api
 STRAVA_CLIENT_SECRET         — from strava.com/settings/api
 STRAVA_REDIRECT_URI          — OAuth callback URL for your bot service
 OPENAI_API_KEY               — from platform.openai.com (used for Whisper voice transcription)
+ELEVENLABS_API_KEY           — from elevenlabs.io (used for persona voice synthesis)
 ```
 
 ### Run migrations

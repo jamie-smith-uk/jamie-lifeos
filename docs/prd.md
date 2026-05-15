@@ -188,6 +188,42 @@ EP-07 (full), EP-08
 
 ---
 
+## Phase 7 — Personality and Voice Output
+
+### Exit criteria
+- User can switch between three named personas via `/persona [name]`: `goggins`, `ferguson`, `stoic`. Selected persona persists across sessions.
+- `/persona default` restores neutral Claude behaviour.
+- `/persona` with an invalid name lists available options.
+- Each persona produces a distinctly different tone and writing style in text responses.
+- When a voice reply is triggered, the assistant responds with a Telegram voice note generated via ElevenLabs TTS using the current persona's voice.
+- Voice reply is triggered when: (a) the user's message arrived as a voice note, or (b) the user's text message requests it ("reply as a voice note", "say that as a voice note").
+- TTS errors fall back to a text reply — they never silently fail.
+- Persona and voice are consistent: the text style and the speaking voice always match.
+
+### Personas
+
+| Slash | Name | Personality | Voice archetype |
+|---|---|---|---|
+| `/persona goggins` | The Relentless | No excuses, short punchy sentences, calls out avoidance, athletic/military language | Intense American male |
+| `/persona ferguson` | The Gaffer | Authoritative, measured, expects excellence, occasional dry wit, team/strategy framing | Authoritative Scottish male |
+| `/persona stoic` | The Advisor | Calm, philosophical, long view, reframes problems, references time and perspective | Calm measured elder |
+| `/persona default` | Default | Neutral, helpful Claude behaviour | No voice (text only) |
+
+### Smoke tests
+1. Send `/persona goggins` — bot confirms "Switched to The Relentless" and describes the persona
+2. Ask "what should I do today?" — response is noticeably short, punchy, direct
+3. Send a voice note — bot replies with a voice note in Goggins-archetype voice
+4. Send `/persona ferguson` — confirm switch, ask same question, response is measurably different in tone
+5. Send `/persona stoic` — repeat, response is philosophical and reframing
+6. Send `/persona default` — response returns to neutral
+7. Send `/persona batman` — bot lists valid persona options
+8. Simulate ElevenLabs API failure — bot sends text reply, does not error silently
+
+### Epics in scope
+EP-12
+
+---
+
 ## User stories
 
 ### EP-01 — Foundation
@@ -256,6 +292,16 @@ EP-07 (full), EP-08
 - EP-08-02: Day plan prioritises tasks by priority, deadline proximity, and estimated effort. Flags if more tasks than available time.
 - EP-08-03: User asks "what should I do next?" — agent checks current time, remaining calendar, and open tasks. Returns single clear recommendation.
 - EP-08-04: User pastes a multi-intent snippet — agent extracts all implied actions and proposes each. "Dinner with Jess Friday 8pm at Dishoom" creates calendar event and logs interaction with Jess if she is in the people graph.
+
+### EP-12 — Personality and Voice Output
+
+- EP-12-01: `/persona [name]` is handled by the orchestrator before the agent loop. Valid names: `goggins`, `ferguson`, `stoic`, `default`. Upserts `current_persona` key in `user_settings` table. Replies with the persona display name and a one-line description of its style. Invalid name replies with a list of valid options.
+- EP-12-02: On every agent request, orchestrator reads `current_persona` from `user_settings` (defaults to `default` if no row). Loads the matching persona config from `packages/orchestrator/src/personas.ts` and prepends its `systemPromptBlock` to the Identity section of the Claude system prompt.
+- EP-12-03: `personas.ts` exports an array of persona objects: `{ id, displayName, description, systemPromptBlock, elevenLabsVoiceId }`. The `systemPromptBlock` for each persona defines tone, vocabulary, sentence structure, and any hard rules (e.g. Goggins: never soften a message, never validate excuses). `elevenLabsVoiceId` is a string placeholder replaced with real IDs after manual voice selection in ElevenLabs UI.
+- EP-12-04: When a voice reply is needed, orchestrator calls ElevenLabs TTS API (`POST https://api.elevenlabs.io/v1/text-to-speech/{voice_id}`, `model_id: eleven_multilingual_v2`) with the current persona's voice ID. Returns mp3 Buffer. If persona is `default` or `elevenLabsVoiceId` is unset, skips TTS and sends text.
+- EP-12-05: Bot sends voice replies via `sendVoice` with the mp3 Buffer. A voice reply is triggered when: (a) the message context contains `[voice]` prefix (originated as voice note in Phase 5), or (b) the agent's text response contains the sentinel `[VOICE_REPLY]` which the orchestrator emits when the user requests "reply as a voice note" or similar. The sentinel is stripped before sending.
+- EP-12-06: ElevenLabs TTS errors (non-200, network failure, empty audio) are caught. Falls back to sending the text response. User is not notified of the TTS failure — they simply receive text. Error is logged at WARN.
+- EP-12-07: `ELEVENLABS_API_KEY` added to env config validation in `packages/shared/src/env.ts`. Added to `.env.example`. No other env schema changes.
 
 ### EP-11 — Voice Message Input
 
