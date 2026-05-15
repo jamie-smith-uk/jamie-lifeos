@@ -10,7 +10,7 @@
     "acceptance_criteria": [
       "pending_voice_intents.id: SERIAL PRIMARY KEY",
       "pending_voice_intents.chat_id: BIGINT NOT NULL",
-      "pending_voice_intents.transcription: TEXT NOT NULL", 
+      "pending_voice_intents.transcription: TEXT NOT NULL",
       "pending_voice_intents.telegram_file_id: TEXT NOT NULL",
       "pending_voice_intents.expires_at: TIMESTAMPTZ NOT NULL",
       "pending_voice_intents.created_at: TIMESTAMPTZ NOT NULL DEFAULT NOW()",
@@ -20,7 +20,7 @@
     "estimated_complexity": "low"
   },
   {
-    "id": "task-2", 
+    "id": "task-2",
     "title": "Add OPENAI_API_KEY to environment configuration",
     "description": "Add OPENAI_API_KEY validation to shared environment configuration and update .env.example with documentation comment",
     "files_in_scope": [
@@ -39,129 +39,246 @@
     "estimated_complexity": "low"
   },
   {
-    "id": "task-3",
-    "title": "Add voice message transcription tool to orchestrator",
-    "description": "Implement voice transcription tool that downloads Telegram voice files and sends them to OpenAI Whisper API for speech-to-text conversion",
+    "id": "task-3a",
+    "title": "Implement voice transcription tool core function",
+    "description": "Implement transcribe_voice_message function that downloads Telegram voice files and sends them to OpenAI Whisper API",
     "files_in_scope": [
-      "packages/orchestrator/src/tools/voice.ts",
-      "packages/orchestrator/src/tools/__tests__/voice.test.ts",
-      "packages/orchestrator/tsconfig.json",
-      "packages/orchestrator/vitest.config.ts"
+      "packages/orchestrator/src/tools/voice.ts"
     ],
-    "dependencies": ["task-2"],
+    "dependencies": [
+      "task-2"
+    ],
     "acceptance_criteria": [
       "transcribe_voice_message function downloads Telegram voice file using bot token",
       "Function sends audio file to OpenAI Whisper API with whisper-1 model",
       "Function returns transcription text on success",
-      "Function handles network errors and API failures gracefully",
-      "Function validates file download and API response formats"
+      "Function handles network errors and API failures gracefully"
     ],
     "security_sensitive": true,
     "estimated_complexity": "low"
   },
   {
-    "id": "task-4",
-    "title": "Add pending voice intent management tools",
-    "description": "Implement database tools for creating, reading, and deleting pending voice intents with expiration handling",
+    "id": "task-3b",
+    "title": "Add voice transcription tool tests and validation",
+    "description": "Add comprehensive tests for voice transcription tool including file validation and API response format checking",
     "files_in_scope": [
-      "packages/orchestrator/src/tools/voice.ts",
       "packages/orchestrator/src/tools/__tests__/voice.test.ts",
       "packages/orchestrator/tsconfig.json",
       "packages/orchestrator/vitest.config.ts"
     ],
-    "dependencies": ["task-1", "task-3"],
+    "dependencies": [
+      "task-3a"
+    ],
+    "acceptance_criteria": [
+      "Function validates file download and API response formats",
+      "Tests cover successful transcription scenarios",
+      "Tests cover network error handling",
+      "Tests cover API failure scenarios"
+    ],
+    "security_sensitive": true,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-4a",
+    "title": "Implement pending voice intent creation and reading",
+    "description": "Implement create_pending_voice_intent and consume_pending_voice_intent functions for database operations",
+    "files_in_scope": [
+      "packages/orchestrator/src/tools/voice.ts"
+    ],
+    "dependencies": [
+      "task-1",
+      "task-3b"
+    ],
     "acceptance_criteria": [
       "create_pending_voice_intent function writes to pending_voice_intents table",
       "Function sets expires_at to 5 minutes from creation time",
       "consume_pending_voice_intent function reads and deletes intent by ID",
-      "Function returns null if intent is expired (expires_at in past)",
-      "Function deletes expired intents when accessed"
+      "Function returns null if intent is expired (expires_at in past)"
     ],
     "security_sensitive": false,
     "estimated_complexity": "low"
   },
   {
-    "id": "task-5",
-    "title": "Add voice callback keyboard builders",
-    "description": "Extend bot keyboard module to generate inline keyboards for voice message confirmations with Yes/No buttons containing proper callback data",
+    "id": "task-4b",
+    "title": "Add pending voice intent management tests",
+    "description": "Add tests for pending voice intent creation, reading, and expiration handling",
     "files_in_scope": [
-      "packages/bot/src/keyboard.ts",
-      "packages/bot/src/__tests__/keyboard.test.ts",
-      "packages/bot/tsconfig.json",
-      "packages/bot/vitest.config.ts"
+      "packages/orchestrator/src/tools/__tests__/voice.test.ts",
+      "packages/orchestrator/tsconfig.json",
+      "packages/orchestrator/vitest.config.ts"
+    ],
+    "dependencies": [
+      "task-4a"
+    ],
+    "acceptance_criteria": [
+      "Tests verify intent creation with correct expiration time",
+      "Tests verify intent consumption and deletion",
+      "Tests verify expired intent handling",
+      "Tests verify null return for expired intents"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-5a",
+    "title": "Implement voice confirmation keyboard builder",
+    "description": "Implement buildVoiceConfirmationKeyboard function to generate inline keyboards for voice message confirmations",
+    "files_in_scope": [
+      "packages/bot/src/keyboard.ts"
     ],
     "dependencies": [],
     "acceptance_criteria": [
       "buildVoiceConfirmationKeyboard function creates inline keyboard",
       "Keyboard contains 'Yes, do it' button with callback_data voice_yes_{id}",
       "Keyboard contains 'No, cancel' button with callback_data voice_no_{id}",
-      "Function accepts intent ID parameter and embeds it in callback data",
-      "Keyboard layout matches Telegram inline keyboard format"
+      "Function accepts intent ID parameter and embeds it in callback data"
     ],
     "security_sensitive": false,
     "estimated_complexity": "low"
   },
   {
-    "id": "task-6",
-    "title": "Add voice message detection to bot message handler",
-    "description": "Extend bot message handler to detect incoming voice messages, transcribe them, create pending intents, and send confirmation messages",
+    "id": "task-5b",
+    "title": "Add voice keyboard builder tests",
+    "description": "Add tests for voice confirmation keyboard builder including format validation",
     "files_in_scope": [
-      "packages/bot/src/index.ts",
-      "packages/bot/src/__tests__/index.test.ts",
+      "packages/bot/src/__tests__/keyboard.test.ts",
       "packages/bot/tsconfig.json",
       "packages/bot/vitest.config.ts"
     ],
-    "dependencies": ["task-3", "task-4", "task-5"],
+    "dependencies": [
+      "task-5a"
+    ],
+    "acceptance_criteria": [
+      "Keyboard layout matches Telegram inline keyboard format",
+      "Tests verify button text and callback data",
+      "Tests verify intent ID embedding in callback data",
+      "Tests cover edge cases for ID formatting"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-6a",
+    "title": "Implement voice message detection in bot handler",
+    "description": "Extend bot message handler to detect incoming voice messages and transcribe them",
+    "files_in_scope": [
+      "packages/bot/src/index.ts"
+    ],
+    "dependencies": [
+      "task-3b",
+      "task-4b"
+    ],
     "acceptance_criteria": [
       "Bot detects message.voice property in incoming messages",
       "Handler calls transcription tool with voice file data",
       "Handler creates pending voice intent with transcription",
-      "Handler sends confirmation message with transcription text",
-      "Handler includes voice confirmation keyboard in reply",
       "Handler catches transcription errors and sends friendly error message"
     ],
     "security_sensitive": true,
     "estimated_complexity": "low"
   },
   {
-    "id": "task-7",
-    "title": "Add voice callback handlers to bot",
-    "description": "Implement callback handlers for voice_yes and voice_no actions that manage pending intents and execute appropriate responses",
+    "id": "task-6b",
+    "title": "Add voice confirmation message and keyboard to bot handler",
+    "description": "Extend bot handler to send confirmation messages with transcription text and voice confirmation keyboard",
     "files_in_scope": [
       "packages/bot/src/index.ts",
       "packages/bot/src/__tests__/index.test.ts",
       "packages/bot/tsconfig.json",
       "packages/bot/vitest.config.ts"
     ],
-    "dependencies": ["task-4", "task-6"],
+    "dependencies": [
+      "task-6a",
+      "task-5b"
+    ],
+    "acceptance_criteria": [
+      "Handler sends confirmation message with transcription text",
+      "Handler includes voice confirmation keyboard in reply",
+      "Tests verify message format and keyboard inclusion",
+      "Tests verify error message handling"
+    ],
+    "security_sensitive": true,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-7a",
+    "title": "Implement voice_yes callback handler",
+    "description": "Implement callback handler for voice_yes action that manages pending intents and executes appropriate responses",
+    "files_in_scope": [
+      "packages/bot/src/index.ts"
+    ],
+    "dependencies": [
+      "task-4b",
+      "task-6b"
+    ],
     "acceptance_criteria": [
       "voice_yes callback handler loads pending intent by ID from callback data",
       "Handler checks if intent is expired and sends expiry message if so",
       "Handler deletes expired intents and stops processing",
-      "Handler forwards valid transcription to orchestrator with [voice] prefix",
-      "voice_no callback handler deletes pending intent and sends cancellation message",
-      "Both handlers properly parse intent ID from callback data"
+      "Handler forwards valid transcription to orchestrator with [voice] prefix"
     ],
     "security_sensitive": false,
     "estimated_complexity": "low"
   },
   {
-    "id": "task-8",
-    "title": "Register voice tools in orchestrator agent",
-    "description": "Add voice transcription and intent management tools to the orchestrator's agent tool registry for use in the agent loop",
+    "id": "task-7b",
+    "title": "Implement voice_no callback handler and tests",
+    "description": "Implement callback handler for voice_no action and add comprehensive tests for both callback handlers",
     "files_in_scope": [
-      "packages/orchestrator/src/agent.ts",
+      "packages/bot/src/index.ts",
+      "packages/bot/src/__tests__/index.test.ts",
+      "packages/bot/tsconfig.json",
+      "packages/bot/vitest.config.ts"
+    ],
+    "dependencies": [
+      "task-7a"
+    ],
+    "acceptance_criteria": [
+      "voice_no callback handler deletes pending intent and sends cancellation message",
+      "Both handlers properly parse intent ID from callback data",
+      "Tests verify intent loading and expiration checking",
+      "Tests verify message sending and intent deletion"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-8a",
+    "title": "Register voice tools in orchestrator agent",
+    "description": "Add voice transcription and intent management tools to the orchestrator's agent tool registry",
+    "files_in_scope": [
+      "packages/orchestrator/src/agent.ts"
+    ],
+    "dependencies": [
+      "task-3b",
+      "task-4b"
+    ],
+    "acceptance_criteria": [
+      "Voice tools are imported and registered in agent tool definitions",
+      "transcribe_voice_message tool is available to agent",
+      "create_pending_voice_intent tool is available to agent",
+      "consume_pending_voice_intent tool is available to agent"
+    ],
+    "security_sensitive": false,
+    "estimated_complexity": "low"
+  },
+  {
+    "id": "task-8b",
+    "title": "Add voice tools integration tests",
+    "description": "Add tests for voice tools integration with the orchestrator agent system",
+    "files_in_scope": [
       "packages/orchestrator/src/__tests__/agent.test.ts",
       "packages/orchestrator/tsconfig.json",
       "packages/orchestrator/vitest.config.ts"
     ],
-    "dependencies": ["task-3", "task-4"],
+    "dependencies": [
+      "task-8a"
+    ],
     "acceptance_criteria": [
-      "Voice tools are imported and registered in agent tool definitions",
-      "transcribe_voice_message tool is available to agent",
-      "create_pending_voice_intent tool is available to agent", 
-      "consume_pending_voice_intent tool is available to agent",
-      "Tools are properly typed and integrated with existing tool system"
+      "Tools are properly typed and integrated with existing tool system",
+      "Tests verify tool availability in agent",
+      "Tests verify tool parameter validation",
+      "Tests verify tool execution in agent loop"
     ],
     "security_sensitive": false,
     "estimated_complexity": "low"
