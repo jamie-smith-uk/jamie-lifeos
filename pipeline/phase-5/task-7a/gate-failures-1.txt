@@ -1,0 +1,158 @@
+=== pnpm test ===
+
+> @lifeos/bot@0.0.1 test /home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot
+> vitest run --config vitest.config.ts
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot[39m
+
+ [31m❯[39m src/__tests__/voice-yes-callback.test.ts [2m([22m[2m18 tests[22m[2m | [22m[31m8 failed[39m[2m)[22m[33m 653[2mms[22m[39m
+     [32m✓[39m extracts intent ID from callback_data format 'voice_yes_<id>'[32m 65[2mms[22m[39m
+     [32m✓[39m queries database for pending_voice_intents table by ID[32m 35[2mms[22m[39m
+     [32m✓[39m handles callback_data with different intent IDs correctly[32m 35[2mms[22m[39m
+     [32m✓[39m loads intent with all required fields from database[32m 34[2mms[22m[39m
+     [32m✓[39m detects expired intent when expires_at is in the past[32m 34[2mms[22m[39m
+     [32m✓[39m sends expiry message when intent has expired[32m 33[2mms[22m[39m
+[31m     [31m×[31m does not forward to orchestrator when intent is expired[39m[32m 39[2mms[22m[39m
+     [32m✓[39m compares expires_at with current time to determine expiry[32m 34[2mms[22m[39m
+     [32m✓[39m deletes expired intent from database[32m 36[2mms[22m[39m
+     [32m✓[39m executes DELETE query with correct intent ID[32m 33[2mms[22m[39m
+[31m     [31m×[31m stops processing after deleting expired intent[39m[32m 33[2mms[22m[39m
+[31m     [31m×[31m does not forward transcription when intent is deleted[39m[32m 34[2mms[22m[39m
+[31m     [31m×[31m forwards valid intent to orchestrator /callback endpoint[39m[32m 34[2mms[22m[39m
+[31m     [31m×[31m prefixes transcription with [voice] when forwarding to orchestrator[39m[32m 33[2mms[22m[39m
+[31m     [31m×[31m includes full transcription text after [voice] prefix[39m[32m 37[2mms[22m[39m
+[31m     [31m×[31m forwards with correct chat_id and callback_query_id[39m[32m 34[2mms[22m[39m
+     [32m✓[39m does not delete valid intent from database[32m 33[2mms[22m[39m
+[31m     [31m×[31m handles transcription with special characters correctly[39m[32m 35[2mms[22m[39m
+ [32m✓[39m src/__tests__/dismiss-nudge-api.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 1218[2mms[22m[39m
+ [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m64 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 1543[2mms[22m[39m
+ [32m✓[39m src/__tests__/keyboard.test.ts [2m([22m[2m62 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32m✓[39m src/__tests__/dismiss-nudge.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 879[2mms[22m[39m
+ [32m✓[39m src/__tests__/voice-message.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 508[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m5 passed[39m[22m[90m (6)[39m
+[2m      Tests [22m [1m[31m8 failed[39m[22m[2m | [22m[1m[32m203 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (212)[39m
+[2m   Start at [22m 10:30:35
+[2m   Duration [22m 2.21s[2m (transform 533ms, setup 0ms, import 686ms, tests 4.83s, environment 1ms)[22m
+
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/voice-yes-callback.test.ts,title=src/__tests__/voice-yes-callback.test.ts > AC-2%3A Handler checks if intent is expired and sends expiry message if so > does not forward to orchestrator when intent is expired,line=453,column=79::TypeError: Cannot read properties of undefined (reading 'calls')%0A ❯ src/__tests__/voice-yes-callback.test.ts:453:79%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/voice-yes-callback.test.ts,title=src/__tests__/voice-yes-callback.test.ts > AC-3%3A Handler deletes expired intents and stops processing > stops processing after deleting expired intent,line=617,column=83::TypeError: Cannot read properties of undefined (reading 'calls')%0A ❯ src/__tests__/voice-yes-callback.test.ts:617:83%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/voice-yes-callback.test.ts,title=src/__tests__/voice-yes-callback.test.ts > AC-3%3A Handler deletes expired intents and stops processing > does not forward transcription when intent is deleted,line=661,column=79::TypeError: Cannot read properties of undefined (reading 'calls')%0A ❯ src/__tests__/voice-yes-callback.test.ts:661:79%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/voice-yes-callback.test.ts,title=src/__tests__/voice-yes-callback.test.ts > AC-4%3A Handler forwards valid transcription to orchestrator with [voice] prefix > forwards valid intent to orchestrator /callback endpoint,line=708,column=79::TypeError: Cannot read properties of undefined (reading 'calls')%0A ❯ src/__tests__/voice-yes-callback.test.ts:708:79%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/voice-yes-callback.test.ts,title=src/__tests__/voice-yes-callback.test.ts > AC-4%3A Handler forwards valid transcription to orchestrator with [voice] prefix > prefixes transcription with [voice] when forwarding to orchestrator,line=749,column=79::TypeError: Cannot read properties of undefined (reading 'calls')%0A ❯ src/__tests__/voice-yes-callback.test.ts:749:79%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/voice-yes-callback.test.ts,title=src/__tests__/voice-yes-callback.test.ts > AC-4%3A Handler forwards valid transcription to orchestrator with [voice] prefix > includes full transcription text after [voice] prefix,line=795,column=79::TypeError: Cannot read properties of undefined (reading 'calls')%0A ❯ src/__tests__/voice-yes-callback.test.ts:795:79%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/voice-yes-callback.test.ts,title=src/__tests__/voice-yes-callback.test.ts > AC-4%3A Handler forwards valid transcription to orchestrator with [voice] prefix > forwards with correct chat_id and callback_query_id,line=840,column=79::TypeError: Cannot read properties of undefined (reading 'calls')%0A ❯ src/__tests__/voice-yes-callback.test.ts:840:79%0A%0A
+
+::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/voice-yes-callback.test.ts,title=src/__tests__/voice-yes-callback.test.ts > AC-4%3A Handler forwards valid transcription to orchestrator with [voice] prefix > handles transcription with special characters correctly,line=924,column=79::TypeError: Cannot read properties of undefined (reading 'calls')%0A ❯ src/__tests__/voice-yes-callback.test.ts:924:79%0A%0A
+/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/bot@0.0.1 test: `vitest run --config vitest.config.ts`
+Exit status 1
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 8 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/voice-yes-callback.test.ts[2m > [22mAC-2: Handler checks if intent is expired and sends expiry message if so[2m > [22mdoes not forward to orchestrator when intent is expired
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'calls')[39m
+[36m [2m❯[22m src/__tests__/voice-yes-callback.test.ts:[2m453:79[22m[39m
+    [90m451|[39m
+    [90m452|[39m     // Should NOT call orchestrator /callback endpoint for expired int…
+    [90m453|[39m     const callbackCalls = (globalThis.fetch as ReturnType<typeof vi.fn…
+    [90m   |[39m                                                                               [31m^[39m
+    [90m454|[39m       (call: unknown[]) => typeof call[0] === "string" && call[0].incl…
+    [90m455|[39m     )[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/voice-yes-callback.test.ts[2m > [22mAC-3: Handler deletes expired intents and stops processing[2m > [22mstops processing after deleting expired intent
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'calls')[39m
+[36m [2m❯[22m src/__tests__/voice-yes-callback.test.ts:[2m617:83[22m[39m
+    [90m615|[39m
+    [90m616|[39m     [90m// Should NOT forward to orchestrator[39m
+    [90m617|[39m     const orchestratorCalls = (globalThis.fetch as ReturnType<typeof v…
+    [90m   |[39m                                                                                   [31m^[39m
+    [90m618|[39m       (call: unknown[]) => typeof call[0] === "string" && call[0].incl…
+    [90m619|[39m     )[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/voice-yes-callback.test.ts[2m > [22mAC-3: Handler deletes expired intents and stops processing[2m > [22mdoes not forward transcription when intent is deleted
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'calls')[39m
+[36m [2m❯[22m src/__tests__/voice-yes-callback.test.ts:[2m661:79[22m[39m
+    [90m659|[39m
+    [90m660|[39m     [90m// Verify no /callback call was made to orchestrator[39m
+    [90m661|[39m     const callbackCalls = (globalThis.fetch as ReturnType<typeof vi.fn…
+    [90m   |[39m                                                                               [31m^[39m
+    [90m662|[39m       (call: unknown[]) => typeof call[0] === "string" && call[0].incl…
+    [90m663|[39m     )[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/voice-yes-callback.test.ts[2m > [22mAC-4: Handler forwards valid transcription to orchestrator with [voice] prefix[2m > [22mforwards valid intent to orchestrator /callback endpoint
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'calls')[39m
+[36m [2m❯[22m src/__tests__/voice-yes-callback.test.ts:[2m708:79[22m[39m
+    [90m706|[39m
+    [90m707|[39m     [90m// Should call /callback endpoint[39m
+    [90m708|[39m     const callbackCalls = (globalThis.fetch as ReturnType<typeof vi.fn…
+    [90m   |[39m                                                                               [31m^[39m
+    [90m709|[39m       (call: unknown[]) => typeof call[0] === "string" && call[0].incl…
+    [90m710|[39m     )[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/voice-yes-callback.test.ts[2m > [22mAC-4: Handler forwards valid transcription to orchestrator with [voice] prefix[2m > [22mprefixes transcription with [voice] when forwarding to orchestrator
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'calls')[39m
+[36m [2m❯[22m src/__tests__/voice-yes-callback.test.ts:[2m749:79[22m[39m
+    [90m747|[39m
+    [90m748|[39m     [90m// Verify the body contains [voice] prefix[39m
+    [90m749|[39m     const callbackCalls = (globalThis.fetch as ReturnType<typeof vi.fn…
+    [90m   |[39m                                                                               [31m^[39m
+    [90m750|[39m       (call: unknown[]) => typeof call[0] === "string" && call[0].incl…
+    [90m751|[39m     )[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/voice-yes-callback.test.ts[2m > [22mAC-4: Handler forwards valid transcription to orchestrator with [voice] prefix[2m > [22mincludes full transcription text after [voice] prefix
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'calls')[39m
+[36m [2m❯[22m src/__tests__/voice-yes-callback.test.ts:[2m795:79[22m[39m
+    [90m793|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+    [90m794|[39m
+    [90m795|[39m     const callbackCalls = (globalThis.fetch as ReturnType<typeof vi.fn…
+    [90m   |[39m                                                                               [31m^[39m
+    [90m796|[39m       (call: unknown[]) => typeof call[0] === "string" && call[0].incl…
+    [90m797|[39m     )[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/voice-yes-callback.test.ts[2m > [22mAC-4: Handler forwards valid transcription to orchestrator with [voice] prefix[2m > [22mforwards with correct chat_id and callback_query_id
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'calls')[39m
+[36m [2m❯[22m src/__tests__/voice-yes-callback.test.ts:[2m840:79[22m[39m
+    [90m838|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+    [90m839|[39m
+    [90m840|[39m     const callbackCalls = (globalThis.fetch as ReturnType<typeof vi.fn…
+    [90m   |[39m                                                                               [31m^[39m
+    [90m841|[39m       (call: unknown[]) => typeof call[0] === "string" && call[0].incl…
+    [90m842|[39m     )[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/voice-yes-callback.test.ts[2m > [22mAC-4: Handler forwards valid transcription to orchestrator with [voice] prefix[2m > [22mhandles transcription with special characters correctly
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'calls')[39m
+[36m [2m❯[22m src/__tests__/voice-yes-callback.test.ts:[2m924:79[22m[39m
+    [90m922|[39m     [35mawait[39m [34mflushPromises[39m()[33m;[39m
+    [90m923|[39m
+    [90m924|[39m     const callbackCalls = (globalThis.fetch as ReturnType<typeof vi.fn…
+    [90m   |[39m                                                                               [31m^[39m
+    [90m925|[39m       (call: unknown[]) => typeof call[0] === "string" && call[0].incl…
+    [90m926|[39m     )[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯[22m[39m
+
+
+

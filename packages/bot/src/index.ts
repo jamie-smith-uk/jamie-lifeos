@@ -416,6 +416,40 @@ async function sendErrorReply(chatId: number): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Helper: answer callback query and handle errors
+// ---------------------------------------------------------------------------
+
+async function answerCallbackQuerySafely(
+  callbackQueryId: string,
+  text: string = "",
+): Promise<void> {
+  try {
+    await bot.answerCallbackQuery(callbackQueryId, { text });
+  } catch (err) {
+    botLogger.warn({ err, callback_query_id: callbackQueryId }, "Failed to answer callback query");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Helper: extract and send orchestrator reply text
+// ---------------------------------------------------------------------------
+
+async function sendOrchestratorReply(
+  chatId: number,
+  orchestratorReply: Record<string, unknown>,
+): Promise<void> {
+  const replyText = typeof orchestratorReply.text === "string" ? orchestratorReply.text : "";
+
+  if (replyText) {
+    try {
+      await bot.sendMessage(chatId, replyText);
+    } catch (err) {
+      botLogger.error({ err, chat_id: chatId }, "Failed to send callback reply message");
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Text message handler
 // ---------------------------------------------------------------------------
 
@@ -576,6 +610,17 @@ bot.on("callback_query", (query) => {
   const messageId = query.message?.message_id ?? 0;
   const callbackQueryId = query.id;
 
+  // Validate callback data length
+  const MAX_CALLBACK_DATA_LENGTH = 256;
+  if (callbackData.length > MAX_CALLBACK_DATA_LENGTH) {
+    botLogger.warn(
+      { chat_id: chatId, callback_data_length: callbackData.length },
+      "Callback data exceeds maximum length",
+    );
+    void answerCallbackQuerySafely(callbackQueryId, "Invalid request");
+    return;
+  }
+
   botLogger.info(
     {
       chat_id: chatId,
@@ -605,15 +650,10 @@ bot.on("callback_query", (query) => {
     postToOrchestrator("/dismiss-nudge", dismissBody)
       .then(() => {
         // Answer the callback query to dismiss the loading spinner
-        bot.answerCallbackQuery(callbackQueryId, { text: "" }).catch((answerErr: unknown) => {
-          botLogger.warn(
-            { err: answerErr, callback_query_id: callbackQueryId },
-            "Failed to answer callback query",
-          );
-        });
+        void answerCallbackQuerySafely(callbackQueryId);
 
         // Remove the inline keyboard from the message
-        bot
+        void bot
           .editMessageReplyMarkup(
             { inline_keyboard: [] },
             { chat_id: chatId, message_id: messageId },
@@ -632,15 +672,137 @@ bot.on("callback_query", (query) => {
         );
 
         // Answer the callback query even on error to dismiss the spinner
-        bot
-          .answerCallbackQuery(callbackQueryId, { text: "Something went wrong." })
-          .catch((answerErr: unknown) => {
-            botLogger.warn(
-              { err: answerErr, callback_query_id: callbackQueryId },
-              "Failed to answer callback query on error",
-            );
-          });
+        void answerCallbackQuerySafely(callbackQueryId, "Something went wrong.");
+        void sendErrorReply(chatId);
+      });
 
+    return;
+  }
+
+  // Check if this is a voice_yes callback (format: "voice_yes_123")
+  const voiceYesMatch = callbackData.match(/^voice_yes_(\d+)$/);
+  if (voiceYesMatch) {
+    const intentId = parseInt(voiceYesMatch[1], 10);
+
+    // Validate intent ID bounds
+    const MAX_INTENT_ID = 2147483647; // Max 32-bit signed integer
+    if (intentId <= 0 || intentId > MAX_INTENT_ID) {
+      botLogger.warn({ chat_id: chatId, intent_id: intentId }, "Invalid intent ID");
+      void answerCallbackQuerySafely(callbackQueryId, "Invalid request");
+      return;
+    }
+
+    botLogger.info(
+      { chat_id: chatId, intent_id: intentId, callback_query_id: callbackQueryId },
+      "Processing voice_yes callback",
+    );
+
+    // Query database for the pending voice intent
+    const selectQuery = `
+      SELECT id, chat_id, transcription, telegram_file_id, expires_at, created_at
+      FROM pending_voice_intents
+      WHERE id = $1
+    `;
+
+    interface PendingVoiceIntent {
+      id: number;
+      chat_id: number;
+      transcription: string;
+      telegram_file_id: string;
+      expires_at: Date;
+      created_at: Date;
+    }
+
+    pool
+      .query(selectQuery, [intentId])
+      .then((result) => {
+        if (result.rowCount === 0) {
+          botLogger.warn(
+            { chat_id: chatId, intent_id: intentId },
+            "Voice intent not found in database",
+          );
+          void answerCallbackQuerySafely(callbackQueryId);
+          void sendErrorReply(chatId);
+          return;
+        }
+
+        const intent = result.rows[0] as PendingVoiceIntent;
+
+        // Check if intent is expired
+        const now = new Date();
+        const isExpired = intent.expires_at <= now;
+
+        if (isExpired) {
+          botLogger.info(
+            { chat_id: chatId, intent_id: intentId, expires_at: intent.expires_at },
+            "Voice intent has expired, deleting and sending expiry message",
+          );
+
+          // Delete expired intent
+          const deleteQuery = "DELETE FROM pending_voice_intents WHERE id = $1";
+          pool
+            .query(deleteQuery, [intentId])
+            .then(() => {
+              // Send expiry message to user
+              void bot
+                .sendMessage(
+                  chatId,
+                  "This voice message confirmation has expired. Please send your voice message again.",
+                )
+                .catch((sendErr: unknown) => {
+                  botLogger.error(
+                    { err: sendErr, chat_id: chatId },
+                    "Failed to send expiry message",
+                  );
+                });
+
+              // Answer the callback query
+              void answerCallbackQuerySafely(callbackQueryId);
+            })
+            .catch((deleteErr: unknown) => {
+              botLogger.error(
+                { err: deleteErr, chat_id: chatId, intent_id: intentId },
+                "Failed to delete expired voice intent",
+              );
+              void answerCallbackQuerySafely(callbackQueryId, "Something went wrong.");
+              void sendErrorReply(chatId);
+            });
+
+          return;
+        }
+
+        // Intent is valid, forward to orchestrator with [voice] prefix
+        const prefixedTranscription = `[voice] <untrusted>${intent.transcription}</untrusted>`;
+        const forwardBody = {
+          chat_id: chatId,
+          callback_query_id: callbackQueryId,
+          callback_data: prefixedTranscription,
+          message_id: messageId,
+        };
+
+        postToOrchestrator("/callback", forwardBody)
+          .then((orchestratorReply) => {
+            // Answer the callback query to dismiss the loading spinner
+            void answerCallbackQuerySafely(callbackQueryId);
+            void sendOrchestratorReply(chatId, orchestratorReply);
+          })
+          .catch((err: unknown) => {
+            botLogger.error(
+              { err, chat_id: chatId, intent_id: intentId, callback_query_id: callbackQueryId },
+              "Failed to forward voice intent to orchestrator",
+            );
+            // Answer the callback query even on error to dismiss the spinner
+            void answerCallbackQuerySafely(callbackQueryId, "Something went wrong.");
+            void sendErrorReply(chatId);
+          });
+      })
+      .catch((err: unknown) => {
+        botLogger.error(
+          { err, chat_id: chatId, intent_id: intentId, callback_query_id: callbackQueryId },
+          "Failed to query voice intent from database",
+        );
+        // Answer the callback query even on error to dismiss the spinner
+        void answerCallbackQuerySafely(callbackQueryId, "Something went wrong.");
         void sendErrorReply(chatId);
       });
 
@@ -659,23 +821,8 @@ bot.on("callback_query", (query) => {
     .then((orchestratorReply) => {
       // T-17: Answer the callback query to dismiss the loading spinner on
       // the button, then send the orchestrator's reply as a new message.
-      bot.answerCallbackQuery(callbackQueryId, { text: "" }).catch((answerErr: unknown) => {
-        botLogger.warn(
-          { err: answerErr, callback_query_id: callbackQueryId },
-          "Failed to answer callback query",
-        );
-      });
-
-      const replyText = typeof orchestratorReply.text === "string" ? orchestratorReply.text : "";
-
-      if (replyText) {
-        bot.sendMessage(chatId, replyText).catch((sendErr: unknown) => {
-          botLogger.error(
-            { err: sendErr, chat_id: chatId },
-            "Failed to send callback reply message",
-          );
-        });
-      }
+      void answerCallbackQuerySafely(callbackQueryId);
+      void sendOrchestratorReply(chatId, orchestratorReply);
     })
     .catch((err: unknown) => {
       botLogger.error(
@@ -683,14 +830,7 @@ bot.on("callback_query", (query) => {
         "Failed to forward callback_query to orchestrator",
       );
       // Answer the callback query even on error to dismiss the spinner.
-      bot
-        .answerCallbackQuery(callbackQueryId, { text: "Something went wrong." })
-        .catch((answerErr: unknown) => {
-          botLogger.warn(
-            { err: answerErr, callback_query_id: callbackQueryId },
-            "Failed to answer callback query on error",
-          );
-        });
+      void answerCallbackQuerySafely(callbackQueryId, "Something went wrong.");
       void sendErrorReply(chatId);
     });
 });

@@ -80,3 +80,10 @@
 ⚠ task-6b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-7a — Implement voice_yes callback handler
+
+**Files:** packages/bot/src/index.ts
+
+⚠ task-7a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
