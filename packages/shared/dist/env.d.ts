@@ -10,6 +10,7 @@ interface EnvConfig {
     TELEGRAM_ALLOWED_CHAT_ID: string;
     ANTHROPIC_API_KEY: string;
     ANTHROPIC_MODEL: string;
+    OPENAI_API_KEY: string;
     DATABASE_URL: string;
     ORCHESTRATOR_URL: string;
     TODOIST_API_TOKEN: string;
@@ -19,6 +20,7 @@ interface EnvConfig {
     STRAVA_CLIENT_ID: string;
     STRAVA_CLIENT_SECRET: string;
     STRAVA_REDIRECT_URI: string;
+    OAUTH_CALLBACK_SECRET: string;
     DIGEST_CRON: string;
     TZ: string;
     BOT_MODE: "polling" | "webhook";

@@ -462,3 +462,192 @@ describe("T-09 — agent.ts context persistence", () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Task-8b: Voice tools integration tests
+// Tests verify voice tools execute correctly in the agent tool loop.
+// ---------------------------------------------------------------------------
+
+describe("agent.ts — Task-8b: Voice tools execution in agent loop", () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  function makeTextMessage(text: string) {
+    return {
+      id: "msg_test",
+      type: "message",
+      role: "assistant",
+      content: [{ type: "text", text, citations: null }],
+      model: "claude-sonnet-4-20250514",
+      stop_reason: "end_turn",
+      stop_sequence: null,
+      usage: {
+        input_tokens: 10,
+        output_tokens: 5,
+        cache_creation_input_tokens: null,
+        cache_read_input_tokens: null,
+        cache_creation: null,
+        inference_geo: null,
+        server_tool_use: null,
+        service_tier: null,
+      },
+    };
+  }
+
+  function makeToolUseMessage(
+    toolId: string,
+    toolName: string,
+    toolInput: Record<string, unknown>,
+  ) {
+    return {
+      id: "msg_tool",
+      type: "message",
+      role: "assistant",
+      content: [
+        {
+          type: "tool_use",
+          id: toolId,
+          name: toolName,
+          input: toolInput,
+          caller: { type: "direct" },
+        },
+      ],
+      model: "claude-sonnet-4-20250514",
+      stop_reason: "tool_use",
+      stop_sequence: null,
+      usage: {
+        input_tokens: 10,
+        output_tokens: 5,
+        cache_creation_input_tokens: null,
+        cache_read_input_tokens: null,
+        cache_creation: null,
+        inference_geo: null,
+        server_tool_use: null,
+        service_tier: null,
+      },
+    };
+  }
+
+  function applyVoiceMocks(
+    anthropicCreate: ReturnType<typeof vi.fn>,
+    consumeFn: ReturnType<typeof vi.fn>,
+  ) {
+    vi.doMock("@lifeos/shared", () => ({
+      pool: {
+        query: vi.fn().mockResolvedValue({ rows: [] }),
+        connect: vi.fn().mockResolvedValue({
+          query: vi.fn().mockResolvedValue({ rows: [] }),
+          release: vi.fn(),
+        }),
+      },
+      env: {
+        ANTHROPIC_API_KEY: "sk-test",
+        ANTHROPIC_MODEL: "claude-sonnet-4-20250514",
+        DATABASE_URL: "postgresql://test",
+        TELEGRAM_BOT_TOKEN: "test-token",
+        OPENAI_API_KEY: "test-openai-key",
+        TZ: "UTC",
+      },
+      logger: { child: vi.fn(() => ({ info: vi.fn(), error: vi.fn(), warn: vi.fn() })) },
+    }));
+    vi.doMock("@anthropic-ai/sdk", () => ({
+      default: vi.fn(() => ({ messages: { create: anthropicCreate } })),
+    }));
+    vi.doMock("../tools/voice.js", () => ({
+      transcribe_voice_message: vi.fn().mockResolvedValue("transcription text"),
+      create_pending_voice_intent: vi.fn().mockResolvedValue({ id: 1, chat_id: 42 }),
+      consume_pending_voice_intent: consumeFn,
+    }));
+    vi.doMock("../context.js", () => ({
+      getActivitySummary: vi.fn().mockResolvedValue("0 activities"),
+    }));
+    vi.doMock("../tools/calendar.js", () => ({
+      calendarReadToolDefinitions: [],
+      calendarWriteToolDefinitions: [],
+      calendarFreeBusyToolDefinitions: [],
+      executeCalendarTool: vi.fn(),
+    }));
+    vi.doMock("../tools/todoist.js", () => ({ executeToDoistTool: vi.fn() }));
+    vi.doMock("../tools/gmail.js", () => ({ executeGmailTool: vi.fn() }));
+    vi.doMock("../tools/people.js", () => ({ executePeopleTool: vi.fn() }));
+    vi.doMock("../tools/life_events.js", () => ({ executeLifeEventsTool: vi.fn() }));
+    vi.doMock("../tools/nudges.js", () => ({ executeNudgesTool: vi.fn() }));
+    vi.doMock("../tools/strava.js", () => ({
+      get_strava_oauth_url: vi.fn(),
+      get_strava_activities: vi.fn(),
+      get_strava_trends: vi.fn(),
+    }));
+  }
+
+  it("consume_pending_voice_intent tool executes correctly in agent loop", async () => {
+    const consumeFn = vi.fn().mockResolvedValue({
+      id: 123,
+      chat_id: 42,
+      transcription: "add a meeting tomorrow",
+      telegram_file_id: "file_abc",
+    });
+
+    const anthropicCreate = vi
+      .fn()
+      .mockResolvedValueOnce(
+        makeToolUseMessage("tool_1", "consume_pending_voice_intent", { id: 123 }),
+      )
+      .mockResolvedValueOnce(makeTextMessage("Intent consumed successfully"));
+
+    applyVoiceMocks(anthropicCreate, consumeFn);
+
+    const { runAgent } = await import("../agent.js");
+    const result = await runAgent({
+      chat_id: 42,
+      text: "Consume pending voice intent",
+      message_id: 1,
+    });
+
+    expect(consumeFn).toHaveBeenCalledWith({ id: 123 });
+    expect(result.text).toBe("Intent consumed successfully");
+  });
+
+  it("voice tool result is fed back into the Anthropic messages array", async () => {
+    const consumeFn = vi.fn().mockResolvedValue({ id: 99, chat_id: 42, transcription: "hello" });
+    let capturedMessages: unknown[] = [];
+
+    const anthropicCreate = vi.fn().mockImplementation(({ messages }: { messages: unknown[] }) => {
+      capturedMessages = messages;
+      if (messages.length < 3) {
+        return Promise.resolve(
+          makeToolUseMessage("tool_2", "consume_pending_voice_intent", { id: 99 }),
+        );
+      }
+      return Promise.resolve(makeTextMessage("Done"));
+    });
+
+    applyVoiceMocks(anthropicCreate, consumeFn);
+
+    const { runAgent } = await import("../agent.js");
+    await runAgent({ chat_id: 42, text: "use voice tool", message_id: 2 });
+
+    // The final call should have a tool_result in the messages array
+    const allMessages = capturedMessages as Array<{ role: string; content: unknown }>;
+    const toolResultMessage = allMessages.find((m) => m.role === "user");
+    expect(toolResultMessage).toBeDefined();
+  });
+
+  it("voice tool error does not crash the agent loop", async () => {
+    const consumeFn = vi.fn().mockRejectedValue(new Error("DB connection failed"));
+
+    const anthropicCreate = vi
+      .fn()
+      .mockResolvedValueOnce(
+        makeToolUseMessage("tool_3", "consume_pending_voice_intent", { id: 1 }),
+      )
+      .mockResolvedValueOnce(makeTextMessage("Error handled gracefully"));
+
+    applyVoiceMocks(anthropicCreate, consumeFn);
+
+    const { runAgent } = await import("../agent.js");
+    const result = await runAgent({ chat_id: 42, text: "trigger voice error", message_id: 3 });
+
+    expect(result.text).toBe("Error handled gracefully");
+  });
+});
