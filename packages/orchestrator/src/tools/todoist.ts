@@ -1,11 +1,11 @@
 /**
- * todoist.ts — Todoist REST API v2 tool implementations.
+ * todoist.ts — Todoist API v1 tool implementations.
  *
- * Uses the Todoist REST API v2 with Bearer token authentication.
+ * Uses the Todoist unified API v1 with Bearer token authentication.
  * Supports get_tasks, create_task, complete_task, delete_task, and update_task.
  *
  * Authentication:
- *   TODOIST_API_TOKEN — Bearer token for Todoist REST API v2.
+ *   TODOIST_API_TOKEN — Bearer token for Todoist API v1.
  *
  * Security:
  *   - No secrets hard-coded — all credentials from environment variables.
@@ -24,7 +24,7 @@ function getTodoistToken(): string {
   return env.TODOIST_API_TOKEN;
 }
 
-const TODOIST_API_BASE = "https://api.todoist.com/rest/v2";
+const TODOIST_API_BASE = "https://api.todoist.com/api/v1";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -121,7 +121,8 @@ async function getTasks(input: Record<string, unknown>): Promise<string> {
       return httpErrorResponse(response, "get_tasks");
     }
 
-    const tasks = (await response.json()) as TodoistTask[];
+    const body = (await response.json()) as TodoistTask[] | { results: TodoistTask[] };
+    const tasks = Array.isArray(body) ? body : body.results;
     return formatTasks(tasks);
   } catch (err) {
     log.error({ err }, "get_tasks failed");
