@@ -59,3 +59,10 @@
 ⚠ task-5a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-5b — Add voice keyboard builder tests
+
+**Files:** packages/bot/src/__tests__/keyboard.test.ts, packages/bot/tsconfig.json, packages/bot/vitest.config.ts
+
+⚠ task-5b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
