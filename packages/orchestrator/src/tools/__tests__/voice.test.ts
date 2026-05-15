@@ -50,6 +50,255 @@ describe("Voice Tools", () => {
     vi.restoreAllMocks();
   });
 
+  describe("Pending voice intent management", () => {
+    let mockPool: {
+      query: ReturnType<typeof vi.fn>;
+    };
+
+    function setupPoolMocks(): void {
+      mockPool = {
+        query: vi.fn(),
+      };
+
+      vi.doMock("@lifeos/shared", () => ({
+        env: {
+          TELEGRAM_BOT_TOKEN: "test-token",
+          OPENAI_API_KEY: "test-key",
+        },
+        logger: {
+          info: vi.fn(),
+          error: vi.fn(),
+          warn: vi.fn(),
+          child: mockLoggerChild,
+        },
+        pool: mockPool,
+      }));
+    }
+
+    describe("create_pending_voice_intent", () => {
+      it("should create a pending voice intent with correct expiration time", async () => {
+        setupPoolMocks();
+        vi.resetModules();
+        voiceModule = await import("../voice.js");
+
+        const mockIntent = {
+          id: 1,
+          chat_id: 123,
+          transcription: "test transcription",
+          telegram_file_id: "file_123",
+          expires_at: new Date(Date.now() + 5 * 60 * 1000),
+          created_at: new Date(),
+        };
+
+        mockPool.query.mockResolvedValueOnce({
+          rows: [mockIntent],
+        });
+
+        const result = await voiceModule.create_pending_voice_intent({
+          chat_id: 123,
+          transcription: "test transcription",
+          telegram_file_id: "file_123",
+        });
+
+        expect(result).toEqual(mockIntent);
+        expect(mockPool.query).toHaveBeenCalledWith(
+          expect.stringContaining("INSERT INTO pending_voice_intents"),
+          [123, "test transcription", "file_123"],
+        );
+      });
+
+      it("should set expires_at to 5 minutes from now", async () => {
+        setupPoolMocks();
+        vi.resetModules();
+        voiceModule = await import("../voice.js");
+
+        const now = new Date();
+        const mockIntent = {
+          id: 1,
+          chat_id: 456,
+          transcription: "another test",
+          telegram_file_id: "file_456",
+          expires_at: new Date(now.getTime() + 5 * 60 * 1000),
+          created_at: now,
+        };
+
+        mockPool.query.mockResolvedValueOnce({
+          rows: [mockIntent],
+        });
+
+        const result = await voiceModule.create_pending_voice_intent({
+          chat_id: 456,
+          transcription: "another test",
+          telegram_file_id: "file_456",
+        });
+
+        expect(result.expires_at).toBeDefined();
+        expect(result.expires_at instanceof Date).toBe(true);
+      });
+
+      it("should return the created intent with all fields", async () => {
+        setupPoolMocks();
+        vi.resetModules();
+        voiceModule = await import("../voice.js");
+
+        const mockIntent = {
+          id: 2,
+          chat_id: 789,
+          transcription: "full test",
+          telegram_file_id: "file_789",
+          expires_at: new Date(),
+          created_at: new Date(),
+        };
+
+        mockPool.query.mockResolvedValueOnce({
+          rows: [mockIntent],
+        });
+
+        const result = await voiceModule.create_pending_voice_intent({
+          chat_id: 789,
+          transcription: "full test",
+          telegram_file_id: "file_789",
+        });
+
+        expect(result.id).toBe(2);
+        expect(result.chat_id).toBe(789);
+        expect(result.transcription).toBe("full test");
+        expect(result.telegram_file_id).toBe("file_789");
+        expect(result.expires_at).toBeDefined();
+        expect(result.created_at).toBeDefined();
+      });
+    });
+
+    describe("consume_pending_voice_intent", () => {
+      it("should delete and return the intent if not expired", async () => {
+        setupPoolMocks();
+        vi.resetModules();
+        voiceModule = await import("../voice.js");
+
+        const futureDate = new Date(Date.now() + 5 * 60 * 1000);
+        const mockIntent = {
+          id: 1,
+          chat_id: 123,
+          transcription: "test transcription",
+          telegram_file_id: "file_123",
+          expires_at: futureDate,
+          created_at: new Date(),
+        };
+
+        mockPool.query.mockResolvedValueOnce({
+          rows: [mockIntent],
+        });
+
+        const result = await voiceModule.consume_pending_voice_intent({
+          id: 1,
+        });
+
+        expect(result).toEqual(mockIntent);
+        expect(mockPool.query).toHaveBeenCalledWith(
+          expect.stringContaining("DELETE FROM pending_voice_intents"),
+          [1],
+        );
+      });
+
+      it("should return null if intent is expired", async () => {
+        setupPoolMocks();
+        vi.resetModules();
+        voiceModule = await import("../voice.js");
+
+        const pastDate = new Date(Date.now() - 1000);
+        const mockIntent = {
+          id: 2,
+          chat_id: 456,
+          transcription: "expired test",
+          telegram_file_id: "file_456",
+          expires_at: pastDate,
+          created_at: new Date(Date.now() - 10 * 60 * 1000),
+        };
+
+        mockPool.query.mockResolvedValueOnce({
+          rows: [mockIntent],
+        });
+
+        const result = await voiceModule.consume_pending_voice_intent({
+          id: 2,
+        });
+
+        expect(result).toBeNull();
+      });
+
+      it("should return null if intent does not exist", async () => {
+        setupPoolMocks();
+        vi.resetModules();
+        voiceModule = await import("../voice.js");
+
+        mockPool.query.mockResolvedValueOnce({
+          rows: [],
+        });
+
+        const result = await voiceModule.consume_pending_voice_intent({
+          id: 999,
+        });
+
+        expect(result).toBeNull();
+      });
+
+      it("should execute DELETE query with correct intent ID", async () => {
+        setupPoolMocks();
+        vi.resetModules();
+        voiceModule = await import("../voice.js");
+
+        const futureDate = new Date(Date.now() + 5 * 60 * 1000);
+        const mockIntent = {
+          id: 42,
+          chat_id: 789,
+          transcription: "test",
+          telegram_file_id: "file_42",
+          expires_at: futureDate,
+          created_at: new Date(),
+        };
+
+        mockPool.query.mockResolvedValueOnce({
+          rows: [mockIntent],
+        });
+
+        await voiceModule.consume_pending_voice_intent({
+          id: 42,
+        });
+
+        expect(mockPool.query).toHaveBeenCalledWith(
+          expect.stringContaining("DELETE FROM pending_voice_intents"),
+          [42],
+        );
+      });
+
+      it("should return null for intent with expires_at exactly at current time", async () => {
+        setupPoolMocks();
+        vi.resetModules();
+        voiceModule = await import("../voice.js");
+
+        const now = new Date();
+        const mockIntent = {
+          id: 3,
+          chat_id: 111,
+          transcription: "boundary test",
+          telegram_file_id: "file_111",
+          expires_at: now,
+          created_at: new Date(now.getTime() - 5 * 60 * 1000),
+        };
+
+        mockPool.query.mockResolvedValueOnce({
+          rows: [mockIntent],
+        });
+
+        const result = await voiceModule.consume_pending_voice_intent({
+          id: 3,
+        });
+
+        expect(result).toBeNull();
+      });
+    });
+  });
+
   describe("transcribe_voice_message", () => {
     describe("Telegram file download and validation", () => {
       it("should validate Telegram getFile response format with ok flag and result", async () => {
