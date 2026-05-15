@@ -1,0 +1,9 @@
+{
+  "task_id": "task-1",
+  "files_checked": [
+    "db/migrations/0009_pending_voice_intents.sql"
+  ],
+  "complex_functions": [],
+  "duplication_pct": null,
+  "coverage_pct": null
+}
