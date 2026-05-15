@@ -13,9 +13,7 @@ Built on Telegram, Claude, and PostgreSQL. Deployed on Railway.
 - **Email** — classified inbox digest, thread summaries, implied actions extracted automatically
 - **People** — a personal knowledge graph of relationships, interactions, and life events
 - **Nudges** — proactive reminders for birthdays, anniversaries, and lapsed contacts
-- **Morning digest** — daily briefing with calendar, tasks, life events, and a suggested day shape
-- **Day planning** — time-blocked plan, "what should I do next?", multi-intent snippet parsing
-- **Automations** — create named recurring automations with natural language schedules
+- **Strava** — OAuth connection to your Strava account, activity sync, and conversation queries over your training data
 
 ---
 
@@ -24,16 +22,17 @@ Built on Telegram, Claude, and PostgreSQL. Deployed on Railway.
 | Layer | Technology |
 |---|---|
 | Interface | Telegram (node-telegram-bot-api) |
-| AI | Claude claude-sonnet-4-20250514 via Anthropic API |
+| AI | Claude (claude-sonnet-4-20250514 default, configurable via `ANTHROPIC_MODEL`) |
 | Calendar | Google Calendar MCP |
 | Email | Gmail MCP |
-| Tasks | Todoist REST API v2 |
+| Tasks | Todoist API v1 |
+| Fitness | Strava API v3 (OAuth 2.0) |
 | Database | PostgreSQL 16 (Railway) via pg — raw parameterised SQL |
 | Scheduler | node-cron |
 | Runtime | Node.js 20 LTS, TypeScript strict mode |
 | Package manager | pnpm workspaces |
 | Testing | Vitest |
-| Infrastructure | Railway (bot + orchestrator + PostgreSQL) |
+| Infrastructure | Railway (bot service + orchestrator service + PostgreSQL) |
 
 ---
 
@@ -41,51 +40,28 @@ Built on Telegram, Claude, and PostgreSQL. Deployed on Railway.
 
 ```
 packages/
-  bot/          — Telegram bot service (message handler, callbacks, keyboards)
-  orchestrator/ — Agent loop, scheduler, tool integrations
-  shared/       — DB pool, logger, env config, shared types
+  bot/          — Telegram bot service (message handler, OAuth callback, inline keyboards)
+  orchestrator/ — Agent loop, tool integrations, scheduler, context management
+  shared/       — DB pool, logger, env config, migration runner, shared types
+
+db/
+  migrations/   — SQL migration files (applied at startup by runMigrations())
 
 docs/
-  prd.md        — Product requirements (5 phases, 9 epics, all user stories)
+  prd.md        — Product requirements (5 phases, all user stories)
   architecture.md — Technical architecture, DB schemas, tool definitions
 
 orchestrator/
-  run-phase.sh     — Pipeline runner (invoke to build a phase)
-  telegram-gate.sh — Human approval gate via Telegram polling
+  run-phase.sh  — Legacy shell runner (deprecated; use npx tsx orchestrator/src/index.ts)
+  approve.sh    — Human approval gate helper
 
 .opencode/
-  agents/       — System prompts for all 8 pipeline agents
+  agents/       — System prompts for all pipeline agents
   rules/        — Always-active security and TypeScript rules
   config.json   — OpenCode agent configuration
 
-migrations/     — SQL migration files
-pipeline/       — Runtime pipeline working files (gitignored)
+pipeline/       — Pipeline working files and phase artifacts (tracked in git)
 ```
-
----
-
-## Build pipeline
-
-Life OS is built by an automated agent pipeline. Each phase is planned, implemented, security-reviewed, tested, and validated before moving to the next.
-
-```
-AG-01 Architect   → task manifest
-AG-02 Reviewer    → human approval gate (via Telegram)
-AG-03 Tester      → test scaffolding and strategy
-AG-04 Developer   → implementation
-AG-05 Migration   → database migrations
-AG-06 Refactor    → code quality pass
-AG-07 Security    → security audit (hard gate)
-AG-08 Validator   → phase sign-off, git tag, Telegram notification
-```
-
-To run a phase:
-
-```bash
-./orchestrator/run-phase.sh --phase 1
-```
-
-The pipeline pauses at the human gate and sends you a Telegram message summarising the task manifest. Reply `approve`, `changes: [what to change]`, or `stop`.
 
 ---
 
@@ -93,11 +69,41 @@ The pipeline pauses at the human gate and sends you a Telegram message summarisi
 
 | Phase | Name | Status |
 |---|---|---|
-| 1 | Foundation — bot, calendar read/write, conversation context | In progress |
-| 2 | Tasks and Email | Pending |
-| 3 | People, Life Events, and Nudges | Pending |
-| 4 | Morning Digest and Day Planning | Pending |
-| 5 | Automations | Pending |
+| 1 | Foundation — bot, calendar read/write, conversation context | ✅ Complete |
+| 2 | Tasks and Email | ✅ Complete |
+| 3 | People, Life Events, and Nudges | ✅ Complete |
+| 4 | Strava Integration | 🔄 In progress (6/11 tasks done) |
+| 5 | Morning Digest and Day Planning | Pending |
+
+---
+
+## Build pipeline
+
+Life OS is built by an automated agent pipeline from [jamie-agent-pipeline](https://github.com/jamie-smith-uk/jamie-agent-pipeline). Each phase is planned, implemented, security-reviewed, tested, and validated before moving to the next.
+
+```
+AG-01 Architect   → task manifest + acceptance criteria
+AG-02 Reviewer    → human approval gate
+AG-09 Splitter    → breaks complex tasks into sub-tasks
+AG-03 Tester      → failing tests (RED)
+AG-04 Developer   → implementation (GREEN)
+AG-05 Migration   → database migrations
+AG-06 Refactor    → code quality pass
+AG-07 Security    → security audit (hard gate)
+AG-08 Validator   → phase sign-off, git tag
+```
+
+To run a phase:
+
+```bash
+npx tsx orchestrator/src/index.ts --phase 4
+```
+
+The pipeline pauses at the human gate. Approve via:
+
+```bash
+./orchestrator/approve.sh --phase 4
+```
 
 ---
 
@@ -108,10 +114,10 @@ The pipeline pauses at the human gate and sends you a Telegram message summarisi
 - Node.js 20 LTS
 - pnpm 9+
 - PostgreSQL 16 (or a Railway PostgreSQL instance)
-- OpenCode CLI (`npm install -g opencode`)
 - A Telegram bot token (from @BotFather)
 - An Anthropic API key
 - A Todoist API token
+- A Strava app (for OAuth)
 
 ### Install
 
@@ -130,26 +136,34 @@ cp .env.example .env
 Required variables:
 
 ```
-TELEGRAM_BOT_TOKEN         — from @BotFather
-TELEGRAM_ALLOWED_CHAT_ID   — your personal chat ID
-ANTHROPIC_API_KEY          — from console.anthropic.com
-TODOIST_API_TOKEN          — from todoist.com/prefs/integrations
-DATABASE_URL               — PostgreSQL connection string
+TELEGRAM_BOT_TOKEN           — from @BotFather
+TELEGRAM_ALLOWED_CHAT_ID     — your personal Telegram chat ID
+ANTHROPIC_API_KEY            — from console.anthropic.com
+ANTHROPIC_MODEL              — optional, defaults to claude-sonnet-4-20250514
+TODOIST_API_TOKEN            — from todoist.com/prefs/integrations
+DATABASE_URL                 — PostgreSQL connection string
 POSTGRES_USER
 POSTGRES_PASSWORD
 POSTGRES_DB
 POSTGRES_HOST
 POSTGRES_PORT
-DIGEST_CRON                — cron expression for morning digest (e.g. '0 7 * * *')
-NUDGE_EVAL_CRON            — cron for nudge evaluation (e.g. '*/15 * * * *')
-TIMEZONE                   — e.g. Europe/London
+DIGEST_CRON                  — cron expression for morning digest (e.g. '0 7 * * *')
+NUDGE_EVAL_CRON              — cron for nudge evaluation (e.g. '*/15 * * * *')
+TIMEZONE                     — e.g. Europe/London
+STRAVA_CLIENT_ID             — from strava.com/settings/api
+STRAVA_CLIENT_SECRET         — from strava.com/settings/api
+STRAVA_REDIRECT_URI          — OAuth callback URL for your bot service
 ```
 
 ### Run migrations
 
+Migrations run automatically at orchestrator startup. To run manually:
+
 ```bash
 pnpm --filter @lifeos/shared migrate
 ```
+
+Migrations live in `db/migrations/` and are tracked in the `migrations` table — each file is applied exactly once.
 
 ### Develop
 
@@ -164,17 +178,18 @@ pnpm dev
 - All secrets in environment variables — never logged, never passed to the AI as values
 - Telegram messages from any chat ID other than `TELEGRAM_ALLOWED_CHAT_ID` are silently dropped
 - Parameterised SQL queries only — no string concatenation
-- Every pipeline task is security-audited by AG-07 before tests run
+- Every pipeline task is security-audited by AG-07 before merging
 - See `.opencode/agents/security-rules.md` for the full ruleset
 
 ---
 
 ## Pipeline source
 
-The agent pipeline is maintained separately at `github.com/jamie-smith-uk/jamie-agent-pipeline`.
+The agent pipeline is maintained separately at [github.com/jamie-smith-uk/jamie-agent-pipeline](https://github.com/jamie-smith-uk/jamie-agent-pipeline).
 
-To update the pipeline scripts and agent prompts in this repo:
+To update pipeline scripts and agent prompts in this repo:
 
 ```bash
-cd ~/Documents/jamie-agent-pipeline && ./orchestrator/sync-pipeline.sh --target ~/Documents/jamie-lifeos
+cd ~/Documents/jamie-agent-pipeline
+./orchestrator/sync-pipeline.sh --target ~/Documents/jamie-lifeos
 ```
