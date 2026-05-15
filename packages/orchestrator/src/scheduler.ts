@@ -145,7 +145,10 @@ async function evaluateNudges(): Promise<void> {
              VALUES ($1, $2, $3, $4, $5, 'pending')`,
             [nudge.person_id, nudge.life_event_id, nudge.message, next, nudge.recurrence],
           );
-          log.info({ nudge_id: nudge.id, next_trigger: next.toISOString() }, "Recurring nudge rescheduled");
+          log.info(
+            { nudge_id: nudge.id, next_trigger: next.toISOString() },
+            "Recurring nudge rescheduled",
+          );
         }
       } catch (err) {
         log.error({ err: String(err), nudge_id: nudge.id }, "Failed to update nudge status");
