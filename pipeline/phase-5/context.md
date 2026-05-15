@@ -94,3 +94,10 @@
 ⚠ task-7b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-8a — Register voice tools in orchestrator agent
+
+**Files:** packages/orchestrator/src/agent.ts
+
+⚠ task-8a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---

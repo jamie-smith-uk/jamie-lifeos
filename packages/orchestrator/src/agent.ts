@@ -97,6 +97,11 @@ import { executeNudgesTool } from "./tools/nudges.js";
 import { executePeopleTool } from "./tools/people.js";
 import { get_strava_activities, get_strava_oauth_url, get_strava_trends } from "./tools/strava.js";
 import { executeToDoistTool } from "./tools/todoist.js";
+import {
+  consume_pending_voice_intent,
+  create_pending_voice_intent,
+  transcribe_voice_message,
+} from "./tools/voice.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -137,9 +142,51 @@ function getAnthropicClient(): Anthropic {
   return _anthropicClient;
 }
 
-// ---------------------------------------------------------------------------
-// System prompt assembly
-// ---------------------------------------------------------------------------
+/**
+ * Execute a voice tool call and return its result as a string.
+ * Delegates to the appropriate voice function based on toolName.
+ *
+ * @param toolName   The name of the voice tool to execute.
+ * @param toolInput  The input parameters for the tool.
+ * @returns          A string representation of the tool result.
+ */
+async function executeVoiceTool(
+  toolName: string,
+  toolInput: Record<string, unknown>,
+): Promise<string> {
+  try {
+    if (toolName === "transcribe_voice_message") {
+      const result = await transcribe_voice_message(toolInput as { file_id: string });
+      return JSON.stringify({ transcription: result });
+    }
+
+    if (toolName === "create_pending_voice_intent") {
+      const result = await create_pending_voice_intent(
+        toolInput as {
+          chat_id: number;
+          transcription: string;
+          telegram_file_id: string;
+        },
+      );
+      return JSON.stringify({ pending_intent: result });
+    }
+
+    if (toolName === "consume_pending_voice_intent") {
+      const result = await consume_pending_voice_intent(toolInput as { id: number });
+      return JSON.stringify({ consumed_intent: result });
+    }
+
+    // Unknown voice tool
+    return JSON.stringify({ error: `Unknown voice tool: ${toolName}` });
+  } catch (error) {
+    logger
+      .child({ service: "agent" })
+      .error({ err: error, toolName, toolInput }, "Voice tool execution error");
+    return JSON.stringify({
+      error: error instanceof Error ? error.message : "Voice tool execution failed",
+    });
+  }
+}
 
 /**
  * Assemble the system prompt with exactly five blocks in order:
@@ -814,6 +861,66 @@ const stravaToolDefinitions: Anthropic.Tool[] = [
   },
 ];
 
+/**
+ * Voice tool definitions.
+ * Task-8a (Phase 5): Voice tools added — transcribe_voice_message, create_pending_voice_intent, consume_pending_voice_intent.
+ */
+const voiceToolDefinitions: Anthropic.Tool[] = [
+  {
+    name: "transcribe_voice_message",
+    description:
+      "Transcribe a Telegram voice message to text using OpenAI Whisper API. Downloads the voice file from Telegram and returns the transcribed text.",
+    input_schema: {
+      type: "object",
+      properties: {
+        file_id: {
+          type: "string",
+          description: "The Telegram file_id of the voice message to transcribe.",
+        },
+      },
+      required: ["file_id"],
+    },
+  },
+  {
+    name: "create_pending_voice_intent",
+    description:
+      "Create a pending voice intent record in the database with a 5-minute TTL. Used to store voice transcriptions temporarily before user confirmation.",
+    input_schema: {
+      type: "object",
+      properties: {
+        chat_id: {
+          type: "number",
+          description: "The Telegram chat ID where the voice message was sent.",
+        },
+        transcription: {
+          type: "string",
+          description: "The transcribed text from the voice message.",
+        },
+        telegram_file_id: {
+          type: "string",
+          description: "The original Telegram file_id of the voice message.",
+        },
+      },
+      required: ["chat_id", "transcription", "telegram_file_id"],
+    },
+  },
+  {
+    name: "consume_pending_voice_intent",
+    description:
+      "Read and delete a pending voice intent by ID. Returns null if the intent has expired or doesn't exist.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "number",
+          description: "The ID of the pending voice intent to consume.",
+        },
+      },
+      required: ["id"],
+    },
+  },
+];
+
 const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   ...calendarReadToolDefinitions,
   ...calendarWriteToolDefinitions,
@@ -824,6 +931,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   ...lifeEventsToolDefinitions,
   ...nudgesToolDefinitions,
   ...stravaToolDefinitions,
+  ...voiceToolDefinitions,
 ];
 
 // ---------------------------------------------------------------------------
@@ -921,6 +1029,18 @@ const STRAVA_TOOL_NAMES = new Set<string>([
 ]);
 
 /**
+ * The set of voice tool names handled by executeVoiceTool.
+ * Task-8a (Phase 5): All voice operations are registered here so the
+ * tool loop routes them to the voice module rather than the unknown-tool
+ * handler.
+ */
+const VOICE_TOOL_NAMES = new Set<string>([
+  "transcribe_voice_message",
+  "create_pending_voice_intent",
+  "consume_pending_voice_intent",
+]);
+
+/**
  * The set of write tool names that must be confirmation-gated.
  * When the agent calls one of these tools, the tool loop intercepts the call,
  * saves a ConfirmationPayload, and returns a synthetic tool_result so the
@@ -945,7 +1065,8 @@ function isUntrustedTool(toolName: string): boolean {
     LIFE_EVENTS_TOOL_NAMES.has(toolName) ||
     NUDGES_TOOL_NAMES.has(toolName) ||
     PEOPLE_TOOL_NAMES.has(toolName) ||
-    STRAVA_TOOL_NAMES.has(toolName)
+    STRAVA_TOOL_NAMES.has(toolName) ||
+    VOICE_TOOL_NAMES.has(toolName)
   );
 }
 
@@ -1053,6 +1174,11 @@ async function executeTool(toolName: string, toolInput: Record<string, unknown>)
   // Delegate Strava tools to the Strava module (Task-8a, Phase 4).
   if (STRAVA_TOOL_NAMES.has(toolName)) {
     return executeStravaTool(toolName, toolInput);
+  }
+
+  // Delegate voice tools to the voice module (Task-8a, Phase 5).
+  if (VOICE_TOOL_NAMES.has(toolName)) {
+    return executeVoiceTool(toolName, toolInput);
   }
 
   // Unknown tool — return a graceful error so the model can handle it.

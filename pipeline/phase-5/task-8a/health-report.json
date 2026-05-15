@@ -1,0 +1,9 @@
+{
+  "task_id": "task-8a",
+  "files_checked": [
+    "packages/orchestrator/src/agent.ts"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 6.1,
+  "coverage_pct": null
+}
