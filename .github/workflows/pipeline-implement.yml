@@ -93,9 +93,9 @@ jobs:
 
       - name: Run pending migrations
         run: |
-          if [ -d migrations ] && ls migrations/*.sql 2>/dev/null | head -1; then
+          if [ -d db/migrations ] && ls db/migrations/*.sql 2>/dev/null | head -1; then
             echo "Running migrations..."
-            for f in migrations/*.sql; do
+            for f in $(ls db/migrations/*.sql | sort); do
               echo "  Applying $f"
               psql "$DATABASE_URL" -f "$f"
             done
