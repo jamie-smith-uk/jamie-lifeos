@@ -147,3 +147,10 @@
 ⚠ task-7b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-8a — Register OAuth and activity query tools in agent
+
+**Files:** packages/orchestrator/src/agent.ts, packages/orchestrator/src/__tests__/agent.test.ts
+
+⚠ task-8a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---

@@ -1,0 +1,10 @@
+{
+  "task_id": "task-8a",
+  "files_checked": [
+    "packages/orchestrator/src/agent.ts",
+    "packages/orchestrator/src/__tests__/agent.test.ts"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 1.3,
+  "coverage_pct": null
+}
