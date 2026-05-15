@@ -1,0 +1,10 @@
+{
+  "task_id": "task-9a",
+  "files_checked": [
+    "packages/orchestrator/src/context.ts",
+    "packages/orchestrator/src/__tests__/agent.test.ts"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 1,
+  "coverage_pct": null
+}

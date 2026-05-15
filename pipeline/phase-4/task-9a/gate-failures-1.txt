@@ -1,0 +1,87 @@
+=== pnpm test ===
+Scope: 2 of 5 workspace projects
+packages/orchestrator test$ vitest run --config vitest.config.ts
+packages/orchestrator test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator[39m
+packages/orchestrator test:  [31m❯[39m src/__tests__/context.test.ts [2m([22m[2m18 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 113[2mms[22m[39m
+packages/orchestrator test:        [32m✓[39m returns activity count of 0 when no activities exist[32m 47[2mms[22m[39m
+packages/orchestrator test:        [32m✓[39m returns activity count of 1 when one activity exists in last 7 days[32m 2[2mms[22m[39m
+packages/orchestrator test:        [32m✓[39m returns activity count of 3 when three activities exist in last 7 days[32m 2[2mms[22m[39m
+packages/orchestrator test:        [32m✓[39m excludes activities older than 7 days from the count[32m 2[2mms[22m[39m
+packages/orchestrator test:        [32m✓[39m returns 0 moving time when no activities exist[32m 2[2mms[22m[39m
+packages/orchestrator test:        [32m✓[39m returns correct moving time for single activity[32m 2[2mms[22m[39m
+packages/orchestrator test:        [32m✓[39m returns sum of moving times for multiple activities[32m 2[2mms[22m[39m
+packages/orchestrator test:        [32m✓[39m formats moving time in human-readable format (minutes or hours)[32m 2[2mms[22m[39m
+packages/orchestrator test:        [32m✓[39m returns empty string for sport and date when no activities exist[32m 2[2mms[22m[39m
+packages/orchestrator test:        [32m✓[39m returns sport type of the most recent activity[32m 2[2mms[22m[39m
+packages/orchestrator test:        [32m✓[39m returns date of the most recent activity[32m 3[2mms[22m[39m
+packages/orchestrator test:        [32m✓[39m identifies most recent activity when multiple exist[32m 10[2mms[22m[39m
+packages/orchestrator test:        [32m✓[39m returns a valid string when no activities exist[32m 2[2mms[22m[39m
+packages/orchestrator test:        [32m✓[39m does not throw an error when no activities exist[32m 3[2mms[22m[39m
+packages/orchestrator test:        [32m✓[39m returns sensible defaults when no activities exist[32m 2[2mms[22m[39m
+packages/orchestrator test:        [32m✓[39m returns different athlete data for different athlete_ids[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m uses parameterised queries with $1 placeholder for athlete_id[39m[32m 11[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m does not use string interpolation for athlete_id[39m[32m 13[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/typing-indicator-t11.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 1433[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m39 tests[22m[2m)[22m[33m 1243[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t17.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 297[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task3.test.ts [2m([22m[2m42 tests[22m[2m)[22m[33m 603[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t16.test.ts [2m([22m[2m35 tests[22m[2m)[22m[33m 339[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t10.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 260[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/scheduler.test.ts [2m([22m[2m45 tests[22m[2m)[22m[32m 256[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t18.test.ts [2m([22m[2m38 tests[22m[2m)[22m[32m 282[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t19.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 246[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task4.test.ts [2m([22m[2m25 tests[22m[2m)[22m[33m 314[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 254[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/life_events.test.ts [2m([22m[2m60 tests[22m[2m)[22m[32m 159[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t20.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 174[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-implied-actions.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 178[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task8.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 155[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/todoist-task1.test.ts [2m([22m[2m71 tests[22m[2m)[22m[32m 200[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task7b.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 185[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/people.test.ts [2m([22m[2m48 tests[22m[2m)[22m[32m 183[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/typecheck-async-await.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 6475[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/shared typechecks without errors (tsc --noEmit) [33m 1320[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/orchestrator typechecks without errors (tsc --noEmit) [33m 1670[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/shared typecheck output contains no 'error TS' messages [33m 1763[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/orchestrator typecheck output contains no 'error TS' messages [33m 1719[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-strava-tools.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 127[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task7a.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 132[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/index-task15.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 69[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-strava-trends.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 75[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/gmail-email-interactions.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 65[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/life_events_nudges.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 50[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/nudges.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 93[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/index-async-await.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+packages/orchestrator test: [31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/context.test.ts[2m > [22mtask-9a — context.ts Strava activity summary[2m > [22mParameterised queries[2m > [22muses parameterised queries with $1 placeholder for athlete_id
+packages/orchestrator test: [31m[1mAssertionError[22m: expected undefined to be defined[39m
+packages/orchestrator test: [36m [2m❯[22m src/__tests__/context.test.ts:[2m649:26[22m[39m
+packages/orchestrator test:     [90m647|[39m         ([sql]) => typeof sql === "string" && sql.toUpperCase().starts…
+packages/orchestrator test:     [90m648|[39m       )[33m;[39m
+packages/orchestrator test:     [90m649|[39m       [34mexpect[39m(selectCall)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                          [31m^[39m
+packages/orchestrator test:     [90m650|[39m
+packages/orchestrator test:     [90m651|[39m       const [selectSql, selectValues] = selectCall as [string, unknown…
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/context.test.ts[2m > [22mtask-9a — context.ts Strava activity summary[2m > [22mParameterised queries[2m > [22mdoes not use string interpolation for athlete_id
+packages/orchestrator test: [31m[1mAssertionError[22m: expected undefined to be defined[39m
+packages/orchestrator test: [36m [2m❯[22m src/__tests__/context.test.ts:[2m664:26[22m[39m
+packages/orchestrator test:     [90m662|[39m         ([sql]) => typeof sql === "string" && sql.toUpperCase().starts…
+packages/orchestrator test:     [90m663|[39m       )[33m;[39m
+packages/orchestrator test:     [90m664|[39m       [34mexpect[39m(selectCall)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                          [31m^[39m
+packages/orchestrator test:     [90m665|[39m
+packages/orchestrator test:     [90m666|[39m       [35mconst[39m [selectSql] [33m=[39m selectCall [35mas[39m [string[33m,[39m unknown[]][33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+packages/orchestrator test: [2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m27 passed[39m[22m[90m (28)[39m
+packages/orchestrator test: [2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m718 passed[39m[22m[90m (720)[39m
+packages/orchestrator test: [2m   Start at [22m 07:05:46
+packages/orchestrator test: [2m   Duration [22m 7.48s[2m (transform 2.06s, setup 0ms, import 2.52s, tests 13.98s, environment 5ms)[22m
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/__tests__/context.test.ts,title=src/__tests__/context.test.ts > task-9a — context.ts Strava activity summary > Parameterised queries > uses parameterised queries with $1 placeholder for athlete_id,line=649,column=26::AssertionError: expected undefined to be defined%0A ❯ src/__tests__/context.test.ts:649:26%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/__tests__/context.test.ts,title=src/__tests__/context.test.ts > task-9a — context.ts Strava activity summary > Parameterised queries > does not use string interpolation for athlete_id,line=664,column=26::AssertionError: expected undefined to be defined%0A ❯ src/__tests__/context.test.ts:664:26%0A%0A
+packages/orchestrator test: Failed
+/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/orchestrator@0.0.1 test: `vitest run --config vitest.config.ts`
+Exit status 1
+
+

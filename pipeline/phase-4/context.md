@@ -161,3 +161,10 @@
 ⚠ task-8b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-9a — Query last 7 days activity summary
+
+**Files:** packages/orchestrator/src/context.ts, packages/orchestrator/src/__tests__/agent.test.ts
+
+⚠ task-9a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
