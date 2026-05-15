@@ -259,7 +259,8 @@ describe("AC2 — get_tasks: filter parameter and formatted task list", () => {
 
     await executeToDoistTool("get_tasks", { filter: "today" });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // 2 calls: tasks endpoint + project map (for display names)
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     const callArgs = fetchMock.mock.calls[0] as [string, RequestInit?];
     const url = callArgs[0];
     expect(url).toContain("today");
@@ -278,7 +279,8 @@ describe("AC2 — get_tasks: filter parameter and formatted task list", () => {
 
     await executeToDoistTool("get_tasks", { filter: "overdue" });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // 2 calls: tasks endpoint + project map (for display names)
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     const callArgs = fetchMock.mock.calls[0] as [string, RequestInit?];
     const url = callArgs[0];
     expect(url).toContain("overdue");
@@ -356,7 +358,7 @@ describe("AC2 — get_tasks: filter parameter and formatted task list", () => {
 
     const callArgs = fetchMock.mock.calls[0] as [string, RequestInit?];
     const url = callArgs[0];
-    expect(url).toMatch(/api\.todoist\.com\/rest\/v2\/tasks/);
+    expect(url).toMatch(/api\.todoist\.com\/api\/v1\/tasks/);
   });
 
   it("get_tasks handles missing filter param gracefully — defaults to fetching all tasks", async () => {
@@ -439,7 +441,7 @@ describe("AC3 — create_task: content, due_date, priority → returns task ID",
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(callArgs[0]).toMatch(/api\.todoist\.com\/rest\/v2\/tasks/);
+    expect(callArgs[0]).toMatch(/api\.todoist\.com\/api\/v1\/tasks/);
     expect(callArgs[1].method?.toUpperCase()).toBe("POST");
   });
 
@@ -1510,7 +1512,7 @@ describe("AC7 — Response format matches agent expectations with JSON serializa
       await executeToDoistTool(op, input);
 
       const callArgs = fetchMock.mock.calls[0] as [string, RequestInit?];
-      expect(callArgs[0]).toMatch(/api\.todoist\.com\/rest\/v2/);
+      expect(callArgs[0]).toMatch(/api\.todoist\.com\/api\/v1/);
     }
   });
 });

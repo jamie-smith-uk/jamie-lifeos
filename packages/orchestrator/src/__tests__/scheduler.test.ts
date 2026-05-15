@@ -1052,7 +1052,7 @@ describe("Scheduler", () => {
       await schedulerModule.startScheduler();
 
       const syncCall = mockCronSchedule.mock.calls.find(
-        (call) => typeof call[0] === "string" && call[0].includes("strava"),
+        (call) => typeof call[0] === "string" && call[0] === "0 * * * *",
       );
 
       if (syncCall && typeof syncCall[1] === "function") {
@@ -1092,7 +1092,7 @@ describe("Scheduler", () => {
       await schedulerModule.startScheduler();
 
       const syncCall = mockCronSchedule.mock.calls.find(
-        (call) => typeof call[0] === "string" && call[0].includes("strava"),
+        (call) => typeof call[0] === "string" && call[0] === "0 * * * *",
       );
 
       if (syncCall && typeof syncCall[1] === "function") {
@@ -1141,7 +1141,7 @@ describe("Scheduler", () => {
       await schedulerModule.startScheduler();
 
       const syncCall = mockCronSchedule.mock.calls.find(
-        (call) => typeof call[0] === "string" && call[0].includes("strava"),
+        (call) => typeof call[0] === "string" && call[0] === "0 * * * *",
       );
 
       if (syncCall && typeof syncCall[1] === "function") {
@@ -1186,7 +1186,7 @@ describe("Scheduler", () => {
       await schedulerModule.startScheduler();
 
       const syncCall = mockCronSchedule.mock.calls.find(
-        (call) => typeof call[0] === "string" && call[0].includes("strava"),
+        (call) => typeof call[0] === "string" && call[0] === "0 * * * *",
       );
 
       if (syncCall && typeof syncCall[1] === "function") {
@@ -1209,7 +1209,7 @@ describe("Scheduler", () => {
       await schedulerModule.startScheduler();
 
       const syncCall = mockCronSchedule.mock.calls.find(
-        (call) => typeof call[0] === "string" && call[0].includes("strava"),
+        (call) => typeof call[0] === "string" && call[0] === "0 * * * *",
       );
 
       if (syncCall && typeof syncCall[1] === "function") {
@@ -1232,7 +1232,7 @@ describe("Scheduler", () => {
       await schedulerModule.startScheduler();
 
       const syncCall = mockCronSchedule.mock.calls.find(
-        (call) => typeof call[0] === "string" && call[0].includes("strava"),
+        (call) => typeof call[0] === "string" && call[0] === "0 * * * *",
       );
 
       if (syncCall && typeof syncCall[1] === "function") {
@@ -1253,7 +1253,7 @@ describe("Scheduler", () => {
       await schedulerModule.startScheduler();
 
       const syncCall = mockCronSchedule.mock.calls.find(
-        (call) => typeof call[0] === "string" && call[0].includes("strava"),
+        (call) => typeof call[0] === "string" && call[0] === "0 * * * *",
       );
 
       if (syncCall && typeof syncCall[1] === "function") {
