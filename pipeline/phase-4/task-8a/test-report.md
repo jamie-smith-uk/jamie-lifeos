@@ -1,0 +1,310 @@
+Title: Test Report — task-8a — PASS
+
+Verified by orchestrator hard gate after Developer attempt 1.
+
+- tsc --noEmit: PASS
+- eslint (files_in_scope): PASS
+- pnpm test: PASS
+
+
+> jamie-lifeos@0.0.1 test /home/runner/work/jamie-lifeos/jamie-lifeos
+> pnpm -r test
+
+Scope: 4 of 5 workspace projects
+packages/shared test$ vitest run --config vitest.config.ts
+packages/shared test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared[39m
+packages/shared test:  [32m✓[39m src/__tests__/logger.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 67[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 113[2mms[22m[39m
+packages/shared test:  [31m❯[39m src/__tests__/env.test.ts [2m([22m[2m25 tests[22m[2m | [22m[31m7 failed[39m[2m)[22m[32m 93[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when TELEGRAM_BOT_TOKEN is missing[32m 19[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when TELEGRAM_ALLOWED_CHAT_ID is missing[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when ANTHROPIC_API_KEY is missing[32m 3[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when DATABASE_URL is missing[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when DIGEST_CRON is missing[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when TZ is missing[32m 1[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when a required var is set to empty string[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when multiple required vars are missing and lists them all[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m error message mentions .env file[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m loads successfully when all required vars are set[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m applies default for ANTHROPIC_MODEL when not set[32m 1[2mms[22m[39m
+packages/shared test:      [32m✓[39m applies default BOT_MODE=polling when not set[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m applies default LOG_LEVEL=info when not set[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m accepts BOT_MODE=webhook[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws on invalid BOT_MODE value[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m trims leading/trailing whitespace from values[32m 3[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m throws when STRAVA_CLIENT_ID is missing[39m[32m 21[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m throws when STRAVA_CLIENT_SECRET is missing[39m[32m 3[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m throws when STRAVA_REDIRECT_URI is missing[39m[32m 4[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m throws when STRAVA_CLIENT_ID is empty string[39m[32m 3[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m throws when STRAVA_CLIENT_SECRET is empty string[39m[32m 2[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m throws when STRAVA_REDIRECT_URI is empty string[39m[32m 3[2mms[22m[39m
+packages/shared test:      [32m✓[39m loads successfully when all Strava vars are set[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m trims whitespace from Strava variables[32m 3[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m throws when multiple Strava vars are missing and lists them all[39m[32m 2[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/types.test.ts [2m([22m[2m33 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate-async-await.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/db.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/env-example.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+packages/shared test: [31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 7 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env.test.ts[2m > [22menv.ts — Strava environment variables[2m > [22mthrows when STRAVA_CLIENT_ID is missing
+packages/shared test: [31m[1mAssertionError[22m: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting[39m
+packages/shared test: [32m- Expected[39m
+packages/shared test: [31m+ Received[39m
+packages/shared test: [32m- Error {[39m
+packages/shared test: [32m-   "message": "rejected promise",[39m
+packages/shared test: [31m+ {[39m
+packages/shared test: [31m+   "env": {[39m
+packages/shared test: [31m+     "ANTHROPIC_API_KEY": "sk-ant-test",[39m
+packages/shared test: [31m+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",[39m
+packages/shared test: [31m+     "BOT_MODE": "polling",[39m
+packages/shared test: [31m+     "DATABASE_URL": "postgresql://localhost:5432/testdb",[39m
+packages/shared test: [31m+     "DIGEST_CRON": "0 7 * * *",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_ID": "",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_SECRET": "",[39m
+packages/shared test: [31m+     "GOOGLE_REFRESH_TOKEN": "",[39m
+packages/shared test: [31m+     "LOG_LEVEL": "info",[39m
+packages/shared test: [31m+     "ORCHESTRATOR_URL": "http://localhost:3001",[39m
+packages/shared test: [31m+     "PORT": "3001",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_ID": "",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_SECRET": "secret_abc123",[39m
+packages/shared test: [31m+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",[39m
+packages/shared test: [31m+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",[39m
+packages/shared test: [31m+     "TELEGRAM_BOT_TOKEN": "bot:test_token",[39m
+packages/shared test: [31m+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",[39m
+packages/shared test: [31m+     "TZ": "Europe/London",[39m
+packages/shared test: [31m+   },[39m
+packages/shared test: [2m  }[22m
+packages/shared test: [36m [2m❯[22m src/__tests__/env.test.ts:[2m204:34[22m[39m
+packages/shared test:     [90m202|[39m     [34msetEnv[39m(vars)[33m;[39m
+packages/shared test:     [90m203|[39m
+packages/shared test:     [90m204|[39m     [35mawait[39m [34mexpect[39m([34mloadEnvModule[39m())[33m.[39mrejects[33m.[39m[34mtoThrow[39m([36m/STRAVA_CLIENT_ID/[39m)[33m;[39m
+packages/shared test:     [90m   |[39m                                  [31m^[39m
+packages/shared test:     [90m205|[39m   })[33m;[39m
+packages/shared test:     [90m206|[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯[22m[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env.test.ts[2m > [22menv.ts — Strava environment variables[2m > [22mthrows when STRAVA_CLIENT_SECRET is missing
+packages/shared test: [31m[1mAssertionError[22m: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting[39m
+packages/shared test: [32m- Expected[39m
+packages/shared test: [31m+ Received[39m
+packages/shared test: [32m- Error {[39m
+packages/shared test: [32m-   "message": "rejected promise",[39m
+packages/shared test: [31m+ {[39m
+packages/shared test: [31m+   "env": {[39m
+packages/shared test: [31m+     "ANTHROPIC_API_KEY": "sk-ant-test",[39m
+packages/shared test: [31m+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",[39m
+packages/shared test: [31m+     "BOT_MODE": "polling",[39m
+packages/shared test: [31m+     "DATABASE_URL": "postgresql://localhost:5432/testdb",[39m
+packages/shared test: [31m+     "DIGEST_CRON": "0 7 * * *",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_ID": "",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_SECRET": "",[39m
+packages/shared test: [31m+     "GOOGLE_REFRESH_TOKEN": "",[39m
+packages/shared test: [31m+     "LOG_LEVEL": "info",[39m
+packages/shared test: [31m+     "ORCHESTRATOR_URL": "http://localhost:3001",[39m
+packages/shared test: [31m+     "PORT": "3001",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_ID": "12345",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_SECRET": "",[39m
+packages/shared test: [31m+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",[39m
+packages/shared test: [31m+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",[39m
+packages/shared test: [31m+     "TELEGRAM_BOT_TOKEN": "bot:test_token",[39m
+packages/shared test: [31m+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",[39m
+packages/shared test: [31m+     "TZ": "Europe/London",[39m
+packages/shared test: [31m+   },[39m
+packages/shared test: [2m  }[22m
+packages/shared test: [36m [2m❯[22m src/__tests__/env.test.ts:[2m212:34[22m[39m
+packages/shared test:     [90m210|[39m     [34msetEnv[39m(vars)[33m;[39m
+packages/shared test:     [90m211|[39m
+packages/shared test:     [90m212|[39m     await expect(loadEnvModule()).rejects.toThrow(/STRAVA_CLIENT_SECRE…
+packages/shared test:     [90m   |[39m                                  [31m^[39m
+packages/shared test:     [90m213|[39m   })[33m;[39m
+packages/shared test:     [90m214|[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯[22m[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env.test.ts[2m > [22menv.ts — Strava environment variables[2m > [22mthrows when STRAVA_REDIRECT_URI is missing
+packages/shared test: [31m[1mAssertionError[22m: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting[39m
+packages/shared test: [32m- Expected[39m
+packages/shared test: [31m+ Received[39m
+packages/shared test: [32m- Error {[39m
+packages/shared test: [32m-   "message": "rejected promise",[39m
+packages/shared test: [31m+ {[39m
+packages/shared test: [31m+   "env": {[39m
+packages/shared test: [31m+     "ANTHROPIC_API_KEY": "sk-ant-test",[39m
+packages/shared test: [31m+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",[39m
+packages/shared test: [31m+     "BOT_MODE": "polling",[39m
+packages/shared test: [31m+     "DATABASE_URL": "postgresql://localhost:5432/testdb",[39m
+packages/shared test: [31m+     "DIGEST_CRON": "0 7 * * *",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_ID": "",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_SECRET": "",[39m
+packages/shared test: [31m+     "GOOGLE_REFRESH_TOKEN": "",[39m
+packages/shared test: [31m+     "LOG_LEVEL": "info",[39m
+packages/shared test: [31m+     "ORCHESTRATOR_URL": "http://localhost:3001",[39m
+packages/shared test: [31m+     "PORT": "3001",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_ID": "12345",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_SECRET": "secret_abc123",[39m
+packages/shared test: [31m+     "STRAVA_REDIRECT_URI": "",[39m
+packages/shared test: [31m+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",[39m
+packages/shared test: [31m+     "TELEGRAM_BOT_TOKEN": "bot:test_token",[39m
+packages/shared test: [31m+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",[39m
+packages/shared test: [31m+     "TZ": "Europe/London",[39m
+packages/shared test: [31m+   },[39m
+packages/shared test: [2m  }[22m
+packages/shared test: [36m [2m❯[22m src/__tests__/env.test.ts:[2m220:34[22m[39m
+packages/shared test:     [90m218|[39m     [34msetEnv[39m(vars)[33m;[39m
+packages/shared test:     [90m219|[39m
+packages/shared test:     [90m220|[39m     await expect(loadEnvModule()).rejects.toThrow(/STRAVA_REDIRECT_URI…
+packages/shared test:     [90m   |[39m                                  [31m^[39m
+packages/shared test:     [90m221|[39m   })[33m;[39m
+packages/shared test:     [90m222|[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯[22m[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env.test.ts[2m > [22menv.ts — Strava environment variables[2m > [22mthrows when STRAVA_CLIENT_ID is empty string
+packages/shared test: [31m[1mAssertionError[22m: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting[39m
+packages/shared test: [32m- Expected[39m
+packages/shared test: [31m+ Received[39m
+packages/shared test: [32m- Error {[39m
+packages/shared test: [32m-   "message": "rejected promise",[39m
+packages/shared test: [31m+ {[39m
+packages/shared test: [31m+   "env": {[39m
+packages/shared test: [31m+     "ANTHROPIC_API_KEY": "sk-ant-test",[39m
+packages/shared test: [31m+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",[39m
+packages/shared test: [31m+     "BOT_MODE": "polling",[39m
+packages/shared test: [31m+     "DATABASE_URL": "postgresql://localhost:5432/testdb",[39m
+packages/shared test: [31m+     "DIGEST_CRON": "0 7 * * *",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_ID": "",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_SECRET": "",[39m
+packages/shared test: [31m+     "GOOGLE_REFRESH_TOKEN": "",[39m
+packages/shared test: [31m+     "LOG_LEVEL": "info",[39m
+packages/shared test: [31m+     "ORCHESTRATOR_URL": "http://localhost:3001",[39m
+packages/shared test: [31m+     "PORT": "3001",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_ID": "",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_SECRET": "secret_abc123",[39m
+packages/shared test: [31m+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",[39m
+packages/shared test: [31m+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",[39m
+packages/shared test: [31m+     "TELEGRAM_BOT_TOKEN": "bot:test_token",[39m
+packages/shared test: [31m+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",[39m
+packages/shared test: [31m+     "TZ": "Europe/London",[39m
+packages/shared test: [31m+   },[39m
+packages/shared test: [2m  }[22m
+packages/shared test: [36m [2m❯[22m src/__tests__/env.test.ts:[2m226:34[22m[39m
+packages/shared test:     [90m224|[39m     [34msetEnv[39m({ [33m...[39m[33mVALID_ENV[39m[33m,[39m [33mSTRAVA_CLIENT_ID[39m[33m:[39m [32m"   "[39m })[33m;[39m
+packages/shared test:     [90m225|[39m
+packages/shared test:     [90m226|[39m     [35mawait[39m [34mexpect[39m([34mloadEnvModule[39m())[33m.[39mrejects[33m.[39m[34mtoThrow[39m([36m/STRAVA_CLIENT_ID/[39m)[33m;[39m
+packages/shared test:     [90m   |[39m                                  [31m^[39m
+packages/shared test:     [90m227|[39m   })[33m;[39m
+packages/shared test:     [90m228|[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯[22m[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env.test.ts[2m > [22menv.ts — Strava environment variables[2m > [22mthrows when STRAVA_CLIENT_SECRET is empty string
+packages/shared test: [31m[1mAssertionError[22m: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting[39m
+packages/shared test: [32m- Expected[39m
+packages/shared test: [31m+ Received[39m
+packages/shared test: [32m- Error {[39m
+packages/shared test: [32m-   "message": "rejected promise",[39m
+packages/shared test: [31m+ {[39m
+packages/shared test: [31m+   "env": {[39m
+packages/shared test: [31m+     "ANTHROPIC_API_KEY": "sk-ant-test",[39m
+packages/shared test: [31m+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",[39m
+packages/shared test: [31m+     "BOT_MODE": "polling",[39m
+packages/shared test: [31m+     "DATABASE_URL": "postgresql://localhost:5432/testdb",[39m
+packages/shared test: [31m+     "DIGEST_CRON": "0 7 * * *",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_ID": "",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_SECRET": "",[39m
+packages/shared test: [31m+     "GOOGLE_REFRESH_TOKEN": "",[39m
+packages/shared test: [31m+     "LOG_LEVEL": "info",[39m
+packages/shared test: [31m+     "ORCHESTRATOR_URL": "http://localhost:3001",[39m
+packages/shared test: [31m+     "PORT": "3001",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_ID": "12345",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_SECRET": "",[39m
+packages/shared test: [31m+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",[39m
+packages/shared test: [31m+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",[39m
+packages/shared test: [31m+     "TELEGRAM_BOT_TOKEN": "bot:test_token",[39m
+packages/shared test: [31m+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",[39m
+packages/shared test: [31m+     "TZ": "Europe/London",[39m
+packages/shared test: [31m+   },[39m
+packages/shared test: [2m  }[22m
+packages/shared test: [36m [2m❯[22m src/__tests__/env.test.ts:[2m232:34[22m[39m
+packages/shared test:     [90m230|[39m     [34msetEnv[39m({ [33m...[39m[33mVALID_ENV[39m[33m,[39m [33mSTRAVA_CLIENT_SECRET[39m[33m:[39m [32m"   "[39m })[33m;[39m
+packages/shared test:     [90m231|[39m
+packages/shared test:     [90m232|[39m     await expect(loadEnvModule()).rejects.toThrow(/STRAVA_CLIENT_SECRE…
+packages/shared test:     [90m   |[39m                                  [31m^[39m
+packages/shared test:     [90m233|[39m   })[33m;[39m
+packages/shared test:     [90m234|[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯[22m[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env.test.ts[2m > [22menv.ts — Strava environment variables[2m > [22mthrows when STRAVA_REDIRECT_URI is empty string
+packages/shared test: [31m[1mAssertionError[22m: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting[39m
+packages/shared test: [32m- Expected[39m
+packages/shared test: [31m+ Received[39m
+packages/shared test: [32m- Error {[39m
+packages/shared test: [32m-   "message": "rejected promise",[39m
+packages/shared test: [31m+ {[39m
+packages/shared test: [31m+   "env": {[39m
+packages/shared test: [31m+     "ANTHROPIC_API_KEY": "sk-ant-test",[39m
+packages/shared test: [31m+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",[39m
+packages/shared test: [31m+     "BOT_MODE": "polling",[39m
+packages/shared test: [31m+     "DATABASE_URL": "postgresql://localhost:5432/testdb",[39m
+packages/shared test: [31m+     "DIGEST_CRON": "0 7 * * *",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_ID": "",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_SECRET": "",[39m
+packages/shared test: [31m+     "GOOGLE_REFRESH_TOKEN": "",[39m
+packages/shared test: [31m+     "LOG_LEVEL": "info",[39m
+packages/shared test: [31m+     "ORCHESTRATOR_URL": "http://localhost:3001",[39m
+packages/shared test: [31m+     "PORT": "3001",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_ID": "12345",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_SECRET": "secret_abc123",[39m
+packages/shared test: [31m+     "STRAVA_REDIRECT_URI": "",[39m
+packages/shared test: [31m+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",[39m
+packages/shared test: [31m+     "TELEGRAM_BOT_TOKEN": "bot:test_token",[39m
+packages/shared test: [31m+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",[39m
+packages/shared test: [31m+     "TZ": "Europe/London",[39m
+packages/shared test: [31m+   },[39m
+packages/shared test: [2m  }[22m
+packages/shared test: [36m [2m❯[22m src/__tests__/env.test.ts:[2m238:34[22m[39m
+packages/shared test:     [90m236|[39m     [34msetEnv[39m({ [33m...[39m[33mVALID_ENV[39m[33m,[39m [33mSTRAVA_REDIRECT_URI[39m[33m:[39m [32m"   "[39m })[33m;[39m
+packages/shared test:     [90m237|[39m
+packages/shared test:     [90m238|[39m     await expect(loadEnvModule()).rejects.toThrow(/STRAVA_REDIRECT_URI…
+packages/shared test:     [90m   |[39m                                  [31m^[39m
+packages/shared test:     [90m239|[39m   })[33m;[39m
+packages/shared test:     [90m240|[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯[22m[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env.test.ts[2m > [22menv.ts — Strava environment variables[2m > [22mthrows when multiple Strava vars are missing and lists them all
+packages/shared test: [31m[1mAssertionError[22m: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting[39m
+packages/shared test: [32m- Expected[39m
+packages/shared test: [31m+ Received[39m
+packages/shared test: [32m- Error {[39m
+packages/shared test: [32m-   "message": "rejected promise",[39m
+packages/shared test: [31m+ {[39m
+packages/shared test: [31m+   "env": {[39m
+packages/shared test: [31m+     "ANTHROPIC_API_KEY": "sk-ant-test",[39m
+packages/shared test: [31m+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",[39m
+packages/shared test: [31m+     "BOT_MODE": "polling",[39m
+packages/shared test: [31m+     "DATABASE_URL": "postgresql://localhost:5432/testdb",[39m
+packages/shared test: [31m+     "DIGEST_CRON": "0 7 * * *",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_ID": "",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_SECRET": "",[39m
+packages/shared test: [31m+     "GOOGLE_REFRESH_TOKEN": "",[39m
+packages/shared test: [31m+     "LOG_LEVEL": "info",[39m
+packages/shared test: [31m+     "ORCHESTRATOR_URL": "http://localhost:3001",[39m
+packages/shared test: [31m+     "PORT": "3001",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_ID": "",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_SECRET": "",[39m
+packages/shared test: [31m+     "STRAVA_REDIRECT_URI": "",[39m
+packages/shared test: [31m+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",[39m
+packages/shared test: [31m+     "TELEGRAM_BOT_TOKEN": "bot:test_token",[39m
+packages/shared test: [31m+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",[39m
+packages/shared test: [31m+     "TZ": "Europe/London",[39m
+packages/shared test: [31m+   },[39m
+packages/shared test: [2m  }[22m
+packages/shared test: [36m [2m❯[22m src/__tests__/env.test.ts:[2m276:34[22m[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯[22m[39m
+packages/shared test: [2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m6 passed[39m[22m[90m (7)[39m
+packages/shared test: [2m      Tests [22m [1m[31m7 failed[39m[22m[2m | [22m[1m[32m107 passed[39m[22m[90m (114)[39m
+packages/shared test: [2m   Start at [22m 06:53:31
+packages/shared test: [2m   Duration [22m 821ms[2m (transform 264ms, setup 0ms, import 545ms, tests 334ms, environment 1ms)[22m
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env.test.ts,title=src/__tests__/env.test.ts > env.ts — Strava environment variables > throws when STRAVA_CLIENT_ID is missing,line=204,column=34::AssertionError: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting%0A%0A- Expected%0A+ Received%0A%0A- Error {%0A-   "message": "rejected promise",%0A+ {%0A+   "env": {%0A+     "ANTHROPIC_API_KEY": "sk-ant-test",%0A+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",%0A+     "BOT_MODE": "polling",%0A+     "DATABASE_URL": "postgresql://localhost:5432/testdb",%0A+     "DIGEST_CRON": "0 7 * * *",%0A+     "GOOGLE_CLIENT_ID": "",%0A+     "GOOGLE_CLIENT_SECRET": "",%0A+     "GOOGLE_REFRESH_TOKEN": "",%0A+     "LOG_LEVEL": "info",%0A+     "ORCHESTRATOR_URL": "http://localhost:3001",%0A+     "PORT": "3001",%0A+     "STRAVA_CLIENT_ID": "",%0A+     "STRAVA_CLIENT_SECRET": "secret_abc123",%0A+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",%0A+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",%0A+     "TELEGRAM_BOT_TOKEN": "bot:test_token",%0A+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",%0A+     "TZ": "Europe/London",%0A+   },%0A  }%0A%0A ❯ src/__tests__/env.test.ts:204:34%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env.test.ts,title=src/__tests__/env.test.ts > env.ts — Strava environment variables > throws when STRAVA_CLIENT_SECRET is missing,line=212,column=34::AssertionError: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting%0A%0A- Expected%0A+ Received%0A%0A- Error {%0A-   "message": "rejected promise",%0A+ {%0A+   "env": {%0A+     "ANTHROPIC_API_KEY": "sk-ant-test",%0A+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",%0A+     "BOT_MODE": "polling",%0A+     "DATABASE_URL": "postgresql://localhost:5432/testdb",%0A+     "DIGEST_CRON": "0 7 * * *",%0A+     "GOOGLE_CLIENT_ID": "",%0A+     "GOOGLE_CLIENT_SECRET": "",%0A+     "GOOGLE_REFRESH_TOKEN": "",%0A+     "LOG_LEVEL": "info",%0A+     "ORCHESTRATOR_URL": "http://localhost:3001",%0A+     "PORT": "3001",%0A+     "STRAVA_CLIENT_ID": "12345",%0A+     "STRAVA_CLIENT_SECRET": "",%0A+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",%0A+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",%0A+     "TELEGRAM_BOT_TOKEN": "bot:test_token",%0A+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",%0A+     "TZ": "Europe/London",%0A+   },%0A  }%0A%0A ❯ src/__tests__/env.test.ts:212:34%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env.test.ts,title=src/__tests__/env.test.ts > env.ts — Strava environment variables > throws when STRAVA_REDIRECT_URI is missing,line=220,column=34::AssertionError: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting%0A%0A- Expected%0A+ Received%0A%0A- Error {%0A-   "message": "rejected promise",%0A+ {%0A+   "env": {%0A+     "ANTHROPIC_API_KEY": "sk-ant-test",%0A+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",%0A+     "BOT_MODE": "polling",%0A+     "DATABASE_URL": "postgresql://localhost:5432/testdb",%0A+     "DIGEST_CRON": "0 7 * * *",%0A+     "GOOGLE_CLIENT_ID": "",%0A+     "GOOGLE_CLIENT_SECRET": "",%0A+     "GOOGLE_REFRESH_TOKEN": "",%0A+     "LOG_LEVEL": "info",%0A+     "ORCHESTRATOR_URL": "http://localhost:3001",%0A+     "PORT": "3001",%0A+     "STRAVA_CLIENT_ID": "12345",%0A+     "STRAVA_CLIENT_SECRET": "secret_abc123",%0A+     "STRAVA_REDIRECT_URI": "",%0A+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",%0A+     "TELEGRAM_BOT_TOKEN": "bot:test_token",%0A+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",%0A+     "TZ": "Europe/London",%0A+   },%0A  }%0A%0A ❯ src/__tests__/env.test.ts:220:34%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env.test.ts,title=src/__tests__/env.test.ts > env.ts — Strava environment variables > throws when STRAVA_CLIENT_ID is empty string,line=226,column=34::AssertionError: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting%0A%0A- Expected%0A+ Received%0A%0A- Error {%0A-   "message": "rejected promise",%0A+ {%0A+   "env": {%0A+     "ANTHROPIC_API_KEY": "sk-ant-test",%0A+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",%0A+     "BOT_MODE": "polling",%0A+     "DATABASE_URL": "postgresql://localhost:5432/testdb",%0A+     "DIGEST_CRON": "0 7 * * *",%0A+     "GOOGLE_CLIENT_ID": "",%0A+     "GOOGLE_CLIENT_SECRET": "",%0A+     "GOOGLE_REFRESH_TOKEN": "",%0A+     "LOG_LEVEL": "info",%0A+     "ORCHESTRATOR_URL": "http://localhost:3001",%0A+     "PORT": "3001",%0A+     "STRAVA_CLIENT_ID": "",%0A+     "STRAVA_CLIENT_SECRET": "secret_abc123",%0A+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",%0A+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",%0A+     "TELEGRAM_BOT_TOKEN": "bot:test_token",%0A+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",%0A+     "TZ": "Europe/London",%0A+   },%0A  }%0A%0A ❯ src/__tests__/env.test.ts:226:34%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env.test.ts,title=src/__tests__/env.test.ts > env.ts — Strava environment variables > throws when STRAVA_CLIENT_SECRET is empty string,line=232,column=34::AssertionError: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting%0A%0A- Expected%0A+ Received%0A%0A- Error {%0A-   "message": "rejected promise",%0A+ {%0A+   "env": {%0A+     "ANTHROPIC_API_KEY": "sk-ant-test",%0A+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",%0A+     "BOT_MODE": "polling",%0A+     "DATABASE_URL": "postgresql://localhost:5432/testdb",%0A+     "DIGEST_CRON": "0 7 * * *",%0A+     "GOOGLE_CLIENT_ID": "",%0A+     "GOOGLE_CLIENT_SECRET": "",%0A+     "GOOGLE_REFRESH_TOKEN": "",%0A+     "LOG_LEVEL": "info",%0A+     "ORCHESTRATOR_URL": "http://localhost:3001",%0A+     "PORT": "3001",%0A+     "STRAVA_CLIENT_ID": "12345",%0A+     "STRAVA_CLIENT_SECRET": "",%0A+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",%0A+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",%0A+     "TELEGRAM_BOT_TOKEN": "bot:test_token",%0A+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",%0A+     "TZ": "Europe/London",%0A+   },%0A  }%0A%0A ❯ src/__tests__/env.test.ts:232:34%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env.test.ts,title=src/__tests__/env.test.ts > env.ts — Strava environment variables > throws when STRAVA_REDIRECT_URI is empty string,line=238,column=34::AssertionError: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting%0A%0A- Expected%0A+ Received%0A%0A- Error {%0A-   "message": "rejected promise",%0A+ {%0A+   "env": {%0A+     "ANTHROPIC_API_KEY": "sk-ant-test",%0A+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",%0A+     "BOT_MODE": "polling",%0A+     "DATABASE_URL": "postgresql://localhost:5432/testdb",%0A+     "DIGEST_CRON": "0 7 * * *",%0A+     "GOOGLE_CLIENT_ID": "",%0A+     "GOOGLE_CLIENT_SECRET": "",%0A+     "GOOGLE_REFRESH_TOKEN": "",%0A+     "LOG_LEVEL": "info",%0A+     "ORCHESTRATOR_URL": "http://localhost:3001",%0A+     "PORT": "3001",%0A+     "STRAVA_CLIENT_ID": "12345",%0A+     "STRAVA_CLIENT_SECRET": "secret_abc123",%0A+     "STRAVA_REDIRECT_URI": "",%0A+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",%0A+     "TELEGRAM_BOT_TOKEN": "bot:test_token",%0A+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",%0A+     "TZ": "Europe/London",%0A+   },%0A  }%0A%0A ❯ src/__tests__/env.test.ts:238:34%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env.test.ts,title=src/__tests__/env.test.ts > env.ts — Strava environment variables > throws when multiple Strava vars are missing and lists them all,line=276,column=34::AssertionError: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting%0A%0A- Expected%0A+ Received%0A%0A- Error {%0A-   "message": "rejected promise",%0A+ {%0A+   "env": {%0A+     "ANTHROPIC_API_KEY": "sk-ant-test",%0A+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",%0A+     "BOT_MODE": "polling",%0A+     "DATABASE_URL": "postgresql://localhost:5432/testdb",%0A+     "DIGEST_CRON": "0 7 * * *",%0A+     "GOOGLE_CLIENT_ID": "",%0A+     "GOOGLE_CLIENT_SECRET": "",%0A+     "GOOGLE_REFRESH_TOKEN": "",%0A+     "LOG_LEVEL": "info",%0A+     "ORCHESTRATOR_URL": "http://localhost:3001",%0A+     "PORT": "3001",%0A+     "STRAVA_CLIENT_ID": "",%0A+     "STRAVA_CLIENT_SECRET": "",%0A+     "STRAVA_REDIRECT_URI": "",%0A+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",%0A+     "TELEGRAM_BOT_TOKEN": "bot:test_token",%0A+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",%0A+     "TZ": "Europe/London",%0A+   },%0A  }%0A%0A ❯ src/__tests__/env.test.ts:276:34%0A%0A
+packages/shared test: Failed
+/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/shared@0.0.1 test: `vitest run --config vitest.config.ts`
+Exit status 1
+ ELIFECYCLE  Test failed. See above for more details.

@@ -94,6 +94,7 @@ import { executeGmailTool } from "./tools/gmail.js";
 import { executeLifeEventsTool } from "./tools/life_events.js";
 import { executeNudgesTool } from "./tools/nudges.js";
 import { executePeopleTool } from "./tools/people.js";
+import { get_strava_activities, get_strava_oauth_url } from "./tools/strava.js";
 import { executeToDoistTool } from "./tools/todoist.js";
 
 // ---------------------------------------------------------------------------
@@ -730,6 +731,50 @@ const nudgesToolDefinitions: Anthropic.Tool[] = [
   },
 ];
 
+/**
+ * Strava tool definitions.
+ * Task-8a (Phase 4): Strava tools added — get_strava_oauth_url, get_strava_activities.
+ */
+const stravaToolDefinitions: Anthropic.Tool[] = [
+  {
+    name: "get_strava_oauth_url",
+    description:
+      "Generate a Strava OAuth authorization URL with CSRF protection. Returns a URL that the user can visit to authorize the application to access their Strava data.",
+    input_schema: {
+      type: "object",
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "get_strava_activities",
+    description:
+      "Retrieve Strava activities from the database with optional filters for sport type and date range. Returns activity data including distance, time, and performance metrics.",
+    input_schema: {
+      type: "object",
+      properties: {
+        athlete_id: {
+          type: "number",
+          description: "The Strava athlete ID to retrieve activities for.",
+        },
+        sport_type: {
+          type: "string",
+          description: "Filter activities by sport type (e.g. 'Run', 'Ride', 'Swim').",
+        },
+        start_date: {
+          type: "string",
+          description: "Filter activities from this date onwards in YYYY-MM-DD format.",
+        },
+        end_date: {
+          type: "string",
+          description: "Filter activities up to this date in YYYY-MM-DD format.",
+        },
+      },
+      required: ["athlete_id"],
+    },
+  },
+];
+
 const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   ...calendarReadToolDefinitions,
   ...calendarWriteToolDefinitions,
@@ -739,6 +784,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   ...peopleToolDefinitions,
   ...lifeEventsToolDefinitions,
   ...nudgesToolDefinitions,
+  ...stravaToolDefinitions,
 ];
 
 // ---------------------------------------------------------------------------
@@ -824,6 +870,14 @@ const LIFE_EVENTS_TOOL_NAMES = new Set<string>(["create_life_event", "get_upcomi
 const NUDGES_TOOL_NAMES = new Set<string>(["create_nudge", "dismiss_nudge"]);
 
 /**
+ * The set of Strava tool names handled by executeStravaTool.
+ * Task-8a (Phase 4): All Strava operations are registered here so the
+ * tool loop routes them to the Strava module rather than the unknown-tool
+ * handler.
+ */
+const STRAVA_TOOL_NAMES = new Set<string>(["get_strava_oauth_url", "get_strava_activities"]);
+
+/**
  * The set of write tool names that must be confirmation-gated.
  * When the agent calls one of these tools, the tool loop intercepts the call,
  * saves a ConfirmationPayload, and returns a synthetic tool_result so the
@@ -847,8 +901,52 @@ function isUntrustedTool(toolName: string): boolean {
     CALENDAR_TOOL_NAMES.has(toolName) ||
     LIFE_EVENTS_TOOL_NAMES.has(toolName) ||
     NUDGES_TOOL_NAMES.has(toolName) ||
-    PEOPLE_TOOL_NAMES.has(toolName)
+    PEOPLE_TOOL_NAMES.has(toolName) ||
+    STRAVA_TOOL_NAMES.has(toolName)
   );
+}
+
+/**
+ * Execute a Strava tool call and return its result as a string.
+ * Delegates to the appropriate Strava function based on toolName.
+ *
+ * @param toolName   The name of the Strava tool to execute.
+ * @param toolInput  The input parameters for the tool.
+ * @returns          A string representation of the tool result.
+ */
+async function executeStravaTool(
+  toolName: string,
+  toolInput: Record<string, unknown>,
+): Promise<string> {
+  try {
+    if (toolName === "get_strava_oauth_url") {
+      const result = await get_strava_oauth_url(toolInput);
+      return JSON.stringify({ oauth_url: result });
+    }
+
+    if (toolName === "get_strava_activities") {
+      const result = await get_strava_activities(
+        toolInput as {
+          athlete_id: number;
+          sport_type?: string;
+          start_date?: string;
+          end_date?: string;
+          caller_athlete_id?: number;
+        },
+      );
+      return JSON.stringify({ activities: result });
+    }
+
+    // Unknown Strava tool
+    return JSON.stringify({ error: `Unknown Strava tool: ${toolName}` });
+  } catch (error) {
+    logger
+      .child({ service: "agent" })
+      .error({ err: error, toolName, toolInput }, "Strava tool execution error");
+    return JSON.stringify({
+      error: error instanceof Error ? error.message : "Strava tool execution failed",
+    });
+  }
 }
 
 /**
@@ -896,6 +994,11 @@ async function executeTool(toolName: string, toolInput: Record<string, unknown>)
     // Add operation field to the input for nudges routing
     const nudgesInput = { ...toolInput, operation: toolName };
     return executeNudgesTool(JSON.stringify(nudgesInput));
+  }
+
+  // Delegate Strava tools to the Strava module (Task-8a, Phase 4).
+  if (STRAVA_TOOL_NAMES.has(toolName)) {
+    return executeStravaTool(toolName, toolInput);
   }
 
   // Unknown tool — return a graceful error so the model can handle it.
