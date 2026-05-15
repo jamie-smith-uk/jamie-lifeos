@@ -16,6 +16,9 @@ interface EnvConfig {
     GOOGLE_CLIENT_ID: string;
     GOOGLE_CLIENT_SECRET: string;
     GOOGLE_REFRESH_TOKEN: string;
+    STRAVA_CLIENT_ID: string;
+    STRAVA_CLIENT_SECRET: string;
+    STRAVA_REDIRECT_URI: string;
     DIGEST_CRON: string;
     TZ: string;
     BOT_MODE: "polling" | "webhook";
