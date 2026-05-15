@@ -415,6 +415,18 @@ bot.onText(/.*/, (msg) => {
   const text = msg.text ?? "";
   const messageId = msg.message_id;
   const fromUsername = msg.from?.username;
+  // Voice messages can come through the text handler
+  const voice = (
+    msg as typeof msg & {
+      voice?: {
+        file_id: string;
+        file_unique_id: string;
+        file_size: number;
+        duration: number;
+        mime_type?: string;
+      };
+    }
+  ).voice;
 
   if (!isAllowedChat(chatId)) {
     // Silently drop — no reply sent to the unauthorised sender.
@@ -422,10 +434,22 @@ bot.onText(/.*/, (msg) => {
     return;
   }
 
-  botLogger.info(
-    { chat_id: chatId, message_id: messageId, from_username: fromUsername },
-    "Received message",
-  );
+  if (voice) {
+    botLogger.info(
+      {
+        chat_id: chatId,
+        message_id: messageId,
+        from_username: fromUsername,
+        file_id: voice.file_id,
+      },
+      "Received voice message",
+    );
+  } else {
+    botLogger.info(
+      { chat_id: chatId, message_id: messageId, from_username: fromUsername },
+      "Received message",
+    );
+  }
 
   const body: Record<string, unknown> = {
     chat_id: chatId,
@@ -434,6 +458,15 @@ bot.onText(/.*/, (msg) => {
   };
   if (fromUsername !== undefined) {
     body.from_username = fromUsername;
+  }
+  if (voice) {
+    body.voice = {
+      file_id: voice.file_id,
+      file_unique_id: voice.file_unique_id,
+      file_size: voice.file_size,
+      duration: voice.duration,
+      ...(voice.mime_type && { mime_type: voice.mime_type }),
+    };
   }
 
   postToOrchestrator("/message", body)
