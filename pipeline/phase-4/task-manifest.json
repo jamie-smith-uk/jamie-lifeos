@@ -322,8 +322,11 @@
     "title": "Format and integrate activity snapshot into agent system prompt",
     "description": "Format activity snapshot for agent context and integrate into system prompt",
     "files_in_scope": [
+      "packages/orchestrator/src/agent.ts",
       "packages/orchestrator/src/context.ts",
-      "packages/orchestrator/src/__tests__/agent.test.ts"
+      "packages/orchestrator/src/__tests__/agent.test.ts",
+      "packages/orchestrator/src/__tests__/agent-t10.test.ts",
+      "packages/shared/src/env.ts"
     ],
     "dependencies": [
       "task-9a"

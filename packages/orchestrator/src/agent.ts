@@ -84,6 +84,7 @@ import type {
   UpdateEventData,
 } from "@lifeos/shared";
 import { env, logger, pool } from "@lifeos/shared";
+import { getActivitySummary } from "./context.js";
 import {
   calendarFreeBusyToolDefinitions,
   calendarReadToolDefinitions,
@@ -141,15 +142,16 @@ function getAnthropicClient(): Anthropic {
 // ---------------------------------------------------------------------------
 
 /**
- * Assemble the system prompt with exactly five blocks in order:
+ * Assemble the system prompt with exactly six blocks in order:
  *   1. Identity
  *   2. Live context (current datetime + TZ)
  *   3. People index (loaded from database)
  *   4. Pending nudges (empty in Phase 1)
- *   5. Active automations (empty in Phase 1)
+ *   5. Activity snapshot (last 7 days Strava, if connected)
  *
  * Task-2 (Phase 2): People index now loads from database and shows names
  * and relationship types for all known people.
+ * Task-9b (Phase 4): Active Automations replaced with Activity Snapshot.
  */
 async function buildSystemPrompt(): Promise<string> {
   const now = new Date();
@@ -192,6 +194,25 @@ async function buildSystemPrompt(): Promise<string> {
     }
   } catch (err) {
     logger.child({ service: "agent" }).warn({ err: String(err) }, "Failed to load people index");
+  }
+
+  // Load activity snapshot from Strava (last 7 days)
+  let activitySnapshotBlock =
+    "## Activity Snapshot\n(No Strava connection. Use /strava to connect.)";
+  try {
+    const credResult = await pool.query(
+      `SELECT athlete_id FROM strava_credentials ORDER BY athlete_id LIMIT 1`,
+      [],
+    );
+    if (credResult.rows.length > 0) {
+      const athleteId = credResult.rows[0].athlete_id as number;
+      const summary = await getActivitySummary(athleteId);
+      activitySnapshotBlock = `## Activity Snapshot\n${summary}`;
+    }
+  } catch (err) {
+    logger
+      .child({ service: "agent" })
+      .warn({ err: String(err) }, "Failed to load activity snapshot");
   }
 
   return [
@@ -248,9 +269,8 @@ Timezone: ${tz}`,
     `## Pending Nudges
 (No pending nudges in Phase 1.)`,
 
-    // Block 5: Active automations (empty in Phase 1)
-    `## Active Automations
-(No active automations in Phase 1.)`,
+    // Block 5: Activity snapshot (last 7 days Strava)
+    activitySnapshotBlock,
   ].join("\n\n");
 }
 

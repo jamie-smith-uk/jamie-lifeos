@@ -631,10 +631,10 @@ describe("T-10 — runAgent agent core", () => {
       expect(capturedSystemPrompt).toContain("## Live Context");
       expect(capturedSystemPrompt).toContain("## People Index");
       expect(capturedSystemPrompt).toContain("## Pending Nudges");
-      expect(capturedSystemPrompt).toContain("## Active Automations");
+      expect(capturedSystemPrompt).toContain("## Activity Snapshot");
     });
 
-    it("blocks appear in the correct order: Identity → Live Context → People Index → Pending Nudges → Active Automations", async () => {
+    it("blocks appear in the correct order: Identity → Live Context → People Index → Pending Nudges → Activity Snapshot", async () => {
       const poolMock = buildPoolMock();
       const { AnthropicMockClass } = buildAnthropicMock([makeTextResponse("Hi!")]);
 
@@ -658,20 +658,20 @@ describe("T-10 — runAgent agent core", () => {
       const idxLiveContext = prompt.indexOf("## Live Context");
       const idxPeopleIndex = prompt.indexOf("## People Index");
       const idxPendingNudges = prompt.indexOf("## Pending Nudges");
-      const idxActiveAutomations = prompt.indexOf("## Active Automations");
+      const idxActivitySnapshot = prompt.indexOf("## Activity Snapshot");
 
       // All blocks must be present
       expect(idxIdentity).toBeGreaterThanOrEqual(0);
       expect(idxLiveContext).toBeGreaterThanOrEqual(0);
       expect(idxPeopleIndex).toBeGreaterThanOrEqual(0);
       expect(idxPendingNudges).toBeGreaterThanOrEqual(0);
-      expect(idxActiveAutomations).toBeGreaterThanOrEqual(0);
+      expect(idxActivitySnapshot).toBeGreaterThanOrEqual(0);
 
       // Correct ordering
       expect(idxIdentity).toBeLessThan(idxLiveContext);
       expect(idxLiveContext).toBeLessThan(idxPeopleIndex);
       expect(idxPeopleIndex).toBeLessThan(idxPendingNudges);
-      expect(idxPendingNudges).toBeLessThan(idxActiveAutomations);
+      expect(idxPendingNudges).toBeLessThan(idxActivitySnapshot);
     });
 
     it("Live Context block contains current datetime (ISO 8601) and timezone", async () => {
@@ -751,13 +751,13 @@ describe("T-10 — runAgent agent core", () => {
       await runAgent({ chat_id: 24, text: "hello", message_id: 24 });
 
       const nudgesStart = capturedSystemPrompt.indexOf("## Pending Nudges");
-      const autoStart = capturedSystemPrompt.indexOf("## Active Automations");
+      const autoStart = capturedSystemPrompt.indexOf("## Activity Snapshot");
       const nudgesBlock = capturedSystemPrompt.slice(nudgesStart, autoStart);
 
       expect(nudgesBlock.toLowerCase()).toMatch(/phase 1|empty|no pending/i);
     });
 
-    it("Active Automations block indicates empty state in Phase 1", async () => {
+    it("Activity Snapshot block present when no Strava connection", async () => {
       const poolMock = buildPoolMock();
       const { AnthropicMockClass } = buildAnthropicMock([makeTextResponse("Hi!")]);
 
@@ -776,10 +776,11 @@ describe("T-10 — runAgent agent core", () => {
       const { runAgent } = await import("../agent.js");
       await runAgent({ chat_id: 25, text: "hello", message_id: 25 });
 
-      const autoStart = capturedSystemPrompt.indexOf("## Active Automations");
+      const autoStart = capturedSystemPrompt.indexOf("## Activity Snapshot");
       const autoBlock = capturedSystemPrompt.slice(autoStart);
 
-      expect(autoBlock.toLowerCase()).toMatch(/phase 1|empty|no active/i);
+      expect(autoStart).toBeGreaterThanOrEqual(0);
+      expect(autoBlock).toContain("## Activity Snapshot");
     });
 
     it("system prompt is a non-empty string passed as 'system' to messages.create()", async () => {

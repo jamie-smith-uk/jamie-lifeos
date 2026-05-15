@@ -51,6 +51,9 @@ const REQUIRED_VARS: ReadonlyArray<keyof EnvConfig> = [
   "DATABASE_URL",
   "DIGEST_CRON",
   "TZ",
+  "STRAVA_CLIENT_ID",
+  "STRAVA_CLIENT_SECRET",
+  "STRAVA_REDIRECT_URI",
 ];
 
 const OPTIONAL_DEFAULTS: Partial<Record<keyof EnvConfig, string>> = {
@@ -59,9 +62,6 @@ const OPTIONAL_DEFAULTS: Partial<Record<keyof EnvConfig, string>> = {
   GOOGLE_CLIENT_ID: "",
   GOOGLE_CLIENT_SECRET: "",
   GOOGLE_REFRESH_TOKEN: "",
-  STRAVA_CLIENT_ID: "",
-  STRAVA_CLIENT_SECRET: "",
-  STRAVA_REDIRECT_URI: "",
   BOT_MODE: "polling",
   LOG_LEVEL: "info",
   ORCHESTRATOR_URL: "http://localhost:3001",
