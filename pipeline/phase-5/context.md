@@ -101,3 +101,10 @@
 ⚠ task-8a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-8b — Add voice tools integration tests
+
+**Files:** packages/orchestrator/src/__tests__/agent.test.ts, packages/orchestrator/tsconfig.json, packages/orchestrator/vitest.config.ts
+
+⚠ task-8b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
