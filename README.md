@@ -14,6 +14,7 @@ Built on Telegram, Claude, and PostgreSQL. Deployed on Railway.
 - **People** — a personal knowledge graph of relationships, interactions, and life events
 - **Nudges** — proactive reminders for birthdays, anniversaries, and lapsed contacts
 - **Strava** — OAuth connection to your Strava account, activity sync, and conversation queries over your training data
+- **Voice** — send a voice note; bot transcribes it via Whisper, confirms what it heard, then actions on approval
 
 ---
 
@@ -23,6 +24,7 @@ Built on Telegram, Claude, and PostgreSQL. Deployed on Railway.
 |---|---|
 | Interface | Telegram (node-telegram-bot-api) |
 | AI | Claude (claude-sonnet-4-20250514 default, configurable via `ANTHROPIC_MODEL`) |
+| Voice transcription | OpenAI Whisper API (whisper-1) |
 | Calendar | Google Calendar MCP |
 | Email | Gmail MCP |
 | Tasks | Todoist API v1 |
@@ -74,6 +76,7 @@ pipeline/       — Pipeline working files and phase artifacts (tracked in git)
 | 3 | People, Life Events, and Nudges | ✅ Complete |
 | 4 | Strava Integration | 🔄 In progress (6/11 tasks done) |
 | 5 | Morning Digest and Day Planning | Pending |
+| 6 | Voice Message Input | Pending |
 
 ---
 
@@ -153,6 +156,7 @@ TIMEZONE                     — e.g. Europe/London
 STRAVA_CLIENT_ID             — from strava.com/settings/api
 STRAVA_CLIENT_SECRET         — from strava.com/settings/api
 STRAVA_REDIRECT_URI          — OAuth callback URL for your bot service
+OPENAI_API_KEY               — from platform.openai.com (used for Whisper voice transcription)
 ```
 
 ### Run migrations

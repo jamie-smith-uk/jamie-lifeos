@@ -15,6 +15,7 @@ One place to ask "what do I need to know and do today?" and get a complete, cont
 - Calendar integration: Google Calendar MCP
 - Email integration: Gmail MCP
 - Task integration: Todoist REST API v2
+- Voice transcription: OpenAI Whisper API (whisper-1)
 - Database: PostgreSQL 16 via pg (node-postgres), raw parameterised SQL only
 - Scheduler: node-cron
 - Infrastructure: Railway (bot service + orchestrator service + PostgreSQL)
@@ -161,6 +162,32 @@ EP-07 (full), EP-08
 
 ---
 
+## Phase 6 — Voice Message Input
+
+### Exit criteria
+- User can send a Telegram voice message and receive a transcription confirmation within 3 seconds
+- Bot replies: "Here's what I heard: [paraphrase]. Shall I do that?" with Yes / No inline keyboard
+- Tapping Yes executes the intent through the existing agent loop as if the user had typed the text
+- Tapping No cancels and replies "OK, cancelled."
+- Pending voice intents expire after 5 minutes; tapping Yes/No on an expired intent replies "That request expired — please send your voice message again."
+- Transcription is added to conversation context as a `[voice]`-prefixed user message so history remains coherent
+- Voice messages from any chat_id not matching TELEGRAM_ALLOWED_CHAT_ID are silently dropped
+- Transcription errors (Whisper API failure) are caught and a friendly error is sent to the user
+
+### Smoke tests
+1. Send a voice note saying "add a task to book the dentist for next week" — bot replies with transcription confirmation within 3 seconds
+2. Tap Yes — task creation flow begins as if text was typed
+3. Send a voice note saying "what have I got today?" — bot replies with transcription confirmation
+4. Tap Yes — calendar events returned
+5. Tap No on a confirmation — bot replies "OK, cancelled." and no action is taken
+6. Send a voice note then wait 6 minutes — tap Yes — bot replies with expiry message
+7. Send a voice note from an unauthorised chat_id — bot does not respond
+
+### Epics in scope
+EP-11
+
+---
+
 ## User stories
 
 ### EP-01 — Foundation
@@ -229,6 +256,15 @@ EP-07 (full), EP-08
 - EP-08-02: Day plan prioritises tasks by priority, deadline proximity, and estimated effort. Flags if more tasks than available time.
 - EP-08-03: User asks "what should I do next?" — agent checks current time, remaining calendar, and open tasks. Returns single clear recommendation.
 - EP-08-04: User pastes a multi-intent snippet — agent extracts all implied actions and proposes each. "Dinner with Jess Friday 8pm at Dishoom" creates calendar event and logs interaction with Jess if she is in the people graph.
+
+### EP-11 — Voice Message Input
+
+- EP-11-01: Bot detects incoming Telegram voice messages (`message.voice`). Downloads the `.oga` audio file using the Telegram file download endpoint (authenticated with `TELEGRAM_BOT_TOKEN`). Sends it to OpenAI Whisper API (`whisper-1` model, `multipart/form-data` POST to `https://api.openai.com/v1/audio/transcriptions`). Returns transcription text.
+- EP-11-02: Bot writes a pending voice intent to `pending_voice_intents` table with `chat_id`, `transcription`, `telegram_file_id`, and `expires_at` (5 minutes from now). Then replies to the user with: "Here's what I heard: [transcription]. Shall I do that?" and an inline keyboard with buttons `[✓ Yes, do it]` and `[✗ No, cancel]` — callback data: `voice_yes_[id]` and `voice_no_[id]`.
+- EP-11-03: Callback handler handles `voice_yes_[id]`. Loads the pending intent from the DB. If `expires_at` is in the past, replies "That request expired — please send your voice message again." and deletes the row. If valid, deletes the row and passes the transcription to the agent as a regular message (prefixed `[voice] ` in conversation context so history is coherent).
+- EP-11-04: Callback handler handles `voice_no_[id]`. Deletes the pending intent row. Replies "OK, cancelled." No further action.
+- EP-11-05: Whisper API errors (non-200 response, network failure, empty transcription) are caught. User receives: "Sorry, I couldn't transcribe that voice message — please try again or type your request." No row is written to `pending_voice_intents`.
+- EP-11-06: `OPENAI_API_KEY` added to env config validation in `packages/shared/src/env.ts`. Added to `.env.example` with a comment. No other changes to the shared env schema.
 
 ### EP-10 — Strava Integration
 

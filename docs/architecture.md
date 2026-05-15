@@ -23,6 +23,7 @@ Life OS is structured in four layers:
 | Google Calendar MCP | gcal.mcp.claude.com | Read and write calendar events |
 | Gmail MCP | gmail.mcp.claude.com | Read inbox and extract implied actions |
 | Todoist integration | Todoist REST API v2 | Full task CRUD |
+| Voice transcription | OpenAI Whisper API (whisper-1) | Speech-to-text for Telegram voice messages |
 | PostgreSQL | Railway managed | All persistent state |
 | Scheduler | node-cron inside orchestrator | Digest, nudge, and automation execution |
 
@@ -146,6 +147,20 @@ Life OS is structured in four layers:
         updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
+### pending_voice_intents
+
+    CREATE TABLE pending_voice_intents (
+        id             SERIAL PRIMARY KEY,
+        chat_id        BIGINT      NOT NULL,
+        transcription  TEXT        NOT NULL,
+        telegram_file_id TEXT      NOT NULL,
+        expires_at     TIMESTAMPTZ NOT NULL,
+        created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE INDEX idx_pending_voice_intents_chat_id
+        ON pending_voice_intents (chat_id);
+
 ### strava_activities
 
     CREATE TABLE strava_activities (
@@ -222,6 +237,11 @@ The conversation history (last 20 messages) is appended as the `messages` array 
 ### Nudge tools (internal DB)
 - `create_nudge` — inserts a nudges record with trigger_at and message
 - `dismiss_nudge` — sets status to dismissed by nudge ID
+
+### Voice tools (OpenAI Whisper API + internal DB)
+- `transcribe_voice_message` — downloads Telegram voice file, POSTs to Whisper API, returns transcription text
+- `create_pending_voice_intent` — writes transcription to `pending_voice_intents` with 5-minute TTL
+- `consume_pending_voice_intent` — reads and deletes a pending intent by ID; returns null if expired
 
 ### Strava tools (internal DB + Strava REST API)
 - `get_strava_oauth_url` — returns OAuth authorisation URL with state token for CSRF protection
