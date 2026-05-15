@@ -73,3 +73,10 @@
 ⚠ task-6a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-6b — Add voice confirmation message and keyboard to bot handler
+
+**Files:** packages/bot/src/index.ts, packages/bot/src/__tests__/index.test.ts, packages/bot/tsconfig.json, packages/bot/vitest.config.ts
+
+⚠ task-6b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
