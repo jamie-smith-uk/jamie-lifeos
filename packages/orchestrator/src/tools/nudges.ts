@@ -20,6 +20,7 @@ interface NudgeInfo {
   life_event_id: number | null;
   message: string;
   trigger_at: string;
+  recurrence: string | null;
   status: string;
   sent_at: string | null;
   dismissed_at: string | null;
@@ -108,6 +109,8 @@ function validateTriggerAt(trigger_at: unknown): string | null {
   return null;
 }
 
+const VALID_RECURRENCES = new Set(["daily", "weekly", "monthly", "yearly"]);
+
 /**
  * Validates inputs for create_nudge.
  */
@@ -116,6 +119,7 @@ function validateCreateNudgeInputs(params: {
   life_event_id?: unknown;
   message?: unknown;
   trigger_at?: unknown;
+  recurrence?: unknown;
 }): string | null {
   const personIdError = validatePersonId(params.person_id);
   if (personIdError) return personIdError;
@@ -128,6 +132,12 @@ function validateCreateNudgeInputs(params: {
 
   const triggerAtError = validateTriggerAt(params.trigger_at);
   if (triggerAtError) return triggerAtError;
+
+  if (params.recurrence !== undefined && params.recurrence !== null) {
+    if (typeof params.recurrence !== "string" || !VALID_RECURRENCES.has(params.recurrence)) {
+      return "'recurrence' must be one of: daily, weekly, monthly, yearly";
+    }
+  }
 
   return null;
 }
@@ -161,6 +171,7 @@ function rowToNudgeInfo(row: {
   life_event_id: number | null;
   message: string;
   trigger_at: Date;
+  recurrence: string | null;
   status: string;
   sent_at: Date | null;
   dismissed_at: Date | null;
@@ -172,6 +183,7 @@ function rowToNudgeInfo(row: {
     life_event_id: row.life_event_id,
     message: row.message,
     trigger_at: row.trigger_at.toISOString(),
+    recurrence: row.recurrence ?? null,
     status: row.status,
     sent_at: row.sent_at?.toISOString() || null,
     dismissed_at: row.dismissed_at?.toISOString() || null,
@@ -191,7 +203,7 @@ async function createNudge(input: string): Promise<string> {
 
   try {
     const params = JSON.parse(input);
-    const { person_id, life_event_id, message, trigger_at } = params;
+    const { person_id, life_event_id, message, trigger_at, recurrence } = params;
 
     // Validate all inputs
     const validationError = validateCreateNudgeInputs(params);
@@ -199,12 +211,22 @@ async function createNudge(input: string): Promise<string> {
       return JSON.stringify({ success: false, error: `create_nudge: ${validationError}` });
     }
 
+    // Reject nudges with a trigger_at in the past
+    if (new Date(trigger_at) <= new Date()) {
+      return JSON.stringify({
+        success: false,
+        error:
+          "create_nudge: trigger_at must be a future date. " +
+          "For recurring events like birthdays, compute the next upcoming occurrence.",
+      });
+    }
+
     // Create the nudge record
     const result = await pool.query(
-      `INSERT INTO nudges (person_id, life_event_id, message, trigger_at, status)
-       VALUES ($1, $2, $3, $4, 'pending')
-       RETURNING id, person_id, life_event_id, message, trigger_at, status, sent_at, dismissed_at, created_at`,
-      [person_id, life_event_id || null, message.trim(), trigger_at],
+      `INSERT INTO nudges (person_id, life_event_id, message, trigger_at, recurrence, status)
+       VALUES ($1, $2, $3, $4, $5, 'pending')
+       RETURNING id, person_id, life_event_id, message, trigger_at, recurrence, status, sent_at, dismissed_at, created_at`,
+      [person_id, life_event_id || null, message.trim(), trigger_at, recurrence ?? null],
     );
 
     const nudge = rowToNudgeInfo(result.rows[0]);
@@ -239,10 +261,10 @@ async function dismissNudge(input: string): Promise<string> {
 
     // Update the nudge record
     const result = await pool.query(
-      `UPDATE nudges 
+      `UPDATE nudges
        SET status = 'dismissed', dismissed_at = now()
        WHERE id = $1
-       RETURNING id, person_id, life_event_id, message, trigger_at, status, sent_at, dismissed_at, created_at`,
+       RETURNING id, person_id, life_event_id, message, trigger_at, recurrence, status, sent_at, dismissed_at, created_at`,
       [nudge_id],
     );
 

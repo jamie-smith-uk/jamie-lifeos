@@ -21,10 +21,35 @@ interface PendingNudge {
   life_event_id: number | null;
   message: string;
   trigger_at: Date;
+  recurrence: "daily" | "weekly" | "monthly" | "yearly" | null;
   status: string;
   sent_at: Date | null;
   dismissed_at: Date | null;
   created_at: Date;
+}
+
+// ---------------------------------------------------------------------------
+// Recurrence helpers
+// ---------------------------------------------------------------------------
+
+function nextOccurrence(from: Date, recurrence: PendingNudge["recurrence"]): Date | null {
+  if (!recurrence) return null;
+  const next = new Date(from);
+  switch (recurrence) {
+    case "daily":
+      next.setDate(next.getDate() + 1);
+      break;
+    case "weekly":
+      next.setDate(next.getDate() + 7);
+      break;
+    case "monthly":
+      next.setMonth(next.getMonth() + 1);
+      break;
+    case "yearly":
+      next.setFullYear(next.getFullYear() + 1);
+      break;
+  }
+  return next;
 }
 
 // ---------------------------------------------------------------------------
@@ -43,8 +68,8 @@ async function evaluateNudges(): Promise<void> {
 
     // Query for pending nudges past their trigger time
     const pendingNudgesResult = await pool.query(
-      `SELECT id, person_id, life_event_id, message, trigger_at, status, sent_at, dismissed_at, created_at
-       FROM nudges 
+      `SELECT id, person_id, life_event_id, message, trigger_at, recurrence, status, sent_at, dismissed_at, created_at
+       FROM nudges
        WHERE status = 'pending' AND trigger_at <= now()
        ORDER BY trigger_at ASC`,
       [],
@@ -104,13 +129,24 @@ async function evaluateNudges(): Promise<void> {
 
         // Update nudge status to 'sent' with sent_at timestamp after successful send
         await pool.query(
-          `UPDATE nudges 
+          `UPDATE nudges
            SET status = 'sent', sent_at = now()
            WHERE id = $1`,
           [nudge.id],
         );
 
         log.info({ nudge_id: nudge.id }, "Nudge marked as sent");
+
+        // Re-schedule if recurring
+        const next = nextOccurrence(nudge.trigger_at, nudge.recurrence);
+        if (next) {
+          await pool.query(
+            `INSERT INTO nudges (person_id, life_event_id, message, trigger_at, recurrence, status)
+             VALUES ($1, $2, $3, $4, $5, 'pending')`,
+            [nudge.person_id, nudge.life_event_id, nudge.message, next, nudge.recurrence],
+          );
+          log.info({ nudge_id: nudge.id, next_trigger: next.toISOString() }, "Recurring nudge rescheduled");
+        }
       } catch (err) {
         log.error({ err: String(err), nudge_id: nudge.id }, "Failed to update nudge status");
       }

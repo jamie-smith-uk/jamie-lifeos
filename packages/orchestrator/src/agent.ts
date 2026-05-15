@@ -580,7 +580,22 @@ const nudgesToolDefinitions: Anthropic.Tool[] = [
   {
     name: "create_nudge",
     description:
-      "Create a new nudge record to remind about a person or life event at a specific time.",
+      "Create a nudge to remind the user about a person or life event at a specific time. " +
+      "\n\n" +
+      "CRITICAL — trigger_at must always be a FUTURE date:\n" +
+      "Never use a date from the past (e.g. a birth year, a historical event date). " +
+      "Always compute the NEXT upcoming occurrence relative to today's date from the system prompt. " +
+      "For a birthday reminder: if the person's birthday this calendar year has not yet passed, " +
+      "use this year's date; if it has already passed, use next year's date. " +
+      "Always apply the advance_days offset to the next occurrence, not to the original event date.\n" +
+      "\n" +
+      "RECURRENCE — use the recurrence field for repeating reminders:\n" +
+      "- Birthdays, anniversaries → 'yearly'\n" +
+      "- Weekly check-ins → 'weekly'\n" +
+      "- Monthly reviews → 'monthly'\n" +
+      "- Daily habits → 'daily'\n" +
+      "- One-off reminders → omit recurrence (or null)\n" +
+      "When recurrence is set, the system automatically reschedules the nudge after it fires.",
     input_schema: {
       type: "object",
       properties: {
@@ -599,7 +614,14 @@ const nudgesToolDefinitions: Anthropic.Tool[] = [
         trigger_at: {
           type: "string",
           description:
-            "When to trigger the nudge in ISO 8601 format (e.g. '2026-05-13T10:00:00Z').",
+            "When to trigger the nudge in ISO 8601 format. Must be a future date — " +
+            "always the NEXT upcoming occurrence, never a historical date.",
+        },
+        recurrence: {
+          type: "string",
+          enum: ["daily", "weekly", "monthly", "yearly"],
+          description:
+            "How often to repeat this nudge after it fires. Omit for one-off reminders.",
         },
       },
       required: ["person_id", "message", "trigger_at"],
