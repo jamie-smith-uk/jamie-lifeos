@@ -388,7 +388,7 @@ export async function startScheduler(): Promise<void> {
     });
 
     // Schedule Strava sync job to run every hour
-    const stravaSyncJob = cron.schedule("0 * * * * # strava-sync", async () => {
+    const stravaSyncJob = cron.schedule("0 * * * *", async () => {
       await syncStravaActivities();
     });
 

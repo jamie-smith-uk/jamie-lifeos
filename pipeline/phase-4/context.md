@@ -123,3 +123,20 @@
 - **Activity data structure**: The `ActivityToSync` interface defines the expected structure for activity data. All optional fields should use `?:` and be handled with null coalescing (`?? null`) in database operations.
 
 ---
+## task-7a — Create Strava sync job function
+
+**Files:** packages/orchestrator/src/scheduler.ts, packages/orchestrator/src/__tests__/scheduler.test.ts
+
+- **Strava sync job pattern**: The Strava sync job is scheduled with cron pattern "0 * * * * # strava-sync" to run every hour. The "# strava-sync" comment allows tests to identify the job by searching for patterns containing "strava".
+
+- **Token refresh workflow**: Use the `ensureValidStravaToken` → `refreshStravaToken` pattern for all Strava API operations. This automatically handles token expiration and refresh before making API calls.
+
+- **Fetch mocking in tests**: Tests that involve HTTP requests to external APIs (like Strava token refresh) require global fetch mocking. The test setup includes a mock for `global.fetch` that returns successful token refresh responses.
+
+- **Multi-athlete processing**: The sync job processes all athletes sequentially, with individual error handling per athlete to ensure one failure doesn't stop the entire sync process.
+
+- **Database credential storage**: Strava credentials (access_token, refresh_token, expires_at) are stored in the `strava_credentials` table and updated when tokens are refreshed. This follows the security rules that allow first-party integration tokens to be stored in PostgreSQL.
+
+- **Parameterized queries**: All database operations use parameterized queries with `$1, $2, etc.` placeholders for security, following the established pattern in the codebase.
+
+---
