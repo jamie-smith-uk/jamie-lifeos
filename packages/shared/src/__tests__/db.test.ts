@@ -26,6 +26,7 @@ process.env.OPENAI_API_KEY = "sk-test-openai";
 process.env.STRAVA_CLIENT_ID = "12345";
 process.env.STRAVA_CLIENT_SECRET = "secret_abc123";
 process.env.STRAVA_REDIRECT_URI = "http://localhost:3001/auth/strava/callback";
+process.env.OAUTH_CALLBACK_SECRET = "test-secret";
 
 // ---------------------------------------------------------------------------
 // AC: db.ts exports a Pool instance; Pool is created once and reused

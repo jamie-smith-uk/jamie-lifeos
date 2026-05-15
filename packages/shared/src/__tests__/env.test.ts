@@ -15,10 +15,12 @@ const VALID_ENV: Record<string, string> = {
   TELEGRAM_BOT_TOKEN: "bot:test_token",
   TELEGRAM_ALLOWED_CHAT_ID: "123456",
   ANTHROPIC_API_KEY: "sk-ant-test",
+  OPENAI_API_KEY: "sk-test-openai",
   DATABASE_URL: "postgresql://localhost:5432/testdb",
   STRAVA_CLIENT_ID: "12345",
   STRAVA_CLIENT_SECRET: "secret_abc123",
   STRAVA_REDIRECT_URI: "http://localhost:3001/auth/strava/callback",
+  OAUTH_CALLBACK_SECRET: "test-secret",
   DIGEST_CRON: "0 7 * * *",
   TZ: "Europe/London",
 };

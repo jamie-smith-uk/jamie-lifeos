@@ -21,6 +21,7 @@ const VALID_ENV: Record<string, string> = {
   STRAVA_CLIENT_ID: "12345",
   STRAVA_CLIENT_SECRET: "secret_abc123",
   STRAVA_REDIRECT_URI: "http://localhost:3001/auth/strava/callback",
+  OAUTH_CALLBACK_SECRET: "test-secret",
   DIGEST_CRON: "0 7 * * *",
   TZ: "Europe/London",
 };

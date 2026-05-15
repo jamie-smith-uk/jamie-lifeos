@@ -36,6 +36,7 @@ interface EnvConfig {
   STRAVA_CLIENT_ID: string;
   STRAVA_CLIENT_SECRET: string;
   STRAVA_REDIRECT_URI: string;
+  OAUTH_CALLBACK_SECRET: string;
 
   // Scheduling
   DIGEST_CRON: string;
@@ -58,6 +59,7 @@ const REQUIRED_VARS: ReadonlyArray<keyof EnvConfig> = [
   "STRAVA_CLIENT_ID",
   "STRAVA_CLIENT_SECRET",
   "STRAVA_REDIRECT_URI",
+  "OAUTH_CALLBACK_SECRET",
 ];
 
 const OPTIONAL_DEFAULTS: Partial<Record<keyof EnvConfig, string>> = {
@@ -122,6 +124,7 @@ function loadEnv(): EnvConfig {
     STRAVA_CLIENT_ID: raw("STRAVA_CLIENT_ID"),
     STRAVA_CLIENT_SECRET: raw("STRAVA_CLIENT_SECRET"),
     STRAVA_REDIRECT_URI: raw("STRAVA_REDIRECT_URI"),
+    OAUTH_CALLBACK_SECRET: raw("OAUTH_CALLBACK_SECRET"),
     DIGEST_CRON: raw("DIGEST_CRON"),
     TZ: raw("TZ"),
     BOT_MODE: botMode,
