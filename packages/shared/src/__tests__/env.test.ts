@@ -194,50 +194,21 @@ describe("env.ts — valid configuration", () => {
 });
 
 // ---------------------------------------------------------------------------
-// AC: Strava environment variables are validated as required strings
+// AC: Strava environment variables are optional (orchestrator-only)
 // ---------------------------------------------------------------------------
 
 describe("env.ts — Strava environment variables", () => {
-  it("throws when STRAVA_CLIENT_ID is missing", async () => {
+  it("loads successfully without Strava vars (they are optional)", async () => {
     const vars = { ...VALID_ENV };
     delete vars.STRAVA_CLIENT_ID;
-    setEnv(vars);
-
-    await expect(loadEnvModule()).rejects.toThrow(/STRAVA_CLIENT_ID/);
-  });
-
-  it("throws when STRAVA_CLIENT_SECRET is missing", async () => {
-    const vars = { ...VALID_ENV };
     delete vars.STRAVA_CLIENT_SECRET;
-    setEnv(vars);
-
-    await expect(loadEnvModule()).rejects.toThrow(/STRAVA_CLIENT_SECRET/);
-  });
-
-  it("throws when STRAVA_REDIRECT_URI is missing", async () => {
-    const vars = { ...VALID_ENV };
     delete vars.STRAVA_REDIRECT_URI;
     setEnv(vars);
 
-    await expect(loadEnvModule()).rejects.toThrow(/STRAVA_REDIRECT_URI/);
-  });
-
-  it("throws when STRAVA_CLIENT_ID is empty string", async () => {
-    setEnv({ ...VALID_ENV, STRAVA_CLIENT_ID: "   " });
-
-    await expect(loadEnvModule()).rejects.toThrow(/STRAVA_CLIENT_ID/);
-  });
-
-  it("throws when STRAVA_CLIENT_SECRET is empty string", async () => {
-    setEnv({ ...VALID_ENV, STRAVA_CLIENT_SECRET: "   " });
-
-    await expect(loadEnvModule()).rejects.toThrow(/STRAVA_CLIENT_SECRET/);
-  });
-
-  it("throws when STRAVA_REDIRECT_URI is empty string", async () => {
-    setEnv({ ...VALID_ENV, STRAVA_REDIRECT_URI: "   " });
-
-    await expect(loadEnvModule()).rejects.toThrow(/STRAVA_REDIRECT_URI/);
+    const mod = await loadEnvModule();
+    expect(mod.env.STRAVA_CLIENT_ID).toBe("");
+    expect(mod.env.STRAVA_CLIENT_SECRET).toBe("");
+    expect(mod.env.STRAVA_REDIRECT_URI).toBe("");
   });
 
   it("loads successfully when all Strava vars are set", async () => {
@@ -266,17 +237,5 @@ describe("env.ts — Strava environment variables", () => {
     expect(mod.env.STRAVA_CLIENT_ID).toBe("12345");
     expect(mod.env.STRAVA_CLIENT_SECRET).toBe("secret_abc123");
     expect(mod.env.STRAVA_REDIRECT_URI).toBe("http://localhost:3001/auth/strava/callback");
-  });
-
-  it("throws when multiple Strava vars are missing and lists them all", async () => {
-    const vars = { ...VALID_ENV };
-    delete vars.STRAVA_CLIENT_ID;
-    delete vars.STRAVA_CLIENT_SECRET;
-    delete vars.STRAVA_REDIRECT_URI;
-    setEnv(vars);
-
-    await expect(loadEnvModule()).rejects.toThrow(
-      /STRAVA_CLIENT_ID.*STRAVA_CLIENT_SECRET.*STRAVA_REDIRECT_URI|STRAVA_CLIENT_ID.*STRAVA_REDIRECT_URI.*STRAVA_CLIENT_SECRET|STRAVA_CLIENT_SECRET.*STRAVA_CLIENT_ID.*STRAVA_REDIRECT_URI|STRAVA_CLIENT_SECRET.*STRAVA_REDIRECT_URI.*STRAVA_CLIENT_ID|STRAVA_REDIRECT_URI.*STRAVA_CLIENT_ID.*STRAVA_CLIENT_SECRET|STRAVA_REDIRECT_URI.*STRAVA_CLIENT_SECRET.*STRAVA_CLIENT_ID/,
-    );
   });
 });

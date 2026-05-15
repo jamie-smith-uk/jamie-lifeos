@@ -64,40 +64,46 @@ async function loadEnvModule() {
 // ---------------------------------------------------------------------------
 
 describe("env.ts — OPENAI_API_KEY validation", () => {
-  it("throws when OPENAI_API_KEY is missing", async () => {
+  it("loads successfully without OPENAI_API_KEY (it is optional)", async () => {
     const vars = { ...VALID_ENV };
     delete vars.OPENAI_API_KEY;
     setEnv(vars);
 
-    await expect(loadEnvModule()).rejects.toThrow(/OPENAI_API_KEY/);
+    const mod = await loadEnvModule();
+    expect(mod.env.OPENAI_API_KEY).toBe("");
   });
 
-  it("throws when OPENAI_API_KEY is empty string", async () => {
+  it("loads successfully when OPENAI_API_KEY is empty string", async () => {
     setEnv({ ...VALID_ENV, OPENAI_API_KEY: "" });
 
-    await expect(loadEnvModule()).rejects.toThrow(/OPENAI_API_KEY/);
+    const mod = await loadEnvModule();
+    expect(mod.env.OPENAI_API_KEY).toBe("");
   });
 
-  it("throws when OPENAI_API_KEY is only whitespace", async () => {
+  it("loads successfully when OPENAI_API_KEY is only whitespace (treated as absent)", async () => {
     setEnv({ ...VALID_ENV, OPENAI_API_KEY: "   " });
 
-    await expect(loadEnvModule()).rejects.toThrow(/OPENAI_API_KEY/);
+    const mod = await loadEnvModule();
+    expect(mod.env.OPENAI_API_KEY).toBe("");
   });
 
-  it("throws when OPENAI_API_KEY is undefined", async () => {
+  it("loads successfully when OPENAI_API_KEY is undefined", async () => {
     const vars = { ...VALID_ENV };
     delete vars.OPENAI_API_KEY;
     setEnv(vars);
 
-    await expect(loadEnvModule()).rejects.toThrow(/OPENAI_API_KEY/);
+    const mod = await loadEnvModule();
+    expect(mod.env).toBeDefined();
   });
 
-  it("includes OPENAI_API_KEY in error message when missing", async () => {
+  it("does not include OPENAI_API_KEY in missing vars error when absent", async () => {
+    // OPENAI_API_KEY is optional — remove a truly required var to trigger error
     const vars = { ...VALID_ENV };
     delete vars.OPENAI_API_KEY;
+    delete vars.DATABASE_URL;
     setEnv(vars);
 
-    await expect(loadEnvModule()).rejects.toThrow(/Missing required environment variable/);
+    await expect(loadEnvModule()).rejects.toThrow(/DATABASE_URL/);
   });
 });
 
