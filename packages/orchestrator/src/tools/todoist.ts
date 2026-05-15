@@ -194,22 +194,27 @@ function formatTasksBySection(
 // get_tasks
 // ---------------------------------------------------------------------------
 
+function buildTasksUrl(filter?: string, projectId?: string, sectionId?: string): string {
+  const url = new URL(`${TODOIST_API_BASE}/tasks`);
+  if (filter) url.searchParams.set("filter", filter);
+  if (projectId) url.searchParams.set("project_id", projectId);
+  if (sectionId) url.searchParams.set("section_id", sectionId);
+  return url.toString();
+}
+
 async function getTasks(input: Record<string, unknown>): Promise<string> {
   const token = getTodoistToken();
   const filter = typeof input.filter === "string" ? input.filter : undefined;
   const projectId = typeof input.project_id === "string" ? input.project_id : undefined;
+  const sectionId = typeof input.section_id === "string" ? input.section_id : undefined;
 
-  const tasksUrl = new URL(`${TODOIST_API_BASE}/tasks`);
-  if (filter) tasksUrl.searchParams.set("filter", filter);
-  if (projectId) tasksUrl.searchParams.set("project_id", projectId);
-
-  // When browsing a specific project, also fetch its sections so we can group
-  // tasks by section (board/column view). Otherwise just resolve project names.
-  const sectionsPromise = projectId ? fetchSectionMap(token, projectId) : Promise.resolve(null);
+  // Fetch sections only when browsing a whole project (not a specific section).
+  const sectionsPromise =
+    projectId && !sectionId ? fetchSectionMap(token, projectId) : Promise.resolve(null);
 
   try {
     const [tasksResponse, projectMap, sectionMap] = await Promise.all([
-      fetch(tasksUrl.toString(), { headers: buildAuthHeaders(token) }),
+      fetch(buildTasksUrl(filter, projectId, sectionId), { headers: buildAuthHeaders(token) }),
       fetchProjectMap(token),
       sectionsPromise,
     ]);

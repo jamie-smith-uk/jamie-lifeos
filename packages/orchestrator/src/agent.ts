@@ -272,19 +272,24 @@ const todoistToolDefinitions: Anthropic.Tool[] = [
   {
     name: "get_tasks",
     description:
-      "Retrieve tasks from Todoist. Filter by a Todoist filter string (e.g. 'today', 'overdue', 'p1', '@label') or by project ID. When a project_id is supplied, tasks are grouped by section (board columns). Call get_projects first to resolve project names to IDs.",
+      "Retrieve tasks from Todoist. Supply project_id to get all tasks in a project grouped by section (board view). Supply section_id to get tasks in one specific section. Supply a filter string for cross-project queries. Do NOT use a filter string when the user asks about a project or section — use project_id or section_id instead.",
     input_schema: {
       type: "object",
       properties: {
         filter: {
           type: "string",
           description:
-            "Todoist filter query (e.g. 'today', 'overdue', 'p1', '@waiting', '#Work'). If omitted, all incomplete tasks are returned.",
+            "Todoist filter query (e.g. 'today', 'overdue', 'p1', '@waiting'). Use for cross-project queries only. Do not combine with project_id or section_id.",
         },
         project_id: {
           type: "string",
           description:
-            "Return only tasks in this project, grouped by section. Use get_projects to find project IDs.",
+            "Return all tasks in this project, grouped by section. Get IDs from get_projects. Use this when the user asks about a project or board.",
+        },
+        section_id: {
+          type: "string",
+          description:
+            "Return only tasks in this specific section (board column). Get IDs from get_sections. Use this when the user asks about one column.",
         },
       },
       required: [],
@@ -293,7 +298,7 @@ const todoistToolDefinitions: Anthropic.Tool[] = [
   {
     name: "get_projects",
     description:
-      "List all Todoist projects with their names and IDs. Call this first when the user asks about a specific project or wants tasks grouped by project.",
+      "List all Todoist projects with their names and IDs. Call this first when the user asks about a specific project or board.",
     input_schema: {
       type: "object",
       properties: {},
@@ -313,14 +318,13 @@ const todoistToolDefinitions: Anthropic.Tool[] = [
   {
     name: "get_sections",
     description:
-      "List all sections (board columns) within a Todoist project. Use get_projects first to get the project ID.",
+      "List sections (board columns) within a project, with their IDs and names. After getting sections, call get_tasks with section_id to fetch tasks for a specific column, or call get_tasks with project_id to get all columns at once.",
     input_schema: {
       type: "object",
       properties: {
         project_id: {
           type: "string",
-          description:
-            "The project ID to list sections for. If omitted, returns sections from all projects.",
+          description: "The project ID to list sections for. Get IDs from get_projects.",
         },
       },
       required: [],
