@@ -77,8 +77,8 @@ pipeline/       — Pipeline working files and phase artifacts (tracked in git)
 | 3 | People, Life Events, and Nudges | ✅ Complete |
 | 4 | Strava Integration | 🔄 In progress (6/11 tasks done) |
 | 5 | Voice Message Input | Pending |
-| 6 | Morning Digest and Day Planning | Pending |
-| 7 | Personality and Voice Output | Pending |
+| 6 | Personality and Voice Output | Pending |
+| 7 | Morning Digest and Day Planning | Pending |
 
 ---
 
