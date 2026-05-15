@@ -45,3 +45,10 @@
 ⚠ task-4a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-4b — Add pending voice intent management tests
+
+**Files:** packages/orchestrator/src/tools/__tests__/voice.test.ts, packages/orchestrator/tsconfig.json, packages/orchestrator/vitest.config.ts
+
+⚠ task-4b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
