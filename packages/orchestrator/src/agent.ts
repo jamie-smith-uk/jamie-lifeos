@@ -94,7 +94,7 @@ import { executeGmailTool } from "./tools/gmail.js";
 import { executeLifeEventsTool } from "./tools/life_events.js";
 import { executeNudgesTool } from "./tools/nudges.js";
 import { executePeopleTool } from "./tools/people.js";
-import { get_strava_activities, get_strava_oauth_url } from "./tools/strava.js";
+import { get_strava_activities, get_strava_oauth_url, get_strava_trends } from "./tools/strava.js";
 import { executeToDoistTool } from "./tools/todoist.js";
 
 // ---------------------------------------------------------------------------
@@ -773,6 +773,25 @@ const stravaToolDefinitions: Anthropic.Tool[] = [
       required: ["athlete_id"],
     },
   },
+  {
+    name: "get_strava_trends",
+    description:
+      "Analyze Strava activities for weekly volume and pace trends over a specified number of weeks. Returns trend analysis including weekly volume data and pace trends by sport type.",
+    input_schema: {
+      type: "object",
+      properties: {
+        athlete_id: {
+          type: "number",
+          description: "The Strava athlete ID to analyze trends for.",
+        },
+        weeks: {
+          type: "number",
+          description: "Number of weeks to analyze (1-52).",
+        },
+      },
+      required: ["athlete_id", "weeks"],
+    },
+  },
 ];
 
 const TOOL_DEFINITIONS: Anthropic.Tool[] = [
@@ -875,7 +894,11 @@ const NUDGES_TOOL_NAMES = new Set<string>(["create_nudge", "dismiss_nudge"]);
  * tool loop routes them to the Strava module rather than the unknown-tool
  * handler.
  */
-const STRAVA_TOOL_NAMES = new Set<string>(["get_strava_oauth_url", "get_strava_activities"]);
+const STRAVA_TOOL_NAMES = new Set<string>([
+  "get_strava_oauth_url",
+  "get_strava_activities",
+  "get_strava_trends",
+]);
 
 /**
  * The set of write tool names that must be confirmation-gated.
@@ -935,6 +958,17 @@ async function executeStravaTool(
         },
       );
       return JSON.stringify({ activities: result });
+    }
+
+    if (toolName === "get_strava_trends") {
+      const result = await get_strava_trends(
+        toolInput as {
+          athlete_id: number;
+          weeks: number;
+          caller_athlete_id?: number;
+        },
+      );
+      return JSON.stringify({ trends: result });
     }
 
     // Unknown Strava tool
