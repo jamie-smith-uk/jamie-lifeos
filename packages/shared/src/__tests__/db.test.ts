@@ -22,6 +22,7 @@ process.env.ANTHROPIC_API_KEY = "sk-ant-test";
 process.env.DATABASE_URL = "postgresql://localhost:5432/testdb";
 process.env.DIGEST_CRON = "0 7 * * *";
 process.env.TZ = "Europe/London";
+process.env.OPENAI_API_KEY = "sk-test-openai";
 process.env.STRAVA_CLIENT_ID = "12345";
 process.env.STRAVA_CLIENT_SECRET = "secret_abc123";
 process.env.STRAVA_REDIRECT_URI = "http://localhost:3001/auth/strava/callback";
