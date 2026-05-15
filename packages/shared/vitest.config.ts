@@ -14,7 +14,7 @@ export default defineConfig({
     pool: "forks",
     // Set OPENAI_API_KEY for tests that don't explicitly provide it
     env: {
-      OPENAI_API_KEY: "sk-test-openai-key-for-tests",
+      OPENAI_API_KEY: "test-openai-key-for-tests",
     },
   },
 });

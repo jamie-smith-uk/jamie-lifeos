@@ -1,0 +1,12 @@
+{
+  "task_id": "task-2",
+  "files_checked": [
+    "packages/shared/src/env.ts",
+    "packages/shared/tsconfig.json",
+    "packages/shared/vitest.config.ts",
+    ".env.example"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 0,
+  "coverage_pct": null
+}
