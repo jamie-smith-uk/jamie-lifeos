@@ -226,7 +226,7 @@ async function validateStateToken(state: string): Promise<{ isValid: boolean; er
  */
 async function exchangeCodeForTokens(
   code: string,
-  logger: ReturnType<typeof botLogger.child>,
+  logger: typeof botLogger,
   res: import("node:http").ServerResponse,
 ): Promise<void> {
   try {
@@ -297,7 +297,7 @@ async function storeStravaCredentials(
     expires_at: number;
     athlete: { id: number };
   },
-  logger: ReturnType<typeof botLogger.child>,
+  logger: typeof botLogger,
 ): Promise<void> {
   const expiresAt = new Date(tokenData.expires_at * 1000);
 
@@ -333,7 +333,7 @@ async function storeStravaCredentials(
  */
 async function sendTelegramConfirmation(
   athlete: { id: number; firstname: string; lastname: string },
-  logger: ReturnType<typeof botLogger.child>,
+  logger: typeof botLogger,
 ): Promise<void> {
   try {
     const chatId = parseInt(env.TELEGRAM_ALLOWED_CHAT_ID, 10);
