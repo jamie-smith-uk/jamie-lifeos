@@ -142,7 +142,7 @@ function getAnthropicClient(): Anthropic {
 // ---------------------------------------------------------------------------
 
 /**
- * Assemble the system prompt with exactly six blocks in order:
+ * Assemble the system prompt with exactly five blocks in order:
  *   1. Identity
  *   2. Live context (current datetime + TZ)
  *   3. People index (loaded from database)
@@ -151,9 +151,9 @@ function getAnthropicClient(): Anthropic {
  *
  * Task-2 (Phase 2): People index now loads from database and shows names
  * and relationship types for all known people.
- * Task-9b (Phase 4): Active Automations replaced with Activity Snapshot.
+ * Task-9b (Phase 4): Activity Snapshot block added as the fifth block.
  */
-async function buildSystemPrompt(): Promise<string> {
+export async function buildSystemPrompt(): Promise<string> {
   const now = new Date();
   const tz = env.TZ;
 

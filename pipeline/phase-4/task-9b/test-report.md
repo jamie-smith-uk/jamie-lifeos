@@ -1,0 +1,299 @@
+Title: Test Report — task-9b — PASS
+
+Verified by orchestrator hard gate after Developer attempt 1.
+
+- tsc --noEmit: PASS
+- eslint (files_in_scope): PASS
+- pnpm test: PASS
+
+
+> jamie-lifeos@0.0.1 test /home/runner/work/jamie-lifeos/jamie-lifeos
+> pnpm -r test
+
+Scope: 4 of 5 workspace projects
+packages/shared test$ vitest run --config vitest.config.ts
+packages/shared test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared[39m
+packages/shared test:  [32m✓[39m src/__tests__/types.test.ts [2m([22m[2m33 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/env.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 58[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 84[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate-async-await.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/logger.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 54[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/db.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/env-example.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+packages/shared test: [2m Test Files [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+packages/shared test: [2m      Tests [22m [1m[32m114 passed[39m[22m[90m (114)[39m
+packages/shared test: [2m   Start at [22m 09:16:05
+packages/shared test: [2m   Duration [22m 591ms[2m (transform 281ms, setup 0ms, import 414ms, tests 235ms, environment 1ms)[22m
+packages/shared test: Done
+packages/bot test$ vitest run --config vitest.config.ts
+packages/orchestrator test$ vitest run --config vitest.config.ts
+packages/bot test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot[39m
+packages/orchestrator test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/people.test.ts [2m([22m[2m48 tests[22m[2m)[22m[32m 139[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/life_events.test.ts [2m([22m[2m60 tests[22m[2m)[22m[33m 321[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/scheduler.test.ts [2m([22m[2m45 tests[22m[2m)[22m[32m 259[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/todoist-task1.test.ts [2m([22m[2m71 tests[22m[2m)[22m[32m 207[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t18.test.ts [2m([22m[2m38 tests[22m[2m)[22m[33m 304[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/dismiss-nudge.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 1066[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task3.test.ts [2m([22m[2m42 tests[22m[2m)[22m[33m 521[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/dismiss-nudge-api.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 1141[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/keyboard.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t19.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 152[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t17.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 249[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task4.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 190[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m50 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 1600[2mms[22m[39m
+packages/bot test: [2m Test Files [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+packages/bot test: [2m      Tests [22m [1m[32m131 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (132)[39m
+packages/bot test: [2m   Start at [22m 09:16:06
+packages/bot test: [2m   Duration [22m 2.06s[2m (transform 532ms, setup 0ms, import 545ms, tests 3.82s, environment 0ms)[22m
+packages/bot test: Done
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t10.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 232[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t20.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 109[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/life_events_nudges.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t16.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 196[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task7b.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 74[2mms[22m[39m
+packages/orchestrator test:  [31m❯[39m src/__tests__/agent-task9b.test.ts [2m([22m[2m17 tests[22m[2m | [22m[31m17 failed[39m[2m)[22m[32m 83[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m formats activity count in the snapshot[39m[32m 20[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m formats moving time in human-readable format[39m[32m 4[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m includes last activity sport type in snapshot[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m includes last activity date in snapshot[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m handles no activities gracefully with default message[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m handles no Strava connection with appropriate message[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m includes Activity Snapshot block in system prompt[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m places Activity Snapshot block after People Index[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m includes all required blocks in system prompt[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m formats activity snapshot with proper structure[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m includes multiple activities in summary when they exist[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m passes system prompt with activity snapshot to Anthropic API[39m[32m 16[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m includes activity snapshot in system prompt for every agent call[39m[32m 4[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m includes activity data in system prompt when Strava is connected[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m includes default activity message when no Strava connection[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m queries strava_credentials table to check for connection[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m queries strava_activities table when credentials exist[39m[32m 3[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-implied-actions.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 82[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m39 tests[22m[2m)[22m[33m 1229[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/nudges.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 58[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/index-task15.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 48[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/context.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 44[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task7a.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 83[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/gmail-email-interactions.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 65[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/typing-indicator-t11.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 1281[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 140[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task8.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 111[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-strava-trends.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 51[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/index-async-await.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-strava-tools.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 69[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/typecheck-async-await.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 4400[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/shared typechecks without errors (tsc --noEmit) [33m 1260[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/orchestrator typechecks without errors (tsc --noEmit) [33m 1411[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/shared typecheck output contains no 'error TS' messages [33m 870[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/orchestrator typecheck output contains no 'error TS' messages [33m 857[2mms[22m[39m
+packages/orchestrator test: [31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 17 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/agent-task9b.test.ts[2m > [22mtask-9b — Activity snapshot integration into agent system prompt[2m > [22mAC1 — Activity snapshot is formatted for agent context[2m > [22mformats activity count in the snapshot
+packages/orchestrator test: [31m[1mTypeError[22m: buildSystemPrompt is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/__tests__/agent-task9b.test.ts:[2m315:34[22m[39m
+packages/orchestrator test:     [90m313|[39m
+packages/orchestrator test:     [90m314|[39m       [35mconst[39m { buildSystemPrompt } [33m=[39m [35mawait[39m [35mimport[39m([32m"../agent.js"[39m)[33m;[39m
+packages/orchestrator test:     [90m315|[39m       [35mconst[39m systemPrompt [33m=[39m [35mawait[39m [34mbuildSystemPrompt[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                  [31m^[39m
+packages/orchestrator test:     [90m316|[39m
+packages/orchestrator test:     [90m317|[39m       [34mexpect[39m(systemPrompt)[33m.[39m[34mtoContain[39m([32m"Activity Snapshot"[39m)[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/agent-task9b.test.ts[2m > [22mtask-9b — Activity snapshot integration into agent system prompt[2m > [22mAC1 — Activity snapshot is formatted for agent context[2m > [22mformats moving time in human-readable format
+packages/orchestrator test: [31m[1mTypeError[22m: buildSystemPrompt is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/__tests__/agent-task9b.test.ts:[2m352:34[22m[39m
+packages/orchestrator test:     [90m350|[39m
+packages/orchestrator test:     [90m351|[39m       [35mconst[39m { buildSystemPrompt } [33m=[39m [35mawait[39m [35mimport[39m([32m"../agent.js"[39m)[33m;[39m
+packages/orchestrator test:     [90m352|[39m       [35mconst[39m systemPrompt [33m=[39m [35mawait[39m [34mbuildSystemPrompt[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                  [31m^[39m
+packages/orchestrator test:     [90m353|[39m
+packages/orchestrator test:     [90m354|[39m       [34mexpect[39m(systemPrompt)[33m.[39m[34mtoContain[39m([32m"Activity Snapshot"[39m)[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/agent-task9b.test.ts[2m > [22mtask-9b — Activity snapshot integration into agent system prompt[2m > [22mAC1 — Activity snapshot is formatted for agent context[2m > [22mincludes last activity sport type in snapshot
+packages/orchestrator test: [31m[1mTypeError[22m: buildSystemPrompt is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/__tests__/agent-task9b.test.ts:[2m389:34[22m[39m
+packages/orchestrator test:     [90m387|[39m
+packages/orchestrator test:     [90m388|[39m       [35mconst[39m { buildSystemPrompt } [33m=[39m [35mawait[39m [35mimport[39m([32m"../agent.js"[39m)[33m;[39m
+packages/orchestrator test:     [90m389|[39m       [35mconst[39m systemPrompt [33m=[39m [35mawait[39m [34mbuildSystemPrompt[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                  [31m^[39m
+packages/orchestrator test:     [90m390|[39m
+packages/orchestrator test:     [90m391|[39m       [34mexpect[39m(systemPrompt)[33m.[39m[34mtoContain[39m([32m"Activity Snapshot"[39m)[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/agent-task9b.test.ts[2m > [22mtask-9b — Activity snapshot integration into agent system prompt[2m > [22mAC1 — Activity snapshot is formatted for agent context[2m > [22mincludes last activity date in snapshot
+packages/orchestrator test: [31m[1mTypeError[22m: buildSystemPrompt is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/__tests__/agent-task9b.test.ts:[2m425:34[22m[39m
+packages/orchestrator test:     [90m423|[39m
+packages/orchestrator test:     [90m424|[39m       [35mconst[39m { buildSystemPrompt } [33m=[39m [35mawait[39m [35mimport[39m([32m"../agent.js"[39m)[33m;[39m
+packages/orchestrator test:     [90m425|[39m       [35mconst[39m systemPrompt [33m=[39m [35mawait[39m [34mbuildSystemPrompt[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                  [31m^[39m
+packages/orchestrator test:     [90m426|[39m
+packages/orchestrator test:     [90m427|[39m       [34mexpect[39m(systemPrompt)[33m.[39m[34mtoContain[39m([32m"Activity Snapshot"[39m)[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/agent-task9b.test.ts[2m > [22mtask-9b — Activity snapshot integration into agent system prompt[2m > [22mAC1 — Activity snapshot is formatted for agent context[2m > [22mhandles no activities gracefully with default message
+packages/orchestrator test: [31m[1mTypeError[22m: buildSystemPrompt is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/__tests__/agent-task9b.test.ts:[2m440:34[22m[39m
+packages/orchestrator test:     [90m438|[39m
+packages/orchestrator test:     [90m439|[39m       [35mconst[39m { buildSystemPrompt } [33m=[39m [35mawait[39m [35mimport[39m([32m"../agent.js"[39m)[33m;[39m
+packages/orchestrator test:     [90m440|[39m       [35mconst[39m systemPrompt [33m=[39m [35mawait[39m [34mbuildSystemPrompt[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                  [31m^[39m
+packages/orchestrator test:     [90m441|[39m
+packages/orchestrator test:     [90m442|[39m       [34mexpect[39m(systemPrompt)[33m.[39m[34mtoContain[39m([32m"Activity Snapshot"[39m)[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/agent-task9b.test.ts[2m > [22mtask-9b — Activity snapshot integration into agent system prompt[2m > [22mAC1 — Activity snapshot is formatted for agent context[2m > [22mhandles no Strava connection with appropriate message
+packages/orchestrator test: [31m[1mTypeError[22m: buildSystemPrompt is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/__tests__/agent-task9b.test.ts:[2m448:34[22m[39m
+packages/orchestrator test:     [90m446|[39m     it("handles no Strava connection with appropriate message", async …
+packages/orchestrator test:     [90m447|[39m       [35mconst[39m { buildSystemPrompt } [33m=[39m [35mawait[39m [35mimport[39m([32m"../agent.js"[39m)[33m;[39m
+packages/orchestrator test:     [90m448|[39m       [35mconst[39m systemPrompt [33m=[39m [35mawait[39m [34mbuildSystemPrompt[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                  [31m^[39m
+packages/orchestrator test:     [90m449|[39m
+packages/orchestrator test:     [90m450|[39m       [34mexpect[39m(systemPrompt)[33m.[39m[34mtoContain[39m([32m"Activity Snapshot"[39m)[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/agent-task9b.test.ts[2m > [22mtask-9b — Activity snapshot integration into agent system prompt[2m > [22mAC2 — System prompt properly includes formatted activity data[2m > [22mincludes Activity Snapshot block in system prompt
+packages/orchestrator test: [31m[1mTypeError[22m: buildSystemPrompt is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/__tests__/agent-task9b.test.ts:[2m462:34[22m[39m
+packages/orchestrator test:     [90m460|[39m     it("includes Activity Snapshot block in system prompt", async () =…
+packages/orchestrator test:     [90m461|[39m       [35mconst[39m { buildSystemPrompt } [33m=[39m [35mawait[39m [35mimport[39m([32m"../agent.js"[39m)[33m;[39m
+packages/orchestrator test:     [90m462|[39m       [35mconst[39m systemPrompt [33m=[39m [35mawait[39m [34mbuildSystemPrompt[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                  [31m^[39m
+packages/orchestrator test:     [90m463|[39m
+packages/orchestrator test:     [90m464|[39m       [34mexpect[39m(systemPrompt)[33m.[39m[34mtoContain[39m([32m"## Activity Snapshot"[39m)[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/agent-task9b.test.ts[2m > [22mtask-9b — Activity snapshot integration into agent system prompt[2m > [22mAC2 — System prompt properly includes formatted activity data[2m > [22mplaces Activity Snapshot block after People Index
+packages/orchestrator test: [31m[1mTypeError[22m: buildSystemPrompt is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/__tests__/agent-task9b.test.ts:[2m469:34[22m[39m
+packages/orchestrator test:     [90m467|[39m     it("places Activity Snapshot block after People Index", async () =…
+packages/orchestrator test:     [90m468|[39m       [35mconst[39m { buildSystemPrompt } [33m=[39m [35mawait[39m [35mimport[39m([32m"../agent.js"[39m)[33m;[39m
+packages/orchestrator test:     [90m469|[39m       [35mconst[39m systemPrompt [33m=[39m [35mawait[39m [34mbuildSystemPrompt[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                  [31m^[39m
+packages/orchestrator test:     [90m470|[39m
+packages/orchestrator test:     [90m471|[39m       [35mconst[39m peopleIndex [33m=[39m systemPrompt[33m.[39m[34mindexOf[39m([32m"## People Index"[39m)[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/agent-task9b.test.ts[2m > [22mtask-9b — Activity snapshot integration into agent system prompt[2m > [22mAC2 — System prompt properly includes formatted activity data[2m > [22mincludes all required blocks in system prompt
+packages/orchestrator test: [31m[1mTypeError[22m: buildSystemPrompt is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/__tests__/agent-task9b.test.ts:[2m481:34[22m[39m
+packages/orchestrator test:     [90m479|[39m     [34mit[39m([32m"includes all required blocks in system prompt"[39m[33m,[39m [35masync[39m () [33m=>[39m {
+packages/orchestrator test:     [90m480|[39m       [35mconst[39m { buildSystemPrompt } [33m=[39m [35mawait[39m [35mimport[39m([32m"../agent.js"[39m)[33m;[39m
+packages/orchestrator test:     [90m481|[39m       [35mconst[39m systemPrompt [33m=[39m [35mawait[39m [34mbuildSystemPrompt[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                  [31m^[39m
+packages/orchestrator test:     [90m482|[39m
+packages/orchestrator test:     [90m483|[39m       [34mexpect[39m(systemPrompt)[33m.[39m[34mtoContain[39m([32m"## Identity"[39m)[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/agent-task9b.test.ts[2m > [22mtask-9b — Activity snapshot integration into agent system prompt[2m > [22mAC2 — System prompt properly includes formatted activity data[2m > [22mformats activity snapshot with proper structure
+packages/orchestrator test: [31m[1mTypeError[22m: buildSystemPrompt is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/__tests__/agent-task9b.test.ts:[2m520:34[22m[39m
+packages/orchestrator test:     [90m518|[39m
+packages/orchestrator test:     [90m519|[39m       [35mconst[39m { buildSystemPrompt } [33m=[39m [35mawait[39m [35mimport[39m([32m"../agent.js"[39m)[33m;[39m
+packages/orchestrator test:     [90m520|[39m       [35mconst[39m systemPrompt [33m=[39m [35mawait[39m [34mbuildSystemPrompt[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                  [31m^[39m
+packages/orchestrator test:     [90m521|[39m
+packages/orchestrator test:     [90m522|[39m       const activitySection = systemPrompt.substring(systemPrompt.inde…
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/agent-task9b.test.ts[2m > [22mtask-9b — Activity snapshot integration into agent system prompt[2m > [22mAC2 — System prompt properly includes formatted activity data[2m > [22mincludes multiple activities in summary when they exist
+packages/orchestrator test: [31m[1mTypeError[22m: buildSystemPrompt is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/__tests__/agent-task9b.test.ts:[2m565:34[22m[39m
+packages/orchestrator test:     [90m563|[39m
+packages/orchestrator test:     [90m564|[39m       [35mconst[39m { buildSystemPrompt } [33m=[39m [35mawait[39m [35mimport[39m([32m"../agent.js"[39m)[33m;[39m
+packages/orchestrator test:     [90m565|[39m       [35mconst[39m systemPrompt [33m=[39m [35mawait[39m [34mbuildSystemPrompt[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                                  [31m^[39m
+packages/orchestrator test:     [90m566|[39m
+packages/orchestrator test:     [90m567|[39m       [34mexpect[39m(systemPrompt)[33m.[39m[34mtoContain[39m([32m"3"[39m)[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/agent-task9b.test.ts[2m > [22mtask-9b — Activity snapshot integration into agent system prompt[2m > [22mAC3 — Agent receives activity context in all planning sessions[2m > [22mpasses system prompt with activity snapshot to Anthropic API
+packages/orchestrator test: [31m[1mTypeError[22m: pool.connect is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m saveMessage src/agent.ts:[2m1630:29[22m[39m
+packages/orchestrator test:     [90m1628|[39m   content[33m:[39m string[33m,[39m
+packages/orchestrator test:     [90m1629|[39m )[33m:[39m [33mPromise[39m[33m<[39m[35mvoid[39m[33m>[39m {
+packages/orchestrator test:     [90m1630|[39m   [35mconst[39m client [33m=[39m [35mawait[39m pool[33m.[39m[34mconnect[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                             [31m^[39m
+packages/orchestrator test:     [90m1631|[39m   [35mtry[39m {
+packages/orchestrator test:     [90m1632|[39m     [35mawait[39m client[33m.[39m[34mquery[39m([32m"BEGIN"[39m)[33m;[39m
+packages/orchestrator test: [90m [2m❯[22m runAgent src/agent.ts:[2m1562:9[22m[39m
+packages/orchestrator test: [90m [2m❯[22m src/__tests__/agent-task9b.test.ts:[2m607:7[22m[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/agent-task9b.test.ts[2m > [22mtask-9b — Activity snapshot integration into agent system prompt[2m > [22mAC3 — Agent receives activity context in all planning sessions[2m > [22mincludes activity snapshot in system prompt for every agent call
+packages/orchestrator test: [31m[1mTypeError[22m: pool.connect is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m saveMessage src/agent.ts:[2m1630:29[22m[39m
+packages/orchestrator test:     [90m1628|[39m   content[33m:[39m string[33m,[39m
+packages/orchestrator test:     [90m1629|[39m )[33m:[39m [33mPromise[39m[33m<[39m[35mvoid[39m[33m>[39m {
+packages/orchestrator test:     [90m1630|[39m   [35mconst[39m client [33m=[39m [35mawait[39m pool[33m.[39m[34mconnect[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                             [31m^[39m
+packages/orchestrator test:     [90m1631|[39m   [35mtry[39m {
+packages/orchestrator test:     [90m1632|[39m     [35mawait[39m client[33m.[39m[34mquery[39m([32m"BEGIN"[39m)[33m;[39m
+packages/orchestrator test: [90m [2m❯[22m runAgent src/agent.ts:[2m1562:9[22m[39m
+packages/orchestrator test: [90m [2m❯[22m src/__tests__/agent-task9b.test.ts:[2m647:7[22m[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/agent-task9b.test.ts[2m > [22mtask-9b — Activity snapshot integration into agent system prompt[2m > [22mAC3 — Agent receives activity context in all planning sessions[2m > [22mincludes activity data in system prompt when Strava is connected
+packages/orchestrator test: [31m[1mTypeError[22m: pool.connect is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m saveMessage src/agent.ts:[2m1630:29[22m[39m
+packages/orchestrator test:     [90m1628|[39m   content[33m:[39m string[33m,[39m
+packages/orchestrator test:     [90m1629|[39m )[33m:[39m [33mPromise[39m[33m<[39m[35mvoid[39m[33m>[39m {
+packages/orchestrator test:     [90m1630|[39m   [35mconst[39m client [33m=[39m [35mawait[39m pool[33m.[39m[34mconnect[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                             [31m^[39m
+packages/orchestrator test:     [90m1631|[39m   [35mtry[39m {
+packages/orchestrator test:     [90m1632|[39m     [35mawait[39m client[33m.[39m[34mquery[39m([32m"BEGIN"[39m)[33m;[39m
+packages/orchestrator test: [90m [2m❯[22m runAgent src/agent.ts:[2m1562:9[22m[39m
+packages/orchestrator test: [90m [2m❯[22m src/__tests__/agent-task9b.test.ts:[2m690:7[22m[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/agent-task9b.test.ts[2m > [22mtask-9b — Activity snapshot integration into agent system prompt[2m > [22mAC3 — Agent receives activity context in all planning sessions[2m > [22mincludes default activity message when no Strava connection
+packages/orchestrator test: [31m[1mTypeError[22m: pool.connect is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m saveMessage src/agent.ts:[2m1630:29[22m[39m
+packages/orchestrator test:     [90m1628|[39m   content[33m:[39m string[33m,[39m
+packages/orchestrator test:     [90m1629|[39m )[33m:[39m [33mPromise[39m[33m<[39m[35mvoid[39m[33m>[39m {
+packages/orchestrator test:     [90m1630|[39m   [35mconst[39m client [33m=[39m [35mawait[39m pool[33m.[39m[34mconnect[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                             [31m^[39m
+packages/orchestrator test:     [90m1631|[39m   [35mtry[39m {
+packages/orchestrator test:     [90m1632|[39m     [35mawait[39m client[33m.[39m[34mquery[39m([32m"BEGIN"[39m)[33m;[39m
+packages/orchestrator test: [90m [2m❯[22m runAgent src/agent.ts:[2m1562:9[22m[39m
+packages/orchestrator test: [90m [2m❯[22m src/__tests__/agent-task9b.test.ts:[2m701:7[22m[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/agent-task9b.test.ts[2m > [22mtask-9b — Activity snapshot integration into agent system prompt[2m > [22mAC3 — Agent receives activity context in all planning sessions[2m > [22mqueries strava_credentials table to check for connection
+packages/orchestrator test: [31m[1mTypeError[22m: pool.connect is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m saveMessage src/agent.ts:[2m1630:29[22m[39m
+packages/orchestrator test:     [90m1628|[39m   content[33m:[39m string[33m,[39m
+packages/orchestrator test:     [90m1629|[39m )[33m:[39m [33mPromise[39m[33m<[39m[35mvoid[39m[33m>[39m {
+packages/orchestrator test:     [90m1630|[39m   [35mconst[39m client [33m=[39m [35mawait[39m pool[33m.[39m[34mconnect[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                             [31m^[39m
+packages/orchestrator test:     [90m1631|[39m   [35mtry[39m {
+packages/orchestrator test:     [90m1632|[39m     [35mawait[39m client[33m.[39m[34mquery[39m([32m"BEGIN"[39m)[33m;[39m
+packages/orchestrator test: [90m [2m❯[22m runAgent src/agent.ts:[2m1562:9[22m[39m
+packages/orchestrator test: [90m [2m❯[22m src/__tests__/agent-task9b.test.ts:[2m711:7[22m[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/17]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/__tests__/agent-task9b.test.ts[2m > [22mtask-9b — Activity snapshot integration into agent system prompt[2m > [22mAC3 — Agent receives activity context in all planning sessions[2m > [22mqueries strava_activities table when credentials exist
+packages/orchestrator test: [31m[1mTypeError[22m: pool.connect is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m saveMessage src/agent.ts:[2m1630:29[22m[39m
+packages/orchestrator test:     [90m1628|[39m   content[33m:[39m string[33m,[39m
+packages/orchestrator test:     [90m1629|[39m )[33m:[39m [33mPromise[39m[33m<[39m[35mvoid[39m[33m>[39m {
+packages/orchestrator test:     [90m1630|[39m   [35mconst[39m client [33m=[39m [35mawait[39m pool[33m.[39m[34mconnect[39m()[33m;[39m
+packages/orchestrator test:     [90m   |[39m                             [31m^[39m
+packages/orchestrator test:     [90m1631|[39m   [35mtry[39m {
+packages/orchestrator test:     [90m1632|[39m     [35mawait[39m client[33m.[39m[34mquery[39m([32m"BEGIN"[39m)[33m;[39m
+packages/orchestrator test: [90m [2m❯[22m runAgent src/agent.ts:[2m1562:9[22m[39m
+packages/orchestrator test: [90m [2m❯[22m src/__tests__/agent-task9b.test.ts:[2m729:7[22m[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/17]⎯[22m[39m
+packages/orchestrator test: [2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m28 passed[39m[22m[90m (29)[39m
+packages/orchestrator test: [2m      Tests [22m [1m[31m17 failed[39m[22m[2m | [22m[1m[32m720 passed[39m[22m[90m (737)[39m
+packages/orchestrator test: [2m   Start at [22m 09:16:06
+packages/orchestrator test: [2m   Duration [22m 8.76s[2m (transform 1.96s, setup 0ms, import 2.25s, tests 10.76s, environment 3ms)[22m
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/__tests__/agent-task9b.test.ts,title=src/__tests__/agent-task9b.test.ts > task-9b — Activity snapshot integration into agent system prompt > AC1 — Activity snapshot is formatted for agent context > formats activity count in the snapshot,line=315,column=34::TypeError: buildSystemPrompt is not a function%0A ❯ src/__tests__/agent-task9b.test.ts:315:34%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/__tests__/agent-task9b.test.ts,title=src/__tests__/agent-task9b.test.ts > task-9b — Activity snapshot integration into agent system prompt > AC1 — Activity snapshot is formatted for agent context > formats moving time in human-readable format,line=352,column=34::TypeError: buildSystemPrompt is not a function%0A ❯ src/__tests__/agent-task9b.test.ts:352:34%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/__tests__/agent-task9b.test.ts,title=src/__tests__/agent-task9b.test.ts > task-9b — Activity snapshot integration into agent system prompt > AC1 — Activity snapshot is formatted for agent context > includes last activity sport type in snapshot,line=389,column=34::TypeError: buildSystemPrompt is not a function%0A ❯ src/__tests__/agent-task9b.test.ts:389:34%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/__tests__/agent-task9b.test.ts,title=src/__tests__/agent-task9b.test.ts > task-9b — Activity snapshot integration into agent system prompt > AC1 — Activity snapshot is formatted for agent context > includes last activity date in snapshot,line=425,column=34::TypeError: buildSystemPrompt is not a function%0A ❯ src/__tests__/agent-task9b.test.ts:425:34%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/__tests__/agent-task9b.test.ts,title=src/__tests__/agent-task9b.test.ts > task-9b — Activity snapshot integration into agent system prompt > AC1 — Activity snapshot is formatted for agent context > handles no activities gracefully with default message,line=440,column=34::TypeError: buildSystemPrompt is not a function%0A ❯ src/__tests__/agent-task9b.test.ts:440:34%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/__tests__/agent-task9b.test.ts,title=src/__tests__/agent-task9b.test.ts > task-9b — Activity snapshot integration into agent system prompt > AC1 — Activity snapshot is formatted for agent context > handles no Strava connection with appropriate message,line=448,column=34::TypeError: buildSystemPrompt is not a function%0A ❯ src/__tests__/agent-task9b.test.ts:448:34%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/__tests__/agent-task9b.test.ts,title=src/__tests__/agent-task9b.test.ts > task-9b — Activity snapshot integration into agent system prompt > AC2 — System prompt properly includes formatted activity data > includes Activity Snapshot block in system prompt,line=462,column=34::TypeError: buildSystemPrompt is not a function%0A ❯ src/__tests__/agent-task9b.test.ts:462:34%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/__tests__/agent-task9b.test.ts,title=src/__tests__/agent-task9b.test.ts > task-9b — Activity snapshot integration into agent system prompt > AC2 — System prompt properly includes formatted activity data > places Activity Snapshot block after People Index,line=469,column=34::TypeError: buildSystemPrompt is not a function%0A ❯ src/__tests__/agent-task9b.test.ts:469:34%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/__tests__/agent-task9b.test.ts,title=src/__tests__/agent-task9b.test.ts > task-9b — Activity snapshot integration into agent system prompt > AC2 — System prompt properly includes formatted activity data > includes all required blocks in system prompt,line=481,column=34::TypeError: buildSystemPrompt is not a function%0A ❯ src/__tests__/agent-task9b.test.ts:481:34%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/__tests__/agent-task9b.test.ts,title=src/__tests__/agent-task9b.test.ts > task-9b — Activity snapshot integration into agent system prompt > AC2 — System prompt properly includes formatted activity data > formats activity snapshot with proper structure,line=520,column=34::TypeError: buildSystemPrompt is not a function%0A ❯ src/__tests__/agent-task9b.test.ts:520:34%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/__tests__/agent-task9b.test.ts,title=src/__tests__/agent-task9b.test.ts > task-9b — Activity snapshot integration into agent system prompt > AC2 — System prompt properly includes formatted activity data > includes multiple activities in summary when they exist,line=565,column=34::TypeError: buildSystemPrompt is not a function%0A ❯ src/__tests__/agent-task9b.test.ts:565:34%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/agent.ts,title=src/__tests__/agent-task9b.test.ts > task-9b — Activity snapshot integration into agent system prompt > AC3 — Agent receives activity context in all planning sessions > passes system prompt with activity snapshot to Anthropic API,line=1630,column=29::TypeError: pool.connect is not a function%0A ❯ saveMessage src/agent.ts:1630:29%0A ❯ runAgent src/agent.ts:1562:9%0A ❯ src/__tests__/agent-task9b.test.ts:607:7%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/agent.ts,title=src/__tests__/agent-task9b.test.ts > task-9b — Activity snapshot integration into agent system prompt > AC3 — Agent receives activity context in all planning sessions > includes activity snapshot in system prompt for every agent call,line=1630,column=29::TypeError: pool.connect is not a function%0A ❯ saveMessage src/agent.ts:1630:29%0A ❯ runAgent src/agent.ts:1562:9%0A ❯ src/__tests__/agent-task9b.test.ts:647:7%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/agent.ts,title=src/__tests__/agent-task9b.test.ts > task-9b — Activity snapshot integration into agent system prompt > AC3 — Agent receives activity context in all planning sessions > includes activity data in system prompt when Strava is connected,line=1630,column=29::TypeError: pool.connect is not a function%0A ❯ saveMessage src/agent.ts:1630:29%0A ❯ runAgent src/agent.ts:1562:9%0A ❯ src/__tests__/agent-task9b.test.ts:690:7%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/agent.ts,title=src/__tests__/agent-task9b.test.ts > task-9b — Activity snapshot integration into agent system prompt > AC3 — Agent receives activity context in all planning sessions > includes default activity message when no Strava connection,line=1630,column=29::TypeError: pool.connect is not a function%0A ❯ saveMessage src/agent.ts:1630:29%0A ❯ runAgent src/agent.ts:1562:9%0A ❯ src/__tests__/agent-task9b.test.ts:701:7%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/agent.ts,title=src/__tests__/agent-task9b.test.ts > task-9b — Activity snapshot integration into agent system prompt > AC3 — Agent receives activity context in all planning sessions > queries strava_credentials table to check for connection,line=1630,column=29::TypeError: pool.connect is not a function%0A ❯ saveMessage src/agent.ts:1630:29%0A ❯ runAgent src/agent.ts:1562:9%0A ❯ src/__tests__/agent-task9b.test.ts:711:7%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/agent.ts,title=src/__tests__/agent-task9b.test.ts > task-9b — Activity snapshot integration into agent system prompt > AC3 — Agent receives activity context in all planning sessions > queries strava_activities table when credentials exist,line=1630,column=29::TypeError: pool.connect is not a function%0A ❯ saveMessage src/agent.ts:1630:29%0A ❯ runAgent src/agent.ts:1562:9%0A ❯ src/__tests__/agent-task9b.test.ts:729:7%0A%0A
+packages/orchestrator test: Failed
+/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/orchestrator@0.0.1 test: `vitest run --config vitest.config.ts`
+Exit status 1
+ ELIFECYCLE  Test failed. See above for more details.
