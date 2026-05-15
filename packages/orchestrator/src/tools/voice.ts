@@ -5,10 +5,29 @@
  * files and sends them to OpenAI Whisper API for transcription.
  */
 
-import { env, logger } from "@lifeos/shared";
+import { env, logger, pool } from "@lifeos/shared";
 
 interface TranscribeVoiceMessageParams {
   file_id: string;
+}
+
+interface CreatePendingVoiceIntentParams {
+  chat_id: number;
+  transcription: string;
+  telegram_file_id: string;
+}
+
+interface ConsumePendingVoiceIntentParams {
+  id: number;
+}
+
+interface PendingVoiceIntent {
+  id: number;
+  chat_id: number;
+  transcription: string;
+  telegram_file_id: string;
+  expires_at: Date;
+  created_at: Date;
 }
 
 interface TelegramGetFileResponse {
@@ -34,7 +53,6 @@ interface WhisperRequestOptions {
     Authorization: string;
   };
   body: FormData;
-  model?: string; // For test inspection
 }
 
 /**
@@ -64,7 +82,9 @@ async function getTelegramFilePath(
   }
 
   if (!getFileData.ok || !getFileData.result?.file_path) {
-    const error = `Telegram getFile error: ${getFileData.error_code} ${getFileData.description}`;
+    const errorCode = getFileData.error_code ?? "unknown";
+    const errorDesc = getFileData.description ?? "no description";
+    const error = `Telegram getFile error: ${errorCode} ${errorDesc}`;
     voiceLogger.error({ telegram_error: getFileData }, error);
     return null;
   }
@@ -110,7 +130,6 @@ async function transcribeWithWhisper(
       Authorization: `Bearer ${env.OPENAI_API_KEY}`,
     },
     body: formData,
-    model: "whisper-1", // For test inspection
   };
 
   const whisperResponse = await fetch(
@@ -177,4 +196,53 @@ export async function transcribe_voice_message(
     voiceLogger.error({ error: errorMessage }, "Voice transcription failed");
     return `error: ${errorMessage}`;
   }
+}
+
+/**
+ * Creates a pending voice intent in the database with a 5-minute TTL
+ */
+export async function create_pending_voice_intent(
+  params: CreatePendingVoiceIntentParams,
+): Promise<PendingVoiceIntent> {
+  const sql = `
+    INSERT INTO pending_voice_intents (chat_id, transcription, telegram_file_id, expires_at)
+    VALUES ($1, $2, $3, NOW() + INTERVAL '5 minutes')
+    RETURNING id, chat_id, transcription, telegram_file_id, expires_at, created_at
+  `;
+
+  const result = await pool.query(sql, [
+    params.chat_id,
+    params.transcription,
+    params.telegram_file_id,
+  ]);
+
+  return result.rows[0] as PendingVoiceIntent;
+}
+
+/**
+ * Reads and deletes a pending voice intent by ID, returning null if expired
+ */
+export async function consume_pending_voice_intent(
+  params: ConsumePendingVoiceIntentParams,
+): Promise<PendingVoiceIntent | null> {
+  const sql = `
+    DELETE FROM pending_voice_intents
+    WHERE id = $1
+    RETURNING id, chat_id, transcription, telegram_file_id, expires_at, created_at
+  `;
+
+  const result = await pool.query(sql, [params.id]);
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const intent = result.rows[0] as PendingVoiceIntent;
+
+  // Check if the intent is expired (expires_at is in the past)
+  if (intent.expires_at <= new Date()) {
+    return null;
+  }
+
+  return intent;
 }

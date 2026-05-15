@@ -1,0 +1,375 @@
+Title: Test Report — task-4a — PASS
+
+Verified by orchestrator hard gate after Developer attempt 1.
+
+- tsc --noEmit: PASS
+- eslint (files_in_scope): PASS
+- pnpm test: PASS
+
+
+> jamie-lifeos@0.0.1 test /home/runner/work/jamie-lifeos/jamie-lifeos
+> pnpm -r test
+
+Scope: 4 of 5 workspace projects
+packages/shared test$ vitest run --config vitest.config.ts
+packages/shared test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared[39m
+packages/shared test:  [32m✓[39m src/__tests__/env.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 80[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/logger.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 90[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 128[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/types.test.ts [2m([22m[2m33 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/env-openai.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/db.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate-async-await.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/env-example.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+packages/shared test: [2m Test Files [22m [1m[32m8 passed[39m[22m[90m (8)[39m
+packages/shared test: [2m      Tests [22m [1m[32m129 passed[39m[22m[90m (129)[39m
+packages/shared test: [2m   Start at [22m 10:00:44
+packages/shared test: [2m   Duration [22m 859ms[2m (transform 323ms, setup 0ms, import 519ms, tests 390ms, environment 1ms)[22m
+packages/shared test: Done
+packages/bot test$ vitest run --config vitest.config.ts
+packages/orchestrator test$ vitest run --config vitest.config.ts
+packages/bot test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot[39m
+packages/orchestrator test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator[39m
+packages/orchestrator test:  [31m❯[39m src/tools/__tests__/voice-pending-intents.test.ts [2m([22m[2m24 tests[22m[2m | [22m[31m24 failed[39m[2m)[22m[32m 261[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should write to pending_voice_intents table with required fields[39m[32m 30[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should set expires_at to 5 minutes from creation time[39m[32m 30[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should execute INSERT query with correct SQL[39m[32m 5[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should use parameterized query to prevent SQL injection[39m[32m 7[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should return object with id, chat_id, transcription, telegram_file_id, expires_at, created_at[39m[32m 15[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should handle database errors gracefully[39m[32m 22[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should handle constraint violations[39m[32m 49[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should accept various chat_id values[39m[32m 7[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should accept various transcription lengths[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should read and delete intent by ID[39m[32m 27[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should return null if intent is expired[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should return null if intent does not exist[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should delete the intent from database after reading[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should use parameterized query to prevent SQL injection[39m[32m 6[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should return intent object with all fields when not expired[39m[32m 17[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should check expiration at consumption time, not creation time[39m[32m 10[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should return null when expires_at equals current time[39m[32m 4[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should handle database errors gracefully[39m[32m 6[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should handle various ID values[39m[32m 3[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should execute query with correct WHERE clause for ID[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should return null for very old expired intents[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should return intent just before expiration[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should create and then consume a pending intent[39m[32m 2[2mms[22m[39m
+packages/orchestrator test: [31m       [31m×[31m should handle multiple pending intents for different chats[39m[32m 2[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/dismiss-nudge.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 1188[2mms[22m[39m
+packages/bot test:      [33m[2m✓[22m[39m extracts nudge ID from dismiss_nudge_<id> callback_data format [33m 324[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/dismiss-nudge-api.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 1299[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/keyboard.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/typing-indicator-t11.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 1697[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m50 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 1688[2mms[22m[39m
+packages/bot test: [2m Test Files [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+packages/bot test: [2m      Tests [22m [1m[32m131 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (132)[39m
+packages/bot test: [2m   Start at [22m 10:00:45
+packages/bot test: [2m   Duration [22m 2.37s[2m (transform 685ms, setup 0ms, import 867ms, tests 4.19s, environment 1ms)[22m
+packages/bot test: Done
+packages/orchestrator test:  [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m39 tests[22m[2m)[22m[33m 1324[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task3.test.ts [2m([22m[2m42 tests[22m[2m)[22m[33m 506[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 268[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t16.test.ts [2m([22m[2m35 tests[22m[2m)[22m[33m 375[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t17.test.ts [2m([22m[2m35 tests[22m[2m)[22m[33m 350[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t10.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 261[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t18.test.ts [2m([22m[2m38 tests[22m[2m)[22m[32m 252[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/life_events.test.ts [2m([22m[2m60 tests[22m[2m)[22m[32m 203[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/scheduler.test.ts [2m([22m[2m45 tests[22m[2m)[22m[32m 229[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t20.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 239[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-t19.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 237[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/voice.test.ts [2m([22m[2m33 tests[22m[2m)[22m[32m 172[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task4.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 225[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/todoist-task1.test.ts [2m([22m[2m71 tests[22m[2m)[22m[32m 226[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-implied-actions.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 194[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/people.test.ts [2m([22m[2m48 tests[22m[2m)[22m[32m 191[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task7b.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 201[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task7a.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 181[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task9b.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 182[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/typecheck-async-await.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 7208[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/shared typechecks without errors (tsc --noEmit) [33m 1719[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/orchestrator typechecks without errors (tsc --noEmit) [33m 1837[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/shared typecheck output contains no 'error TS' messages [33m 1825[2mms[22m[39m
+packages/orchestrator test:      [33m[2m✓[22m[39m @lifeos/orchestrator typecheck output contains no 'error TS' messages [33m 1823[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-strava-tools.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 141[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-task8.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 114[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/index-task15.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 67[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/gmail-email-interactions.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 97[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/nudges.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 79[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/context.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 82[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/agent-strava-trends.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 76[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/tools/__tests__/life_events_nudges.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 60[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/index-async-await.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+packages/orchestrator test: [31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 24 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mcreate_pending_voice_intent[2m > [22mshould write to pending_voice_intents table with required fields
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.create_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m71:40[22m[39m
+packages/orchestrator test:     [90m 69|[39m       })[33m;[39m
+packages/orchestrator test:     [90m 70|[39m
+packages/orchestrator test:     [90m 71|[39m       [35mconst[39m result [33m=[39m [35mawait[39m voiceModule[33m.[39m[34mcreate_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                                        [31m^[39m
+packages/orchestrator test:     [90m 72|[39m         chat_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m 73|[39m         transcription[33m:[39m [32m"Hello world"[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mcreate_pending_voice_intent[2m > [22mshould set expires_at to 5 minutes from creation time
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.create_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m101:40[22m[39m
+packages/orchestrator test:     [90m 99|[39m       })[33m;[39m
+packages/orchestrator test:     [90m100|[39m
+packages/orchestrator test:     [90m101|[39m       [35mconst[39m result [33m=[39m [35mawait[39m voiceModule[33m.[39m[34mcreate_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                                        [31m^[39m
+packages/orchestrator test:     [90m102|[39m         chat_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m103|[39m         transcription[33m:[39m [32m"Test"[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mcreate_pending_voice_intent[2m > [22mshould execute INSERT query with correct SQL
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.create_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m130:25[22m[39m
+packages/orchestrator test:     [90m128|[39m       })[33m;[39m
+packages/orchestrator test:     [90m129|[39m
+packages/orchestrator test:     [90m130|[39m       [35mawait[39m voiceModule[33m.[39m[34mcreate_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                         [31m^[39m
+packages/orchestrator test:     [90m131|[39m         chat_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m132|[39m         transcription[33m:[39m [32m"Hello"[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mcreate_pending_voice_intent[2m > [22mshould use parameterized query to prevent SQL injection
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.create_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m163:25[22m[39m
+packages/orchestrator test:     [90m161|[39m       })[33m;[39m
+packages/orchestrator test:     [90m162|[39m
+packages/orchestrator test:     [90m163|[39m       [35mawait[39m voiceModule[33m.[39m[34mcreate_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                         [31m^[39m
+packages/orchestrator test:     [90m164|[39m         chat_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m165|[39m         transcription[33m:[39m [32m"Test'; DROP TABLE pending_voice_intents; --"[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mcreate_pending_voice_intent[2m > [22mshould return object with id, chat_id, transcription, telegram_file_id, expires_at, created_at
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.create_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m194:40[22m[39m
+packages/orchestrator test:     [90m192|[39m       })[33m;[39m
+packages/orchestrator test:     [90m193|[39m
+packages/orchestrator test:     [90m194|[39m       [35mconst[39m result [33m=[39m [35mawait[39m voiceModule[33m.[39m[34mcreate_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                                        [31m^[39m
+packages/orchestrator test:     [90m195|[39m         chat_id[33m:[39m [34m99999[39m[33m,[39m
+packages/orchestrator test:     [90m196|[39m         transcription[33m:[39m [32m"Test transcription"[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mcreate_pending_voice_intent[2m > [22mshould handle database errors gracefully
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.create_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m212:21[22m[39m
+packages/orchestrator test:     [90m210|[39m
+packages/orchestrator test:     [90m211|[39m       [35mawait[39m [34mexpect[39m(
+packages/orchestrator test:     [90m212|[39m         voiceModule[33m.[39m[34mcreate_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                     [31m^[39m
+packages/orchestrator test:     [90m213|[39m           chat_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m214|[39m           transcription[33m:[39m [32m"Test"[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mcreate_pending_voice_intent[2m > [22mshould handle constraint violations
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.create_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m226:21[22m[39m
+packages/orchestrator test:     [90m224|[39m
+packages/orchestrator test:     [90m225|[39m       [35mawait[39m [34mexpect[39m(
+packages/orchestrator test:     [90m226|[39m         voiceModule[33m.[39m[34mcreate_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                     [31m^[39m
+packages/orchestrator test:     [90m227|[39m           chat_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m228|[39m           transcription[33m:[39m [32m"Test"[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mcreate_pending_voice_intent[2m > [22mshould accept various chat_id values
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.create_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m251:42[22m[39m
+packages/orchestrator test:     [90m249|[39m         })[33m;[39m
+packages/orchestrator test:     [90m250|[39m
+packages/orchestrator test:     [90m251|[39m         [35mconst[39m result [33m=[39m [35mawait[39m voiceModule[33m.[39m[34mcreate_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                                          [31m^[39m
+packages/orchestrator test:     [90m252|[39m           chat_id[33m:[39m chatId[33m,[39m
+packages/orchestrator test:     [90m253|[39m           transcription[33m:[39m [32m"Test"[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mcreate_pending_voice_intent[2m > [22mshould accept various transcription lengths
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.create_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m283:42[22m[39m
+packages/orchestrator test:     [90m281|[39m         })[33m;[39m
+packages/orchestrator test:     [90m282|[39m
+packages/orchestrator test:     [90m283|[39m         [35mconst[39m result [33m=[39m [35mawait[39m voiceModule[33m.[39m[34mcreate_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                                          [31m^[39m
+packages/orchestrator test:     [90m284|[39m           chat_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m285|[39m           transcription[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mconsume_pending_voice_intent[2m > [22mshould read and delete intent by ID
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.consume_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m309:40[22m[39m
+packages/orchestrator test:     [90m307|[39m       })[33m;[39m
+packages/orchestrator test:     [90m308|[39m
+packages/orchestrator test:     [90m309|[39m       [35mconst[39m result [33m=[39m [35mawait[39m voiceModule[33m.[39m[34mconsume_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                                        [31m^[39m
+packages/orchestrator test:     [90m310|[39m         id[33m:[39m [34m1[39m[33m,[39m
+packages/orchestrator test:     [90m311|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mconsume_pending_voice_intent[2m > [22mshould return null if intent is expired
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.consume_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m333:40[22m[39m
+packages/orchestrator test:     [90m331|[39m       })[33m;[39m
+packages/orchestrator test:     [90m332|[39m
+packages/orchestrator test:     [90m333|[39m       [35mconst[39m result [33m=[39m [35mawait[39m voiceModule[33m.[39m[34mconsume_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                                        [31m^[39m
+packages/orchestrator test:     [90m334|[39m         id[33m:[39m [34m1[39m[33m,[39m
+packages/orchestrator test:     [90m335|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mconsume_pending_voice_intent[2m > [22mshould return null if intent does not exist
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.consume_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m345:40[22m[39m
+packages/orchestrator test:     [90m343|[39m       })[33m;[39m
+packages/orchestrator test:     [90m344|[39m
+packages/orchestrator test:     [90m345|[39m       [35mconst[39m result [33m=[39m [35mawait[39m voiceModule[33m.[39m[34mconsume_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                                        [31m^[39m
+packages/orchestrator test:     [90m346|[39m         id[33m:[39m [34m999[39m[33m,[39m
+packages/orchestrator test:     [90m347|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mconsume_pending_voice_intent[2m > [22mshould delete the intent from database after reading
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.consume_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m366:25[22m[39m
+packages/orchestrator test:     [90m364|[39m       })[33m;[39m
+packages/orchestrator test:     [90m365|[39m
+packages/orchestrator test:     [90m366|[39m       [35mawait[39m voiceModule[33m.[39m[34mconsume_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                         [31m^[39m
+packages/orchestrator test:     [90m367|[39m         id[33m:[39m [34m1[39m[33m,[39m
+packages/orchestrator test:     [90m368|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mconsume_pending_voice_intent[2m > [22mshould use parameterized query to prevent SQL injection
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.consume_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m384:25[22m[39m
+packages/orchestrator test:     [90m382|[39m       })[33m;[39m
+packages/orchestrator test:     [90m383|[39m
+packages/orchestrator test:     [90m384|[39m       [35mawait[39m voiceModule[33m.[39m[34mconsume_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                         [31m^[39m
+packages/orchestrator test:     [90m385|[39m         id[33m:[39m [34m1[39m[33m,[39m
+packages/orchestrator test:     [90m386|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mconsume_pending_voice_intent[2m > [22mshould return intent object with all fields when not expired
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.consume_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m413:40[22m[39m
+packages/orchestrator test:     [90m411|[39m       })[33m;[39m
+packages/orchestrator test:     [90m412|[39m
+packages/orchestrator test:     [90m413|[39m       [35mconst[39m result [33m=[39m [35mawait[39m voiceModule[33m.[39m[34mconsume_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                                        [31m^[39m
+packages/orchestrator test:     [90m414|[39m         id[33m:[39m [34m42[39m[33m,[39m
+packages/orchestrator test:     [90m415|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mconsume_pending_voice_intent[2m > [22mshould check expiration at consumption time, not creation time
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.consume_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m444:40[22m[39m
+packages/orchestrator test:     [90m442|[39m       })[33m;[39m
+packages/orchestrator test:     [90m443|[39m
+packages/orchestrator test:     [90m444|[39m       [35mconst[39m result [33m=[39m [35mawait[39m voiceModule[33m.[39m[34mconsume_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                                        [31m^[39m
+packages/orchestrator test:     [90m445|[39m         id[33m:[39m [34m1[39m[33m,[39m
+packages/orchestrator test:     [90m446|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mconsume_pending_voice_intent[2m > [22mshould return null when expires_at equals current time
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.consume_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m468:40[22m[39m
+packages/orchestrator test:     [90m466|[39m       })[33m;[39m
+packages/orchestrator test:     [90m467|[39m
+packages/orchestrator test:     [90m468|[39m       [35mconst[39m result [33m=[39m [35mawait[39m voiceModule[33m.[39m[34mconsume_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                                        [31m^[39m
+packages/orchestrator test:     [90m469|[39m         id[33m:[39m [34m1[39m[33m,[39m
+packages/orchestrator test:     [90m470|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mconsume_pending_voice_intent[2m > [22mshould handle database errors gracefully
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.consume_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m480:21[22m[39m
+packages/orchestrator test:     [90m478|[39m
+packages/orchestrator test:     [90m479|[39m       [35mawait[39m [34mexpect[39m(
+packages/orchestrator test:     [90m480|[39m         voiceModule[33m.[39m[34mconsume_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                     [31m^[39m
+packages/orchestrator test:     [90m481|[39m           id[33m:[39m [34m1[39m[33m,[39m
+packages/orchestrator test:     [90m482|[39m         })[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mconsume_pending_voice_intent[2m > [22mshould handle various ID values
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.consume_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m494:27[22m[39m
+packages/orchestrator test:     [90m492|[39m         })[33m;[39m
+packages/orchestrator test:     [90m493|[39m
+packages/orchestrator test:     [90m494|[39m         [35mawait[39m voiceModule[33m.[39m[34mconsume_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                           [31m^[39m
+packages/orchestrator test:     [90m495|[39m           id[33m,[39m
+packages/orchestrator test:     [90m496|[39m         })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mconsume_pending_voice_intent[2m > [22mshould execute query with correct WHERE clause for ID
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.consume_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m507:25[22m[39m
+packages/orchestrator test:     [90m505|[39m       })[33m;[39m
+packages/orchestrator test:     [90m506|[39m
+packages/orchestrator test:     [90m507|[39m       [35mawait[39m voiceModule[33m.[39m[34mconsume_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                         [31m^[39m
+packages/orchestrator test:     [90m508|[39m         id[33m:[39m [34m42[39m[33m,[39m
+packages/orchestrator test:     [90m509|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mconsume_pending_voice_intent[2m > [22mshould return null for very old expired intents
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.consume_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m540:40[22m[39m
+packages/orchestrator test:     [90m538|[39m       })[33m;[39m
+packages/orchestrator test:     [90m539|[39m
+packages/orchestrator test:     [90m540|[39m       [35mconst[39m result [33m=[39m [35mawait[39m voiceModule[33m.[39m[34mconsume_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                                        [31m^[39m
+packages/orchestrator test:     [90m541|[39m         id[33m:[39m [34m1[39m[33m,[39m
+packages/orchestrator test:     [90m542|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mconsume_pending_voice_intent[2m > [22mshould return intent just before expiration
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.consume_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m563:40[22m[39m
+packages/orchestrator test:     [90m561|[39m       })[33m;[39m
+packages/orchestrator test:     [90m562|[39m
+packages/orchestrator test:     [90m563|[39m       [35mconst[39m result [33m=[39m [35mawait[39m voiceModule[33m.[39m[34mconsume_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                                        [31m^[39m
+packages/orchestrator test:     [90m564|[39m         id[33m:[39m [34m1[39m[33m,[39m
+packages/orchestrator test:     [90m565|[39m       })[33m;[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mIntegration scenarios[2m > [22mshould create and then consume a pending intent
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.create_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m591:41[22m[39m
+packages/orchestrator test:     [90m589|[39m       })[33m;[39m
+packages/orchestrator test:     [90m590|[39m
+packages/orchestrator test:     [90m591|[39m       [35mconst[39m created [33m=[39m [35mawait[39m voiceModule[33m.[39m[34mcreate_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                                         [31m^[39m
+packages/orchestrator test:     [90m592|[39m         chat_id[33m:[39m [34m12345[39m[33m,[39m
+packages/orchestrator test:     [90m593|[39m         transcription[33m:[39m [32m"Hello world"[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/24]⎯[22m[39m
+packages/orchestrator test: [41m[1m FAIL [22m[49m src/tools/__tests__/voice-pending-intents.test.ts[2m > [22mPending Voice Intents[2m > [22mIntegration scenarios[2m > [22mshould handle multiple pending intents for different chats
+packages/orchestrator test: [31m[1mTypeError[22m: voiceModule.create_pending_voice_intent is not a function[39m
+packages/orchestrator test: [36m [2m❯[22m src/tools/__tests__/voice-pending-intents.test.ts:[2m639:41[22m[39m
+packages/orchestrator test:     [90m637|[39m       })[33m;[39m
+packages/orchestrator test:     [90m638|[39m
+packages/orchestrator test:     [90m639|[39m       [35mconst[39m intent1 [33m=[39m [35mawait[39m voiceModule[33m.[39m[34mcreate_pending_voice_intent[39m({
+packages/orchestrator test:     [90m   |[39m                                         [31m^[39m
+packages/orchestrator test:     [90m640|[39m         chat_id[33m:[39m [34m111[39m[33m,[39m
+packages/orchestrator test:     [90m641|[39m         transcription[33m:[39m [32m"Chat 1 message"[39m[33m,[39m
+packages/orchestrator test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/24]⎯[22m[39m
+packages/orchestrator test: [2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m30 passed[39m[22m[90m (31)[39m
+packages/orchestrator test: [2m      Tests [22m [1m[31m24 failed[39m[22m[2m | [22m[1m[32m770 passed[39m[22m[90m (794)[39m
+packages/orchestrator test: [2m   Start at [22m 10:00:45
+packages/orchestrator test: [2m   Duration [22m 8.66s[2m (transform 2.15s, setup 0ms, import 2.80s, tests 15.71s, environment 5ms)[22m
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > create_pending_voice_intent > should write to pending_voice_intents table with required fields,line=71,column=40::TypeError: voiceModule.create_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:71:40%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > create_pending_voice_intent > should set expires_at to 5 minutes from creation time,line=101,column=40::TypeError: voiceModule.create_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:101:40%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > create_pending_voice_intent > should execute INSERT query with correct SQL,line=130,column=25::TypeError: voiceModule.create_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:130:25%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > create_pending_voice_intent > should use parameterized query to prevent SQL injection,line=163,column=25::TypeError: voiceModule.create_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:163:25%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > create_pending_voice_intent > should return object with id%2C chat_id%2C transcription%2C telegram_file_id%2C expires_at%2C created_at,line=194,column=40::TypeError: voiceModule.create_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:194:40%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > create_pending_voice_intent > should handle database errors gracefully,line=212,column=21::TypeError: voiceModule.create_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:212:21%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > create_pending_voice_intent > should handle constraint violations,line=226,column=21::TypeError: voiceModule.create_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:226:21%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > create_pending_voice_intent > should accept various chat_id values,line=251,column=42::TypeError: voiceModule.create_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:251:42%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > create_pending_voice_intent > should accept various transcription lengths,line=283,column=42::TypeError: voiceModule.create_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:283:42%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > consume_pending_voice_intent > should read and delete intent by ID,line=309,column=40::TypeError: voiceModule.consume_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:309:40%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > consume_pending_voice_intent > should return null if intent is expired,line=333,column=40::TypeError: voiceModule.consume_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:333:40%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > consume_pending_voice_intent > should return null if intent does not exist,line=345,column=40::TypeError: voiceModule.consume_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:345:40%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > consume_pending_voice_intent > should delete the intent from database after reading,line=366,column=25::TypeError: voiceModule.consume_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:366:25%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > consume_pending_voice_intent > should use parameterized query to prevent SQL injection,line=384,column=25::TypeError: voiceModule.consume_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:384:25%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > consume_pending_voice_intent > should return intent object with all fields when not expired,line=413,column=40::TypeError: voiceModule.consume_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:413:40%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > consume_pending_voice_intent > should check expiration at consumption time%2C not creation time,line=444,column=40::TypeError: voiceModule.consume_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:444:40%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > consume_pending_voice_intent > should return null when expires_at equals current time,line=468,column=40::TypeError: voiceModule.consume_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:468:40%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > consume_pending_voice_intent > should handle database errors gracefully,line=480,column=21::TypeError: voiceModule.consume_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:480:21%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > consume_pending_voice_intent > should handle various ID values,line=494,column=27::TypeError: voiceModule.consume_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:494:27%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > consume_pending_voice_intent > should execute query with correct WHERE clause for ID,line=507,column=25::TypeError: voiceModule.consume_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:507:25%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > consume_pending_voice_intent > should return null for very old expired intents,line=540,column=40::TypeError: voiceModule.consume_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:540:40%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > consume_pending_voice_intent > should return intent just before expiration,line=563,column=40::TypeError: voiceModule.consume_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:563:40%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > Integration scenarios > should create and then consume a pending intent,line=591,column=41::TypeError: voiceModule.create_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:591:41%0A%0A
+packages/orchestrator test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator/src/tools/__tests__/voice-pending-intents.test.ts,title=src/tools/__tests__/voice-pending-intents.test.ts > Pending Voice Intents > Integration scenarios > should handle multiple pending intents for different chats,line=639,column=41::TypeError: voiceModule.create_pending_voice_intent is not a function%0A ❯ src/tools/__tests__/voice-pending-intents.test.ts:639:41%0A%0A
+packages/orchestrator test: Failed
+/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/orchestrator@0.0.1 test: `vitest run --config vitest.config.ts`
+Exit status 1
+ ELIFECYCLE  Test failed. See above for more details.
