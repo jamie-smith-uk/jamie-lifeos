@@ -15,6 +15,9 @@ interface EnvConfig {
   ANTHROPIC_API_KEY: string;
   ANTHROPIC_MODEL: string;
 
+  // OpenAI
+  OPENAI_API_KEY: string;
+
   // Database
   DATABASE_URL: string;
 
@@ -48,6 +51,7 @@ const REQUIRED_VARS: ReadonlyArray<keyof EnvConfig> = [
   "TELEGRAM_BOT_TOKEN",
   "TELEGRAM_ALLOWED_CHAT_ID",
   "ANTHROPIC_API_KEY",
+  "OPENAI_API_KEY",
   "DATABASE_URL",
   "DIGEST_CRON",
   "TZ",
@@ -108,6 +112,7 @@ function loadEnv(): EnvConfig {
     TELEGRAM_ALLOWED_CHAT_ID: raw("TELEGRAM_ALLOWED_CHAT_ID"),
     ANTHROPIC_API_KEY: raw("ANTHROPIC_API_KEY"),
     ANTHROPIC_MODEL: raw("ANTHROPIC_MODEL"),
+    OPENAI_API_KEY: raw("OPENAI_API_KEY"),
     DATABASE_URL: raw("DATABASE_URL"),
     ORCHESTRATOR_URL: raw("ORCHESTRATOR_URL"),
     TODOIST_API_TOKEN: raw("TODOIST_API_TOKEN"),

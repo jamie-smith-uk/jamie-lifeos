@@ -1,0 +1,302 @@
+Title: Test Report — task-2 — PASS
+
+Verified by orchestrator hard gate after Developer attempt 2.
+
+- tsc --noEmit: PASS
+- eslint (files_in_scope): PASS
+- pnpm test: PASS
+
+
+> jamie-lifeos@0.0.1 test /home/runner/work/jamie-lifeos/jamie-lifeos
+> pnpm -r test
+
+Scope: 4 of 5 workspace projects
+packages/shared test$ vitest run --config vitest.config.ts
+packages/shared test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared[39m
+packages/shared test:  [31m❯[39m src/__tests__/env-openai.test.ts [2m([22m[2m15 tests[22m[2m | [22m[31m10 failed[39m[2m)[22m[32m 94[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m throws when OPENAI_API_KEY is missing[39m[32m 58[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m throws when OPENAI_API_KEY is empty string[39m[32m 3[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m throws when OPENAI_API_KEY is only whitespace[39m[32m 3[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m throws when OPENAI_API_KEY is undefined[39m[32m 3[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m includes OPENAI_API_KEY in error message when missing[39m[32m 3[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m exports OPENAI_API_KEY when set[39m[32m 3[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m exports OPENAI_API_KEY with trimmed whitespace[39m[32m 4[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m loads successfully when OPENAI_API_KEY is set with all other required vars[39m[32m 3[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m OPENAI_API_KEY is a string property on env object[39m[32m 4[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m OPENAI_API_KEY is not empty after loading[39m[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m documents OPENAI_API_KEY in .env.example[32m 1[2mms[22m[39m
+packages/shared test:      [32m✓[39m includes OPENAI_API_KEY with a value in .env.example[32m 1[2mms[22m[39m
+packages/shared test:      [32m✓[39m includes an explanatory comment for OPENAI_API_KEY[32m 1[2mms[22m[39m
+packages/shared test:      [32m✓[39m OPENAI_API_KEY appears near the comment in .env.example[32m 1[2mms[22m[39m
+packages/shared test:      [32m✓[39m OPENAI_API_KEY is not commented out in .env.example[32m 1[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/env.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 148[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 147[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/types.test.ts [2m([22m[2m33 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/logger.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 90[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/db.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate-async-await.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/env-example.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+packages/shared test: [31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 10 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env-openai.test.ts[2m > [22menv.ts — OPENAI_API_KEY validation[2m > [22mthrows when OPENAI_API_KEY is missing
+packages/shared test: [31m[1mAssertionError[22m: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting[39m
+packages/shared test: [32m- Expected[39m
+packages/shared test: [31m+ Received[39m
+packages/shared test: [32m- Error {[39m
+packages/shared test: [32m-   "message": "rejected promise",[39m
+packages/shared test: [31m+ {[39m
+packages/shared test: [31m+   "env": {[39m
+packages/shared test: [31m+     "ANTHROPIC_API_KEY": "sk-ant-test",[39m
+packages/shared test: [31m+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",[39m
+packages/shared test: [31m+     "BOT_MODE": "polling",[39m
+packages/shared test: [31m+     "DATABASE_URL": "postgresql://localhost:5432/testdb",[39m
+packages/shared test: [31m+     "DIGEST_CRON": "0 7 * * *",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_ID": "",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_SECRET": "",[39m
+packages/shared test: [31m+     "GOOGLE_REFRESH_TOKEN": "",[39m
+packages/shared test: [31m+     "LOG_LEVEL": "info",[39m
+packages/shared test: [31m+     "ORCHESTRATOR_URL": "http://localhost:3001",[39m
+packages/shared test: [31m+     "PORT": "3001",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_ID": "12345",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_SECRET": "secret_abc123",[39m
+packages/shared test: [31m+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",[39m
+packages/shared test: [31m+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",[39m
+packages/shared test: [31m+     "TELEGRAM_BOT_TOKEN": "bot:test_token",[39m
+packages/shared test: [31m+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",[39m
+packages/shared test: [31m+     "TZ": "Europe/London",[39m
+packages/shared test: [31m+   },[39m
+packages/shared test: [2m  }[22m
+packages/shared test: [36m [2m❯[22m src/__tests__/env-openai.test.ts:[2m71:34[22m[39m
+packages/shared test:     [90m 69|[39m     [34msetEnv[39m(vars)[33m;[39m
+packages/shared test:     [90m 70|[39m
+packages/shared test:     [90m 71|[39m     [35mawait[39m [34mexpect[39m([34mloadEnvModule[39m())[33m.[39mrejects[33m.[39m[34mtoThrow[39m([36m/OPENAI_API_KEY/[39m)[33m;[39m
+packages/shared test:     [90m   |[39m                                  [31m^[39m
+packages/shared test:     [90m 72|[39m   })[33m;[39m
+packages/shared test:     [90m 73|[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯[22m[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env-openai.test.ts[2m > [22menv.ts — OPENAI_API_KEY validation[2m > [22mthrows when OPENAI_API_KEY is empty string
+packages/shared test: [31m[1mAssertionError[22m: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting[39m
+packages/shared test: [32m- Expected[39m
+packages/shared test: [31m+ Received[39m
+packages/shared test: [32m- Error {[39m
+packages/shared test: [32m-   "message": "rejected promise",[39m
+packages/shared test: [31m+ {[39m
+packages/shared test: [31m+   "env": {[39m
+packages/shared test: [31m+     "ANTHROPIC_API_KEY": "sk-ant-test",[39m
+packages/shared test: [31m+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",[39m
+packages/shared test: [31m+     "BOT_MODE": "polling",[39m
+packages/shared test: [31m+     "DATABASE_URL": "postgresql://localhost:5432/testdb",[39m
+packages/shared test: [31m+     "DIGEST_CRON": "0 7 * * *",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_ID": "",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_SECRET": "",[39m
+packages/shared test: [31m+     "GOOGLE_REFRESH_TOKEN": "",[39m
+packages/shared test: [31m+     "LOG_LEVEL": "info",[39m
+packages/shared test: [31m+     "ORCHESTRATOR_URL": "http://localhost:3001",[39m
+packages/shared test: [31m+     "PORT": "3001",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_ID": "12345",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_SECRET": "secret_abc123",[39m
+packages/shared test: [31m+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",[39m
+packages/shared test: [31m+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",[39m
+packages/shared test: [31m+     "TELEGRAM_BOT_TOKEN": "bot:test_token",[39m
+packages/shared test: [31m+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",[39m
+packages/shared test: [31m+     "TZ": "Europe/London",[39m
+packages/shared test: [31m+   },[39m
+packages/shared test: [2m  }[22m
+packages/shared test: [36m [2m❯[22m src/__tests__/env-openai.test.ts:[2m77:34[22m[39m
+packages/shared test:     [90m 75|[39m     [34msetEnv[39m({ [33m...[39m[33mVALID_ENV[39m[33m,[39m [33mOPENAI_API_KEY[39m[33m:[39m [32m""[39m })[33m;[39m
+packages/shared test:     [90m 76|[39m
+packages/shared test:     [90m 77|[39m     [35mawait[39m [34mexpect[39m([34mloadEnvModule[39m())[33m.[39mrejects[33m.[39m[34mtoThrow[39m([36m/OPENAI_API_KEY/[39m)[33m;[39m
+packages/shared test:     [90m   |[39m                                  [31m^[39m
+packages/shared test:     [90m 78|[39m   })[33m;[39m
+packages/shared test:     [90m 79|[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯[22m[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env-openai.test.ts[2m > [22menv.ts — OPENAI_API_KEY validation[2m > [22mthrows when OPENAI_API_KEY is only whitespace
+packages/shared test: [31m[1mAssertionError[22m: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting[39m
+packages/shared test: [32m- Expected[39m
+packages/shared test: [31m+ Received[39m
+packages/shared test: [32m- Error {[39m
+packages/shared test: [32m-   "message": "rejected promise",[39m
+packages/shared test: [31m+ {[39m
+packages/shared test: [31m+   "env": {[39m
+packages/shared test: [31m+     "ANTHROPIC_API_KEY": "sk-ant-test",[39m
+packages/shared test: [31m+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",[39m
+packages/shared test: [31m+     "BOT_MODE": "polling",[39m
+packages/shared test: [31m+     "DATABASE_URL": "postgresql://localhost:5432/testdb",[39m
+packages/shared test: [31m+     "DIGEST_CRON": "0 7 * * *",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_ID": "",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_SECRET": "",[39m
+packages/shared test: [31m+     "GOOGLE_REFRESH_TOKEN": "",[39m
+packages/shared test: [31m+     "LOG_LEVEL": "info",[39m
+packages/shared test: [31m+     "ORCHESTRATOR_URL": "http://localhost:3001",[39m
+packages/shared test: [31m+     "PORT": "3001",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_ID": "12345",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_SECRET": "secret_abc123",[39m
+packages/shared test: [31m+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",[39m
+packages/shared test: [31m+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",[39m
+packages/shared test: [31m+     "TELEGRAM_BOT_TOKEN": "bot:test_token",[39m
+packages/shared test: [31m+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",[39m
+packages/shared test: [31m+     "TZ": "Europe/London",[39m
+packages/shared test: [31m+   },[39m
+packages/shared test: [2m  }[22m
+packages/shared test: [36m [2m❯[22m src/__tests__/env-openai.test.ts:[2m83:34[22m[39m
+packages/shared test:     [90m 81|[39m     [34msetEnv[39m({ [33m...[39m[33mVALID_ENV[39m[33m,[39m [33mOPENAI_API_KEY[39m[33m:[39m [32m"   "[39m })[33m;[39m
+packages/shared test:     [90m 82|[39m
+packages/shared test:     [90m 83|[39m     [35mawait[39m [34mexpect[39m([34mloadEnvModule[39m())[33m.[39mrejects[33m.[39m[34mtoThrow[39m([36m/OPENAI_API_KEY/[39m)[33m;[39m
+packages/shared test:     [90m   |[39m                                  [31m^[39m
+packages/shared test:     [90m 84|[39m   })[33m;[39m
+packages/shared test:     [90m 85|[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯[22m[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env-openai.test.ts[2m > [22menv.ts — OPENAI_API_KEY validation[2m > [22mthrows when OPENAI_API_KEY is undefined
+packages/shared test: [31m[1mAssertionError[22m: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting[39m
+packages/shared test: [32m- Expected[39m
+packages/shared test: [31m+ Received[39m
+packages/shared test: [32m- Error {[39m
+packages/shared test: [32m-   "message": "rejected promise",[39m
+packages/shared test: [31m+ {[39m
+packages/shared test: [31m+   "env": {[39m
+packages/shared test: [31m+     "ANTHROPIC_API_KEY": "sk-ant-test",[39m
+packages/shared test: [31m+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",[39m
+packages/shared test: [31m+     "BOT_MODE": "polling",[39m
+packages/shared test: [31m+     "DATABASE_URL": "postgresql://localhost:5432/testdb",[39m
+packages/shared test: [31m+     "DIGEST_CRON": "0 7 * * *",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_ID": "",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_SECRET": "",[39m
+packages/shared test: [31m+     "GOOGLE_REFRESH_TOKEN": "",[39m
+packages/shared test: [31m+     "LOG_LEVEL": "info",[39m
+packages/shared test: [31m+     "ORCHESTRATOR_URL": "http://localhost:3001",[39m
+packages/shared test: [31m+     "PORT": "3001",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_ID": "12345",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_SECRET": "secret_abc123",[39m
+packages/shared test: [31m+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",[39m
+packages/shared test: [31m+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",[39m
+packages/shared test: [31m+     "TELEGRAM_BOT_TOKEN": "bot:test_token",[39m
+packages/shared test: [31m+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",[39m
+packages/shared test: [31m+     "TZ": "Europe/London",[39m
+packages/shared test: [31m+   },[39m
+packages/shared test: [2m  }[22m
+packages/shared test: [36m [2m❯[22m src/__tests__/env-openai.test.ts:[2m91:34[22m[39m
+packages/shared test:     [90m 89|[39m     [34msetEnv[39m(vars)[33m;[39m
+packages/shared test:     [90m 90|[39m
+packages/shared test:     [90m 91|[39m     [35mawait[39m [34mexpect[39m([34mloadEnvModule[39m())[33m.[39mrejects[33m.[39m[34mtoThrow[39m([36m/OPENAI_API_KEY/[39m)[33m;[39m
+packages/shared test:     [90m   |[39m                                  [31m^[39m
+packages/shared test:     [90m 92|[39m   })[33m;[39m
+packages/shared test:     [90m 93|[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯[22m[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env-openai.test.ts[2m > [22menv.ts — OPENAI_API_KEY validation[2m > [22mincludes OPENAI_API_KEY in error message when missing
+packages/shared test: [31m[1mAssertionError[22m: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting[39m
+packages/shared test: [32m- Expected[39m
+packages/shared test: [31m+ Received[39m
+packages/shared test: [32m- Error {[39m
+packages/shared test: [32m-   "message": "rejected promise",[39m
+packages/shared test: [31m+ {[39m
+packages/shared test: [31m+   "env": {[39m
+packages/shared test: [31m+     "ANTHROPIC_API_KEY": "sk-ant-test",[39m
+packages/shared test: [31m+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",[39m
+packages/shared test: [31m+     "BOT_MODE": "polling",[39m
+packages/shared test: [31m+     "DATABASE_URL": "postgresql://localhost:5432/testdb",[39m
+packages/shared test: [31m+     "DIGEST_CRON": "0 7 * * *",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_ID": "",[39m
+packages/shared test: [31m+     "GOOGLE_CLIENT_SECRET": "",[39m
+packages/shared test: [31m+     "GOOGLE_REFRESH_TOKEN": "",[39m
+packages/shared test: [31m+     "LOG_LEVEL": "info",[39m
+packages/shared test: [31m+     "ORCHESTRATOR_URL": "http://localhost:3001",[39m
+packages/shared test: [31m+     "PORT": "3001",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_ID": "12345",[39m
+packages/shared test: [31m+     "STRAVA_CLIENT_SECRET": "secret_abc123",[39m
+packages/shared test: [31m+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",[39m
+packages/shared test: [31m+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",[39m
+packages/shared test: [31m+     "TELEGRAM_BOT_TOKEN": "bot:test_token",[39m
+packages/shared test: [31m+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",[39m
+packages/shared test: [31m+     "TZ": "Europe/London",[39m
+packages/shared test: [31m+   },[39m
+packages/shared test: [2m  }[22m
+packages/shared test: [36m [2m❯[22m src/__tests__/env-openai.test.ts:[2m99:34[22m[39m
+packages/shared test:     [90m 97|[39m     [34msetEnv[39m(vars)[33m;[39m
+packages/shared test:     [90m 98|[39m
+packages/shared test:     [90m 99|[39m     await expect(loadEnvModule()).rejects.toThrow(/Missing required en…
+packages/shared test:     [90m   |[39m                                  [31m^[39m
+packages/shared test:     [90m100|[39m   })[33m;[39m
+packages/shared test:     [90m101|[39m })[33m;[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯[22m[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env-openai.test.ts[2m > [22menv.ts — OPENAI_API_KEY export[2m > [22mexports OPENAI_API_KEY when set
+packages/shared test: [31m[1mAssertionError[22m: expected undefined to be 'sk-proj-test-key-123' // Object.is equality[39m
+packages/shared test: [32m- Expected:[39m
+packages/shared test: "sk-proj-test-key-123"
+packages/shared test: [31m+ Received:[39m
+packages/shared test: undefined
+packages/shared test: [36m [2m❯[22m src/__tests__/env-openai.test.ts:[2m112:36[22m[39m
+packages/shared test:     [90m110|[39m
+packages/shared test:     [90m111|[39m     [35mconst[39m mod [33m=[39m [35mawait[39m [34mloadEnvModule[39m()[33m;[39m
+packages/shared test:     [90m112|[39m     [34mexpect[39m(mod[33m.[39menv[33m.[39m[33mOPENAI_API_KEY[39m)[33m.[39m[34mtoBe[39m([32m"sk-proj-test-key-123"[39m)[33m;[39m
+packages/shared test:     [90m   |[39m                                    [31m^[39m
+packages/shared test:     [90m113|[39m   })[33m;[39m
+packages/shared test:     [90m114|[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯[22m[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env-openai.test.ts[2m > [22menv.ts — OPENAI_API_KEY export[2m > [22mexports OPENAI_API_KEY with trimmed whitespace
+packages/shared test: [31m[1mAssertionError[22m: expected undefined to be 'sk-proj-test-key-123' // Object.is equality[39m
+packages/shared test: [32m- Expected:[39m
+packages/shared test: "sk-proj-test-key-123"
+packages/shared test: [31m+ Received:[39m
+packages/shared test: undefined
+packages/shared test: [36m [2m❯[22m src/__tests__/env-openai.test.ts:[2m119:36[22m[39m
+packages/shared test:     [90m117|[39m
+packages/shared test:     [90m118|[39m     [35mconst[39m mod [33m=[39m [35mawait[39m [34mloadEnvModule[39m()[33m;[39m
+packages/shared test:     [90m119|[39m     [34mexpect[39m(mod[33m.[39menv[33m.[39m[33mOPENAI_API_KEY[39m)[33m.[39m[34mtoBe[39m([32m"sk-proj-test-key-123"[39m)[33m;[39m
+packages/shared test:     [90m   |[39m                                    [31m^[39m
+packages/shared test:     [90m120|[39m   })[33m;[39m
+packages/shared test:     [90m121|[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯[22m[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env-openai.test.ts[2m > [22menv.ts — OPENAI_API_KEY export[2m > [22mloads successfully when OPENAI_API_KEY is set with all other required vars
+packages/shared test: [31m[1mAssertionError[22m: expected undefined to be 'sk-proj-test-openai-key' // Object.is equality[39m
+packages/shared test: [32m- Expected:[39m
+packages/shared test: "sk-proj-test-openai-key"
+packages/shared test: [31m+ Received:[39m
+packages/shared test: undefined
+packages/shared test: [36m [2m❯[22m src/__tests__/env-openai.test.ts:[2m127:36[22m[39m
+packages/shared test:     [90m125|[39m     [35mconst[39m mod [33m=[39m [35mawait[39m [34mloadEnvModule[39m()[33m;[39m
+packages/shared test:     [90m126|[39m     [34mexpect[39m(mod[33m.[39menv)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+packages/shared test:     [90m127|[39m     [34mexpect[39m(mod[33m.[39menv[33m.[39m[33mOPENAI_API_KEY[39m)[33m.[39m[34mtoBe[39m([32m"sk-proj-test-openai-key"[39m)[33m;[39m
+packages/shared test:     [90m   |[39m                                    [31m^[39m
+packages/shared test:     [90m128|[39m   })[33m;[39m
+packages/shared test:     [90m129|[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯[22m[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env-openai.test.ts[2m > [22menv.ts — OPENAI_API_KEY export[2m > [22mOPENAI_API_KEY is a string property on env object
+packages/shared test: [31m[1mAssertionError[22m: expected 'undefined' to be 'string' // Object.is equality[39m
+packages/shared test: Expected: [32m"string"[39m
+packages/shared test: Received: [31m"undefined"[39m
+packages/shared test: [36m [2m❯[22m src/__tests__/env-openai.test.ts:[2m134:43[22m[39m
+packages/shared test:     [90m132|[39m
+packages/shared test:     [90m133|[39m     [35mconst[39m mod [33m=[39m [35mawait[39m [34mloadEnvModule[39m()[33m;[39m
+packages/shared test:     [90m134|[39m     [34mexpect[39m([35mtypeof[39m mod[33m.[39menv[33m.[39m[33mOPENAI_API_KEY[39m)[33m.[39m[34mtoBe[39m([32m"string"[39m)[33m;[39m
+packages/shared test:     [90m   |[39m                                           [31m^[39m
+packages/shared test:     [90m135|[39m   })[33m;[39m
+packages/shared test:     [90m136|[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯[22m[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env-openai.test.ts[2m > [22menv.ts — OPENAI_API_KEY export[2m > [22mOPENAI_API_KEY is not empty after loading
+packages/shared test: [31m[1mTypeError[22m: Cannot read properties of undefined (reading 'length')[39m
+packages/shared test: [36m [2m❯[22m src/__tests__/env-openai.test.ts:[2m141:35[22m[39m
+packages/shared test:     [90m139|[39m
+packages/shared test:     [90m140|[39m     [35mconst[39m mod [33m=[39m [35mawait[39m [34mloadEnvModule[39m()[33m;[39m
+packages/shared test:     [90m141|[39m     [34mexpect[39m(mod[33m.[39menv[33m.[39m[33mOPENAI_API_KEY[39m[33m.[39mlength)[33m.[39m[34mtoBeGreaterThan[39m([34m0[39m)[33m;[39m
+packages/shared test:     [90m   |[39m                                   [31m^[39m
+packages/shared test:     [90m142|[39m   })[33m;[39m
+packages/shared test:     [90m143|[39m })[33m;[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯[22m[39m
+packages/shared test: [2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m7 passed[39m[22m[90m (8)[39m
+packages/shared test: [2m      Tests [22m [1m[31m10 failed[39m[22m[2m | [22m[1m[32m119 passed[39m[22m[90m (129)[39m
+packages/shared test: [2m   Start at [22m 09:32:57
+packages/shared test: [2m   Duration [22m 903ms[2m (transform 341ms, setup 0ms, import 428ms, tests 536ms, environment 1ms)[22m
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env-openai.test.ts,title=src/__tests__/env-openai.test.ts > env.ts — OPENAI_API_KEY validation > throws when OPENAI_API_KEY is missing,line=71,column=34::AssertionError: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting%0A%0A- Expected%0A+ Received%0A%0A- Error {%0A-   "message": "rejected promise",%0A+ {%0A+   "env": {%0A+     "ANTHROPIC_API_KEY": "sk-ant-test",%0A+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",%0A+     "BOT_MODE": "polling",%0A+     "DATABASE_URL": "postgresql://localhost:5432/testdb",%0A+     "DIGEST_CRON": "0 7 * * *",%0A+     "GOOGLE_CLIENT_ID": "",%0A+     "GOOGLE_CLIENT_SECRET": "",%0A+     "GOOGLE_REFRESH_TOKEN": "",%0A+     "LOG_LEVEL": "info",%0A+     "ORCHESTRATOR_URL": "http://localhost:3001",%0A+     "PORT": "3001",%0A+     "STRAVA_CLIENT_ID": "12345",%0A+     "STRAVA_CLIENT_SECRET": "secret_abc123",%0A+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",%0A+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",%0A+     "TELEGRAM_BOT_TOKEN": "bot:test_token",%0A+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",%0A+     "TZ": "Europe/London",%0A+   },%0A  }%0A%0A ❯ src/__tests__/env-openai.test.ts:71:34%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env-openai.test.ts,title=src/__tests__/env-openai.test.ts > env.ts — OPENAI_API_KEY validation > throws when OPENAI_API_KEY is empty string,line=77,column=34::AssertionError: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting%0A%0A- Expected%0A+ Received%0A%0A- Error {%0A-   "message": "rejected promise",%0A+ {%0A+   "env": {%0A+     "ANTHROPIC_API_KEY": "sk-ant-test",%0A+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",%0A+     "BOT_MODE": "polling",%0A+     "DATABASE_URL": "postgresql://localhost:5432/testdb",%0A+     "DIGEST_CRON": "0 7 * * *",%0A+     "GOOGLE_CLIENT_ID": "",%0A+     "GOOGLE_CLIENT_SECRET": "",%0A+     "GOOGLE_REFRESH_TOKEN": "",%0A+     "LOG_LEVEL": "info",%0A+     "ORCHESTRATOR_URL": "http://localhost:3001",%0A+     "PORT": "3001",%0A+     "STRAVA_CLIENT_ID": "12345",%0A+     "STRAVA_CLIENT_SECRET": "secret_abc123",%0A+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",%0A+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",%0A+     "TELEGRAM_BOT_TOKEN": "bot:test_token",%0A+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",%0A+     "TZ": "Europe/London",%0A+   },%0A  }%0A%0A ❯ src/__tests__/env-openai.test.ts:77:34%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env-openai.test.ts,title=src/__tests__/env-openai.test.ts > env.ts — OPENAI_API_KEY validation > throws when OPENAI_API_KEY is only whitespace,line=83,column=34::AssertionError: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting%0A%0A- Expected%0A+ Received%0A%0A- Error {%0A-   "message": "rejected promise",%0A+ {%0A+   "env": {%0A+     "ANTHROPIC_API_KEY": "sk-ant-test",%0A+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",%0A+     "BOT_MODE": "polling",%0A+     "DATABASE_URL": "postgresql://localhost:5432/testdb",%0A+     "DIGEST_CRON": "0 7 * * *",%0A+     "GOOGLE_CLIENT_ID": "",%0A+     "GOOGLE_CLIENT_SECRET": "",%0A+     "GOOGLE_REFRESH_TOKEN": "",%0A+     "LOG_LEVEL": "info",%0A+     "ORCHESTRATOR_URL": "http://localhost:3001",%0A+     "PORT": "3001",%0A+     "STRAVA_CLIENT_ID": "12345",%0A+     "STRAVA_CLIENT_SECRET": "secret_abc123",%0A+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",%0A+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",%0A+     "TELEGRAM_BOT_TOKEN": "bot:test_token",%0A+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",%0A+     "TZ": "Europe/London",%0A+   },%0A  }%0A%0A ❯ src/__tests__/env-openai.test.ts:83:34%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env-openai.test.ts,title=src/__tests__/env-openai.test.ts > env.ts — OPENAI_API_KEY validation > throws when OPENAI_API_KEY is undefined,line=91,column=34::AssertionError: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting%0A%0A- Expected%0A+ Received%0A%0A- Error {%0A-   "message": "rejected promise",%0A+ {%0A+   "env": {%0A+     "ANTHROPIC_API_KEY": "sk-ant-test",%0A+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",%0A+     "BOT_MODE": "polling",%0A+     "DATABASE_URL": "postgresql://localhost:5432/testdb",%0A+     "DIGEST_CRON": "0 7 * * *",%0A+     "GOOGLE_CLIENT_ID": "",%0A+     "GOOGLE_CLIENT_SECRET": "",%0A+     "GOOGLE_REFRESH_TOKEN": "",%0A+     "LOG_LEVEL": "info",%0A+     "ORCHESTRATOR_URL": "http://localhost:3001",%0A+     "PORT": "3001",%0A+     "STRAVA_CLIENT_ID": "12345",%0A+     "STRAVA_CLIENT_SECRET": "secret_abc123",%0A+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",%0A+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",%0A+     "TELEGRAM_BOT_TOKEN": "bot:test_token",%0A+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",%0A+     "TZ": "Europe/London",%0A+   },%0A  }%0A%0A ❯ src/__tests__/env-openai.test.ts:91:34%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env-openai.test.ts,title=src/__tests__/env-openai.test.ts > env.ts — OPENAI_API_KEY validation > includes OPENAI_API_KEY in error message when missing,line=99,column=34::AssertionError: promise resolved "{ env: { …(18) }, …(1) }" instead of rejecting%0A%0A- Expected%0A+ Received%0A%0A- Error {%0A-   "message": "rejected promise",%0A+ {%0A+   "env": {%0A+     "ANTHROPIC_API_KEY": "sk-ant-test",%0A+     "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",%0A+     "BOT_MODE": "polling",%0A+     "DATABASE_URL": "postgresql://localhost:5432/testdb",%0A+     "DIGEST_CRON": "0 7 * * *",%0A+     "GOOGLE_CLIENT_ID": "",%0A+     "GOOGLE_CLIENT_SECRET": "",%0A+     "GOOGLE_REFRESH_TOKEN": "",%0A+     "LOG_LEVEL": "info",%0A+     "ORCHESTRATOR_URL": "http://localhost:3001",%0A+     "PORT": "3001",%0A+     "STRAVA_CLIENT_ID": "12345",%0A+     "STRAVA_CLIENT_SECRET": "secret_abc123",%0A+     "STRAVA_REDIRECT_URI": "http://localhost:3001/auth/strava/callback",%0A+     "TELEGRAM_ALLOWED_CHAT_ID": "123456",%0A+     "TELEGRAM_BOT_TOKEN": "bot:test_token",%0A+     "TODOIST_API_TOKEN": "e6b883431c77e26272151e64e0a5a12488172324",%0A+     "TZ": "Europe/London",%0A+   },%0A  }%0A%0A ❯ src/__tests__/env-openai.test.ts:99:34%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env-openai.test.ts,title=src/__tests__/env-openai.test.ts > env.ts — OPENAI_API_KEY export > exports OPENAI_API_KEY when set,line=112,column=36::AssertionError: expected undefined to be 'sk-proj-test-key-123' // Object.is equality%0A%0A- Expected:%0A"sk-proj-test-key-123"%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/__tests__/env-openai.test.ts:112:36%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env-openai.test.ts,title=src/__tests__/env-openai.test.ts > env.ts — OPENAI_API_KEY export > exports OPENAI_API_KEY with trimmed whitespace,line=119,column=36::AssertionError: expected undefined to be 'sk-proj-test-key-123' // Object.is equality%0A%0A- Expected:%0A"sk-proj-test-key-123"%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/__tests__/env-openai.test.ts:119:36%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env-openai.test.ts,title=src/__tests__/env-openai.test.ts > env.ts — OPENAI_API_KEY export > loads successfully when OPENAI_API_KEY is set with all other required vars,line=127,column=36::AssertionError: expected undefined to be 'sk-proj-test-openai-key' // Object.is equality%0A%0A- Expected:%0A"sk-proj-test-openai-key"%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/__tests__/env-openai.test.ts:127:36%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env-openai.test.ts,title=src/__tests__/env-openai.test.ts > env.ts — OPENAI_API_KEY export > OPENAI_API_KEY is a string property on env object,line=134,column=43::AssertionError: expected 'undefined' to be 'string' // Object.is equality%0A%0AExpected: "string"%0AReceived: "undefined"%0A%0A ❯ src/__tests__/env-openai.test.ts:134:43%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env-openai.test.ts,title=src/__tests__/env-openai.test.ts > env.ts — OPENAI_API_KEY export > OPENAI_API_KEY is not empty after loading,line=141,column=35::TypeError: Cannot read properties of undefined (reading 'length')%0A ❯ src/__tests__/env-openai.test.ts:141:35%0A%0A
+packages/shared test: Failed
+/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/shared@0.0.1 test: `vitest run --config vitest.config.ts`
+Exit status 1
+ ELIFECYCLE  Test failed. See above for more details.

@@ -12,5 +12,9 @@ export default defineConfig({
     isolate: true,
     // Give each test file its own fresh module registry
     pool: "forks",
+    // Set OPENAI_API_KEY for tests that don't explicitly provide it
+    env: {
+      OPENAI_API_KEY: "sk-test-openai-key-for-tests",
+    },
   },
 });
