@@ -45,3 +45,25 @@ export function buildDismissKeyboard(nudgeId: number): InlineKeyboardMarkup {
     inline_keyboard: [[{ text: "Dismiss", callback_data: `dismiss:${nudgeId}` }]],
   };
 }
+
+/**
+ * Returns a two-button inline keyboard for confirming or cancelling
+ * a voice message intent.
+ *
+ * Button layout (single row):
+ *   [Yes, do it]  [No, cancel]
+ *
+ * callback_data values: 'voice_yes_{id}', 'voice_no_{id}'
+ *
+ * @param intentId - The numeric ID of the voice intent to confirm or cancel.
+ */
+export function buildVoiceConfirmationKeyboard(intentId: number): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      [
+        { text: "Yes, do it", callback_data: `voice_yes_${intentId}` },
+        { text: "No, cancel", callback_data: `voice_no_${intentId}` },
+      ],
+    ],
+  };
+}

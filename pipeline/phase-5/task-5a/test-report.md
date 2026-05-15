@@ -1,0 +1,380 @@
+Title: Test Report — task-5a — PASS
+
+Verified by orchestrator hard gate after Developer attempt 1.
+
+- tsc --noEmit: PASS
+- eslint (files_in_scope): PASS
+- pnpm test: PASS
+
+
+> jamie-lifeos@0.0.1 test /home/runner/work/jamie-lifeos/jamie-lifeos
+> pnpm -r test
+
+Scope: 4 of 5 workspace projects
+packages/shared test$ vitest run --config vitest.config.ts
+packages/shared test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared[39m
+packages/shared test:  [32m✓[39m src/__tests__/env.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 145[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/logger.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 69[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 92[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/env-openai.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 54[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/types.test.ts [2m([22m[2m33 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/db.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate-async-await.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/env-example.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+packages/shared test: [2m Test Files [22m [1m[32m8 passed[39m[22m[90m (8)[39m
+packages/shared test: [2m      Tests [22m [1m[32m129 passed[39m[22m[90m (129)[39m
+packages/shared test: [2m   Start at [22m 10:07:26
+packages/shared test: [2m   Duration [22m 876ms[2m (transform 360ms, setup 0ms, import 488ms, tests 424ms, environment 1ms)[22m
+packages/shared test: Done
+packages/bot test$ vitest run --config vitest.config.ts
+packages/orchestrator test$ vitest run --config vitest.config.ts
+packages/bot test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot[39m
+packages/orchestrator test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/orchestrator[39m
+packages/bot test:  [31m❯[39m src/__tests__/keyboard.test.ts [2m([22m[2m53 tests[22m[2m | [22m[31m25 failed[39m[2m)[22m[32m 46[2mms[22m[39m
+packages/bot test:      [32m✓[39m returns an object with inline_keyboard property[32m 3[2mms[22m[39m
+packages/bot test:      [32m✓[39m inline_keyboard is an array[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m has exactly one row[32m 1[2mms[22m[39m
+packages/bot test:      [32m✓[39m row contains exactly three buttons[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m each button has text and callback_data properties[32m 2[2mms[22m[39m
+packages/bot test:      [32m✓[39m first button text is 'Confirm'[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m second button text is 'Edit'[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m third button text is 'Cancel'[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m returns a fresh object on each call (not a cached reference)[32m 1[2mms[22m[39m
+packages/bot test:      [32m✓[39m conforms to InlineKeyboardMarkup shape (TypeScript structural check at runtime)[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m returns an object with inline_keyboard property[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m inline_keyboard is an array[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m has exactly one row[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m row contains exactly one button[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m the single button has text 'Dismiss'[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m the button has a callback_data property[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m conforms to InlineKeyboardMarkup shape[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m returns a fresh object for each call with the same nudgeId[32m 1[2mms[22m[39m
+packages/bot test:      [32m✓[39m buildConfirmKeyboard: first button callback_data is exactly 'confirm'[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m buildConfirmKeyboard: second button callback_data is exactly 'edit'[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m buildConfirmKeyboard: third button callback_data is exactly 'cancel'[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m buildDismissKeyboard: callback_data is 'dismiss:<nudgeId>' for nudgeId=1[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m buildDismissKeyboard: callback_data is 'dismiss:<nudgeId>' for nudgeId=42[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m buildDismissKeyboard: callback_data is 'dismiss:<nudgeId>' for nudgeId=0[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m buildDismissKeyboard: callback_data is 'dismiss:<nudgeId>' for a large nudgeId[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m buildDismissKeyboard: different nudgeIds produce different callback_data[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m buildDismissKeyboard: callback_data follows 'dismiss:<nudgeId>' pattern exactly (no extra chars)[32m 0[2mms[22m[39m
+packages/bot test:      [32m✓[39m buildConfirmKeyboard: no button has an unexpected callback_data value[32m 0[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m returns an object with inline_keyboard property[39m[32m 6[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m inline_keyboard is an array[39m[32m 1[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m has exactly one row[39m[32m 1[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m row contains exactly two buttons[39m[32m 1[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m each button has text and callback_data properties[39m[32m 1[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m conforms to InlineKeyboardMarkup shape (TypeScript structural check at runtime)[39m[32m 1[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m returns a fresh object on each call (not a cached reference)[39m[32m 1[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m first button text is 'Yes, do it'[39m[32m 3[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m first button callback_data is 'voice_yes_1' for intent ID 1[39m[32m 1[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m first button callback_data is 'voice_yes_42' for intent ID 42[39m[32m 0[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m first button callback_data is 'voice_yes_0' for intent ID 0[39m[32m 1[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m first button callback_data is 'voice_yes_999999' for large intent ID[39m[32m 0[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m first button callback_data follows 'voice_yes_<id>' pattern exactly[39m[32m 0[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m second button text is 'No, cancel'[39m[32m 0[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m second button callback_data is 'voice_no_1' for intent ID 1[39m[32m 0[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m second button callback_data is 'voice_no_42' for intent ID 42[39m[32m 0[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m second button callback_data is 'voice_no_0' for intent ID 0[39m[32m 0[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m second button callback_data is 'voice_no_999999' for large intent ID[39m[32m 1[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m second button callback_data follows 'voice_no_<id>' pattern exactly[39m[32m 0[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m accepts an intent ID parameter[39m[32m 4[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m embeds intent ID in both callback_data values[39m[32m 1[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m different intent IDs produce different callback_data[39m[32m 0[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m same intent ID produces consistent callback_data across calls[39m[32m 1[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m callback_data values contain the exact intent ID without modification[39m[32m 0[2mms[22m[39m
+packages/bot test: [31m     [31m×[31m no button has an unexpected callback_data value[39m[32m 1[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/dismiss-nudge-api.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 1484[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/dismiss-nudge.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 986[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m39 tests[22m[2m)[22m[33m 1364[2mms[22m[39m
+packages/orchestrator test:  [32m✓[39m src/__tests__/typing-indicator-t11.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 1529[2mms[22m[39m
+packages/bot test:  [32m✓[39m src/__tests__/index.test.ts [2m([22m[2m50 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 1720[2mms[22m[39m
+packages/bot test: [31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 25 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-1: buildVoiceConfirmationKeyboard function creates inline keyboard[2m > [22mreturns an object with inline_keyboard property
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m209:20[22m[39m
+packages/bot test:     [90m207|[39m describe("task-5a AC-1: buildVoiceConfirmationKeyboard function create…
+packages/bot test:     [90m208|[39m   [34mit[39m([32m"returns an object with inline_keyboard property"[39m[33m,[39m () [33m=>[39m {
+packages/bot test:     [90m209|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m210|[39m     [34mexpect[39m(result)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+packages/bot test:     [90m211|[39m     [34mexpect[39m([35mtypeof[39m result)[33m.[39m[34mtoBe[39m([32m"object"[39m)[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-1: buildVoiceConfirmationKeyboard function creates inline keyboard[2m > [22minline_keyboard is an array
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m216:20[22m[39m
+packages/bot test:     [90m214|[39m
+packages/bot test:     [90m215|[39m   [34mit[39m([32m"inline_keyboard is an array"[39m[33m,[39m () [33m=>[39m {
+packages/bot test:     [90m216|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m217|[39m     [34mexpect[39m([33mArray[39m[33m.[39m[34misArray[39m(result[33m.[39minline_keyboard))[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+packages/bot test:     [90m218|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-1: buildVoiceConfirmationKeyboard function creates inline keyboard[2m > [22mhas exactly one row
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m221:20[22m[39m
+packages/bot test:     [90m219|[39m
+packages/bot test:     [90m220|[39m   [34mit[39m([32m"has exactly one row"[39m[33m,[39m () [33m=>[39m {
+packages/bot test:     [90m221|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m222|[39m     [34mexpect[39m(result[33m.[39minline_keyboard)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m223|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-1: buildVoiceConfirmationKeyboard function creates inline keyboard[2m > [22mrow contains exactly two buttons
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m226:20[22m[39m
+packages/bot test:     [90m224|[39m
+packages/bot test:     [90m225|[39m   [34mit[39m([32m"row contains exactly two buttons"[39m[33m,[39m () [33m=>[39m {
+packages/bot test:     [90m226|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m227|[39m     [35mconst[39m row [33m=[39m result[33m.[39minline_keyboard[[34m0[39m][33m;[39m
+packages/bot test:     [90m228|[39m     [34mexpect[39m(row)[33m.[39m[34mtoHaveLength[39m([34m2[39m)[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-1: buildVoiceConfirmationKeyboard function creates inline keyboard[2m > [22meach button has text and callback_data properties
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m232:20[22m[39m
+packages/bot test:     [90m230|[39m
+packages/bot test:     [90m231|[39m   [34mit[39m([32m"each button has text and callback_data properties"[39m[33m,[39m () [33m=>[39m {
+packages/bot test:     [90m232|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m233|[39m     [35mconst[39m row [33m=[39m result[33m.[39minline_keyboard[[34m0[39m][33m![39m[33m;[39m
+packages/bot test:     [90m234|[39m     [35mfor[39m ([35mconst[39m button [35mof[39m row) {
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-1: buildVoiceConfirmationKeyboard function creates inline keyboard[2m > [22mconforms to InlineKeyboardMarkup shape (TypeScript structural check at runtime)
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m241:42[22m[39m
+packages/bot test:     [90m239|[39m
+packages/bot test:     [90m240|[39m   it("conforms to InlineKeyboardMarkup shape (TypeScript structural ch…
+packages/bot test:     [90m241|[39m     const result: InlineKeyboardMarkup = buildVoiceConfirmationKeyboar…
+packages/bot test:     [90m   |[39m                                          [31m^[39m
+packages/bot test:     [90m242|[39m     // If we reach here, TypeScript was satisfied; verify runtime shap…
+packages/bot test:     [90m243|[39m     [34mexpect[39m(result[33m.[39minline_keyboard)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-1: buildVoiceConfirmationKeyboard function creates inline keyboard[2m > [22mreturns a fresh object on each call (not a cached reference)
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m248:21[22m[39m
+packages/bot test:     [90m246|[39m
+packages/bot test:     [90m247|[39m   it("returns a fresh object on each call (not a cached reference)", (…
+packages/bot test:     [90m248|[39m     [35mconst[39m result1 [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                     [31m^[39m
+packages/bot test:     [90m249|[39m     [35mconst[39m result2 [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m250|[39m     [34mexpect[39m(result1)[33m.[39mnot[33m.[39m[34mtoBe[39m(result2)[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-2: Keyboard contains 'Yes, do it' button with callback_data voice_yes_{id}[2m > [22mfirst button text is 'Yes, do it'
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m260:20[22m[39m
+packages/bot test:     [90m258|[39m describe("task-5a AC-2: Keyboard contains 'Yes, do it' button with cal…
+packages/bot test:     [90m259|[39m   [34mit[39m([32m"first button text is 'Yes, do it'"[39m[33m,[39m () [33m=>[39m {
+packages/bot test:     [90m260|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m261|[39m     [34mexpect[39m(result[33m.[39minline_keyboard[[34m0[39m][33m?.[39m[[34m0[39m][33m?.[39mtext)[33m.[39m[34mtoBe[39m([32m"Yes, do it"[39m)[33m;[39m
+packages/bot test:     [90m262|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-2: Keyboard contains 'Yes, do it' button with callback_data voice_yes_{id}[2m > [22mfirst button callback_data is 'voice_yes_1' for intent ID 1
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m265:20[22m[39m
+packages/bot test:     [90m263|[39m
+packages/bot test:     [90m264|[39m   it("first button callback_data is 'voice_yes_1' for intent ID 1", ()…
+packages/bot test:     [90m265|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m266|[39m     expect(result.inline_keyboard[0]?.[0]?.callback_data).toBe("voice_…
+packages/bot test:     [90m267|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-2: Keyboard contains 'Yes, do it' button with callback_data voice_yes_{id}[2m > [22mfirst button callback_data is 'voice_yes_42' for intent ID 42
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m270:20[22m[39m
+packages/bot test:     [90m268|[39m
+packages/bot test:     [90m269|[39m   it("first button callback_data is 'voice_yes_42' for intent ID 42", …
+packages/bot test:     [90m270|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m42[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m271|[39m     expect(result.inline_keyboard[0]?.[0]?.callback_data).toBe("voice_…
+packages/bot test:     [90m272|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-2: Keyboard contains 'Yes, do it' button with callback_data voice_yes_{id}[2m > [22mfirst button callback_data is 'voice_yes_0' for intent ID 0
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m275:20[22m[39m
+packages/bot test:     [90m273|[39m
+packages/bot test:     [90m274|[39m   it("first button callback_data is 'voice_yes_0' for intent ID 0", ()…
+packages/bot test:     [90m275|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m0[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m276|[39m     expect(result.inline_keyboard[0]?.[0]?.callback_data).toBe("voice_…
+packages/bot test:     [90m277|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-2: Keyboard contains 'Yes, do it' button with callback_data voice_yes_{id}[2m > [22mfirst button callback_data is 'voice_yes_999999' for large intent ID
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m280:20[22m[39m
+packages/bot test:     [90m278|[39m
+packages/bot test:     [90m279|[39m   it("first button callback_data is 'voice_yes_999999' for large inten…
+packages/bot test:     [90m280|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m999999[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m281|[39m     expect(result.inline_keyboard[0]?.[0]?.callback_data).toBe("voice_…
+packages/bot test:     [90m282|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-2: Keyboard contains 'Yes, do it' button with callback_data voice_yes_{id}[2m > [22mfirst button callback_data follows 'voice_yes_<id>' pattern exactly
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m286:20[22m[39m
+packages/bot test:     [90m284|[39m   it("first button callback_data follows 'voice_yes_<id>' pattern exac…
+packages/bot test:     [90m285|[39m     [35mconst[39m intentId [33m=[39m [34m7[39m[33m;[39m
+packages/bot test:     [90m286|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m(intentId)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m287|[39m     [35mconst[39m callbackData [33m=[39m result[33m.[39minline_keyboard[[34m0[39m][33m?.[39m[[34m0[39m][33m?.[39mcallback_data[33m;[39m
+packages/bot test:     [90m288|[39m     [34mexpect[39m(callbackData)[33m.[39m[34mtoMatch[39m([36m/^voice_yes_\d+$/[39m)[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-3: Keyboard contains 'No, cancel' button with callback_data voice_no_{id}[2m > [22msecond button text is 'No, cancel'
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m299:20[22m[39m
+packages/bot test:     [90m297|[39m describe("task-5a AC-3: Keyboard contains 'No, cancel' button with cal…
+packages/bot test:     [90m298|[39m   [34mit[39m([32m"second button text is 'No, cancel'"[39m[33m,[39m () [33m=>[39m {
+packages/bot test:     [90m299|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m300|[39m     [34mexpect[39m(result[33m.[39minline_keyboard[[34m0[39m][33m?.[39m[[34m1[39m][33m?.[39mtext)[33m.[39m[34mtoBe[39m([32m"No, cancel"[39m)[33m;[39m
+packages/bot test:     [90m301|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-3: Keyboard contains 'No, cancel' button with callback_data voice_no_{id}[2m > [22msecond button callback_data is 'voice_no_1' for intent ID 1
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m304:20[22m[39m
+packages/bot test:     [90m302|[39m
+packages/bot test:     [90m303|[39m   it("second button callback_data is 'voice_no_1' for intent ID 1", ()…
+packages/bot test:     [90m304|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m305|[39m     expect(result.inline_keyboard[0]?.[1]?.callback_data).toBe("voice_…
+packages/bot test:     [90m306|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-3: Keyboard contains 'No, cancel' button with callback_data voice_no_{id}[2m > [22msecond button callback_data is 'voice_no_42' for intent ID 42
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m309:20[22m[39m
+packages/bot test:     [90m307|[39m
+packages/bot test:     [90m308|[39m   it("second button callback_data is 'voice_no_42' for intent ID 42", …
+packages/bot test:     [90m309|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m42[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m310|[39m     expect(result.inline_keyboard[0]?.[1]?.callback_data).toBe("voice_…
+packages/bot test:     [90m311|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-3: Keyboard contains 'No, cancel' button with callback_data voice_no_{id}[2m > [22msecond button callback_data is 'voice_no_0' for intent ID 0
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m314:20[22m[39m
+packages/bot test:     [90m312|[39m
+packages/bot test:     [90m313|[39m   it("second button callback_data is 'voice_no_0' for intent ID 0", ()…
+packages/bot test:     [90m314|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m0[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m315|[39m     expect(result.inline_keyboard[0]?.[1]?.callback_data).toBe("voice_…
+packages/bot test:     [90m316|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-3: Keyboard contains 'No, cancel' button with callback_data voice_no_{id}[2m > [22msecond button callback_data is 'voice_no_999999' for large intent ID
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m319:20[22m[39m
+packages/bot test:     [90m317|[39m
+packages/bot test:     [90m318|[39m   it("second button callback_data is 'voice_no_999999' for large inten…
+packages/bot test:     [90m319|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m999999[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m320|[39m     expect(result.inline_keyboard[0]?.[1]?.callback_data).toBe("voice_…
+packages/bot test:     [90m321|[39m   })[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-3: Keyboard contains 'No, cancel' button with callback_data voice_no_{id}[2m > [22msecond button callback_data follows 'voice_no_<id>' pattern exactly
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m325:20[22m[39m
+packages/bot test:     [90m323|[39m   it("second button callback_data follows 'voice_no_<id>' pattern exac…
+packages/bot test:     [90m324|[39m     [35mconst[39m intentId [33m=[39m [34m7[39m[33m;[39m
+packages/bot test:     [90m325|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m(intentId)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m326|[39m     [35mconst[39m callbackData [33m=[39m result[33m.[39minline_keyboard[[34m0[39m][33m?.[39m[[34m1[39m][33m?.[39mcallback_data[33m;[39m
+packages/bot test:     [90m327|[39m     [34mexpect[39m(callbackData)[33m.[39m[34mtoMatch[39m([36m/^voice_no_\d+$/[39m)[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-4: Function accepts intent ID parameter and embeds it in callback data[2m > [22maccepts an intent ID parameter
+packages/bot test: [31m[1mAssertionError[22m: expected [Function] to not throw an error but 'TypeError: (0 , __vite_ssr_import_1__…' was thrown[39m
+packages/bot test: [32m- Expected:[39m
+packages/bot test: undefined
+packages/bot test: [31m+ Received:[39m
+packages/bot test: "TypeError: (0 , __vite_ssr_import_1__.buildVoiceConfirmationKeyboard) is not a function"
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m338:57[22m[39m
+packages/bot test:     [90m336|[39m describe("task-5a AC-4: Function accepts intent ID parameter and embed…
+packages/bot test:     [90m337|[39m   [34mit[39m([32m"accepts an intent ID parameter"[39m[33m,[39m () [33m=>[39m {
+packages/bot test:     [90m338|[39m     [34mexpect[39m(() [33m=>[39m [34mbuildVoiceConfirmationKeyboard[39m([34m1[39m))[33m.[39mnot[33m.[39m[34mtoThrow[39m()[33m;[39m
+packages/bot test:     [90m   |[39m                                                         [31m^[39m
+packages/bot test:     [90m339|[39m   })[33m;[39m
+packages/bot test:     [90m340|[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-4: Function accepts intent ID parameter and embeds it in callback data[2m > [22membeds intent ID in both callback_data values
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m343:20[22m[39m
+packages/bot test:     [90m341|[39m   [34mit[39m([32m"embeds intent ID in both callback_data values"[39m[33m,[39m () [33m=>[39m {
+packages/bot test:     [90m342|[39m     [35mconst[39m intentId [33m=[39m [34m123[39m[33m;[39m
+packages/bot test:     [90m343|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m(intentId)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m344|[39m     [35mconst[39m yesCallback [33m=[39m result[33m.[39minline_keyboard[[34m0[39m][33m?.[39m[[34m0[39m][33m?.[39mcallback_data[33m;[39m
+packages/bot test:     [90m345|[39m     [35mconst[39m noCallback [33m=[39m result[33m.[39minline_keyboard[[34m0[39m][33m?.[39m[[34m1[39m][33m?.[39mcallback_data[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-4: Function accepts intent ID parameter and embeds it in callback data[2m > [22mdifferent intent IDs produce different callback_data
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m351:16[22m[39m
+packages/bot test:     [90m349|[39m
+packages/bot test:     [90m350|[39m   [34mit[39m([32m"different intent IDs produce different callback_data"[39m[33m,[39m () [33m=>[39m {
+packages/bot test:     [90m351|[39m     [35mconst[39m r1 [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m1[39m)[33m;[39m
+packages/bot test:     [90m   |[39m                [31m^[39m
+packages/bot test:     [90m352|[39m     [35mconst[39m r2 [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m([34m2[39m)[33m;[39m
+packages/bot test:     [90m353|[39m     [34mexpect[39m(r1[33m.[39minline_keyboard[[34m0[39m][33m?.[39m[[34m0[39m][33m?.[39mcallback_data)[33m.[39mnot[33m.[39m[34mtoBe[39m(
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-4: Function accepts intent ID parameter and embeds it in callback data[2m > [22msame intent ID produces consistent callback_data across calls
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m363:16[22m[39m
+packages/bot test:     [90m361|[39m   it("same intent ID produces consistent callback_data across calls", …
+packages/bot test:     [90m362|[39m     [35mconst[39m intentId [33m=[39m [34m50[39m[33m;[39m
+packages/bot test:     [90m363|[39m     [35mconst[39m r1 [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m(intentId)[33m;[39m
+packages/bot test:     [90m   |[39m                [31m^[39m
+packages/bot test:     [90m364|[39m     [35mconst[39m r2 [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m(intentId)[33m;[39m
+packages/bot test:     [90m365|[39m     [34mexpect[39m(r1[33m.[39minline_keyboard[[34m0[39m][33m?.[39m[[34m0[39m][33m?.[39mcallback_data)[33m.[39m[34mtoBe[39m(
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-4: Function accepts intent ID parameter and embeds it in callback data[2m > [22mcallback_data values contain the exact intent ID without modification
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m375:20[22m[39m
+packages/bot test:     [90m373|[39m   it("callback_data values contain the exact intent ID without modific…
+packages/bot test:     [90m374|[39m     [35mconst[39m intentId [33m=[39m [34m12345[39m[33m;[39m
+packages/bot test:     [90m375|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m(intentId)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m376|[39m     [35mconst[39m yesCallback [33m=[39m result[33m.[39minline_keyboard[[34m0[39m][33m?.[39m[[34m0[39m][33m?.[39mcallback_data[33m;[39m
+packages/bot test:     [90m377|[39m     [35mconst[39m noCallback [33m=[39m result[33m.[39minline_keyboard[[34m0[39m][33m?.[39m[[34m1[39m][33m?.[39mcallback_data[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/25]⎯[22m[39m
+packages/bot test: [41m[1m FAIL [22m[49m src/__tests__/keyboard.test.ts[2m > [22mtask-5a AC-4: Function accepts intent ID parameter and embeds it in callback data[2m > [22mno button has an unexpected callback_data value
+packages/bot test: [31m[1mTypeError[22m: buildVoiceConfirmationKeyboard is not a function[39m
+packages/bot test: [36m [2m❯[22m src/__tests__/keyboard.test.ts:[2m384:20[22m[39m
+packages/bot test:     [90m382|[39m   [34mit[39m([32m"no button has an unexpected callback_data value"[39m[33m,[39m () [33m=>[39m {
+packages/bot test:     [90m383|[39m     [35mconst[39m intentId [33m=[39m [34m99[39m[33m;[39m
+packages/bot test:     [90m384|[39m     [35mconst[39m result [33m=[39m [34mbuildVoiceConfirmationKeyboard[39m(intentId)[33m;[39m
+packages/bot test:     [90m   |[39m                    [31m^[39m
+packages/bot test:     [90m385|[39m     [35mconst[39m row [33m=[39m result[33m.[39minline_keyboard[[34m0[39m][33m![39m[33m;[39m
+packages/bot test:     [90m386|[39m     [35mconst[39m callbackValues [33m=[39m row[33m.[39m[34mmap[39m((b) [33m=>[39m b[33m.[39mcallback_data)[33m;[39m
+packages/bot test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/25]⎯[22m[39m
+packages/bot test: [2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (4)[39m
+packages/bot test: [2m      Tests [22m [1m[31m25 failed[39m[22m[2m | [22m[1m[32m131 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (157)[39m
+packages/bot test: [2m   Start at [22m 10:07:28
+packages/bot test: [2m   Duration [22m 2.34s[2m (transform 792ms, setup 0ms, import 895ms, tests 4.24s, environment 1ms)[22m
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-1%3A buildVoiceConfirmationKeyboard function creates inline keyboard > returns an object with inline_keyboard property,line=209,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:209:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-1%3A buildVoiceConfirmationKeyboard function creates inline keyboard > inline_keyboard is an array,line=216,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:216:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-1%3A buildVoiceConfirmationKeyboard function creates inline keyboard > has exactly one row,line=221,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:221:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-1%3A buildVoiceConfirmationKeyboard function creates inline keyboard > row contains exactly two buttons,line=226,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:226:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-1%3A buildVoiceConfirmationKeyboard function creates inline keyboard > each button has text and callback_data properties,line=232,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:232:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-1%3A buildVoiceConfirmationKeyboard function creates inline keyboard > conforms to InlineKeyboardMarkup shape (TypeScript structural check at runtime),line=241,column=42::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:241:42%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-1%3A buildVoiceConfirmationKeyboard function creates inline keyboard > returns a fresh object on each call (not a cached reference),line=248,column=21::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:248:21%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-2%3A Keyboard contains 'Yes%2C do it' button with callback_data voice_yes_{id} > first button text is 'Yes%2C do it',line=260,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:260:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-2%3A Keyboard contains 'Yes%2C do it' button with callback_data voice_yes_{id} > first button callback_data is 'voice_yes_1' for intent ID 1,line=265,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:265:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-2%3A Keyboard contains 'Yes%2C do it' button with callback_data voice_yes_{id} > first button callback_data is 'voice_yes_42' for intent ID 42,line=270,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:270:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-2%3A Keyboard contains 'Yes%2C do it' button with callback_data voice_yes_{id} > first button callback_data is 'voice_yes_0' for intent ID 0,line=275,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:275:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-2%3A Keyboard contains 'Yes%2C do it' button with callback_data voice_yes_{id} > first button callback_data is 'voice_yes_999999' for large intent ID,line=280,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:280:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-2%3A Keyboard contains 'Yes%2C do it' button with callback_data voice_yes_{id} > first button callback_data follows 'voice_yes_<id>' pattern exactly,line=286,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:286:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-3%3A Keyboard contains 'No%2C cancel' button with callback_data voice_no_{id} > second button text is 'No%2C cancel',line=299,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:299:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-3%3A Keyboard contains 'No%2C cancel' button with callback_data voice_no_{id} > second button callback_data is 'voice_no_1' for intent ID 1,line=304,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:304:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-3%3A Keyboard contains 'No%2C cancel' button with callback_data voice_no_{id} > second button callback_data is 'voice_no_42' for intent ID 42,line=309,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:309:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-3%3A Keyboard contains 'No%2C cancel' button with callback_data voice_no_{id} > second button callback_data is 'voice_no_0' for intent ID 0,line=314,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:314:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-3%3A Keyboard contains 'No%2C cancel' button with callback_data voice_no_{id} > second button callback_data is 'voice_no_999999' for large intent ID,line=319,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:319:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-3%3A Keyboard contains 'No%2C cancel' button with callback_data voice_no_{id} > second button callback_data follows 'voice_no_<id>' pattern exactly,line=325,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:325:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-4%3A Function accepts intent ID parameter and embeds it in callback data > accepts an intent ID parameter,line=338,column=57::AssertionError: expected [Function] to not throw an error but 'TypeError: (0 , __vite_ssr_import_1__…' was thrown%0A%0A- Expected:%0Aundefined%0A%0A+ Received:%0A"TypeError: (0 , __vite_ssr_import_1__.buildVoiceConfirmationKeyboard) is not a function"%0A%0A ❯ src/__tests__/keyboard.test.ts:338:57%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-4%3A Function accepts intent ID parameter and embeds it in callback data > embeds intent ID in both callback_data values,line=343,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:343:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-4%3A Function accepts intent ID parameter and embeds it in callback data > different intent IDs produce different callback_data,line=351,column=16::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:351:16%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-4%3A Function accepts intent ID parameter and embeds it in callback data > same intent ID produces consistent callback_data across calls,line=363,column=16::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:363:16%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-4%3A Function accepts intent ID parameter and embeds it in callback data > callback_data values contain the exact intent ID without modification,line=375,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:375:20%0A%0A
+packages/bot test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot/src/__tests__/keyboard.test.ts,title=src/__tests__/keyboard.test.ts > task-5a AC-4%3A Function accepts intent ID parameter and embeds it in callback data > no button has an unexpected callback_data value,line=384,column=20::TypeError: buildVoiceConfirmationKeyboard is not a function%0A ❯ src/__tests__/keyboard.test.ts:384:20%0A%0A
+packages/bot test: Failed
+/home/runner/work/jamie-lifeos/jamie-lifeos/packages/bot:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/bot@0.0.1 test: `vitest run --config vitest.config.ts`
+Exit status 1
+ ELIFECYCLE  Test failed. See above for more details.
