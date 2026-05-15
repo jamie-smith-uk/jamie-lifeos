@@ -168,3 +168,10 @@
 ⚠ task-9a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-9b — Format and integrate activity snapshot into agent system prompt
+
+**Files:** packages/orchestrator/src/agent.ts, packages/orchestrator/src/context.ts, packages/orchestrator/src/__tests__/agent.test.ts, packages/orchestrator/src/__tests__/agent-t10.test.ts, packages/shared/src/env.ts
+
+⚠ task-9b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---

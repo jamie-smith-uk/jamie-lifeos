@@ -1,0 +1,13 @@
+{
+  "task_id": "task-9b",
+  "files_checked": [
+    "packages/orchestrator/src/agent.ts",
+    "packages/orchestrator/src/context.ts",
+    "packages/orchestrator/src/__tests__/agent.test.ts",
+    "packages/orchestrator/src/__tests__/agent-t10.test.ts",
+    "packages/shared/src/env.ts"
+  ],
+  "complex_functions": [],
+  "duplication_pct": 0.8,
+  "coverage_pct": null
+}
