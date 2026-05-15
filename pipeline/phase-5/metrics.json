@@ -1,0 +1,50 @@
+{
+  "phase": 5,
+  "started_at": "2026-05-15T13:33:28Z",
+  "tasks": {
+    "task-8b": {
+      "title": "Add voice tools integration tests",
+      "red": {
+        "duration_s": 188,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "total_duration_s": 301,
+      "green": {
+        "duration_s": 82,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "refactor": {
+        "duration_s": 10,
+        "attempts": 1,
+        "result": "pass"
+      },
+      "health": {
+        "complex_fn_count": 0,
+        "max_complexity_score": 0,
+        "duplication_pct": 0,
+        "coverage_pct": null
+      },
+      "health_delta": "no measurable change",
+      "security": {
+        "duration_s": 21,
+        "attempts": 1,
+        "result": "pass"
+      }
+    }
+  },
+  "summary": {
+    "completed_at": "2026-05-15T13:38:38Z",
+    "total_duration_s": 301,
+    "tasks_completed": 1,
+    "pass_at_1_rate": 100,
+    "high_retry_tasks": [],
+    "top_security_findings": [],
+    "health": {
+      "avg_coverage_pct": null,
+      "avg_duplication_pct": 0,
+      "total_complex_fns": 0
+    }
+  }
+}
