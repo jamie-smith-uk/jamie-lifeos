@@ -595,7 +595,15 @@ const nudgesToolDefinitions: Anthropic.Tool[] = [
       "- Monthly reviews → 'monthly'\n" +
       "- Daily habits → 'daily'\n" +
       "- One-off reminders → omit recurrence (or null)\n" +
-      "When recurrence is set, the system automatically reschedules the nudge after it fires.",
+      "When recurrence is set, the system automatically reschedules the nudge after it fires. " +
+      "The day of week is preserved — a nudge set for next Monday with 'weekly' recurrence " +
+      "will always fire on Mondays.\n" +
+      "\n" +
+      "MULTI-DAY WEEKLY SCHEDULES — call create_nudge once per day:\n" +
+      "If the user wants reminders on specific days of the week (e.g. 'every Monday and Thursday'), " +
+      "create one nudge per day, each with recurrence 'weekly' and trigger_at set to the next " +
+      "upcoming occurrence of that specific weekday. For example, 'every Mon and Thu' → " +
+      "call create_nudge twice: once with trigger_at = next Monday, once with trigger_at = next Thursday.",
     input_schema: {
       type: "object",
       properties: {
