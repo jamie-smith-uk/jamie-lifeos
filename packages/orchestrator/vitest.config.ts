@@ -10,6 +10,7 @@ export default defineConfig({
       "src/tools/__tests__/life_events.test.ts",
       "src/tools/__tests__/life_events_nudges.test.ts",
       "src/tools/__tests__/nudges.test.ts",
+      "src/tools/__tests__/voice.test.ts",
       "src/__tests__/scheduler.test.ts",
     ],
     isolate: true,
