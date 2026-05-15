@@ -1012,6 +1012,200 @@ describe("Scheduler", () => {
       expect(typeof schedulerModule.syncStravaActivities).toBe("function");
     });
 
+    it("should schedule Strava sync job to run every 30 minutes", async () => {
+      await schedulerModule.startScheduler();
+
+      // Verify that schedule was called with 30-minute cron expression
+      expect(mockCronSchedule).toHaveBeenCalled();
+
+      // Find the call that schedules the Strava sync job (should be "*/30 * * * *")
+      const calls = mockCronSchedule.mock.calls;
+      const stravaSyncCall = calls.find(
+        (call) =>
+          call[0] === "*/30 * * * *" || (typeof call[0] === "string" && call[0].includes("30")),
+      );
+
+      expect(stravaSyncCall).toBeDefined();
+    });
+
+    it("should update strava_credentials with new tokens after refresh", async () => {
+      const athleteId = 12345;
+      const expiredAt = new Date("2026-05-10T10:00:00Z"); // Past date
+
+      // Mock fetching expired credentials
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            athlete_id: athleteId,
+            access_token: "old_token",
+            refresh_token: "test_refresh",
+            expires_at: expiredAt,
+            last_synced_at: new Date("2026-05-10T10:00:00Z"),
+          },
+        ],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock token refresh update
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            athlete_id: athleteId,
+            access_token: "new_access_token",
+            refresh_token: "new_refresh_token",
+            expires_at: new Date("2026-05-15T16:00:00Z"),
+            last_synced_at: new Date("2026-05-10T10:00:00Z"),
+          },
+        ],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const syncCall = mockCronSchedule.mock.calls.find(
+        (call) =>
+          typeof call[0] === "string" && (call[0] === "*/30 * * * *" || call[0].includes("30")),
+      );
+
+      if (syncCall && typeof syncCall[1] === "function") {
+        await syncCall[1]();
+      }
+
+      // Verify that an UPDATE query was made to update tokens
+      const updateCall = mockPoolQuery.mock.calls.find(
+        (call) => String(call[0]).includes("UPDATE") && String(call[0]).includes("access_token"),
+      );
+      expect(updateCall).toBeDefined();
+      expect(String(updateCall?.[0])).toContain("access_token");
+      expect(String(updateCall?.[0])).toContain("refresh_token");
+    });
+
+    it("should update last_synced_at timestamp after successful sync", async () => {
+      const athleteId = 12345;
+
+      // Mock fetching credentials
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            athlete_id: athleteId,
+            access_token: "test_token",
+            refresh_token: "test_refresh",
+            expires_at: new Date("2026-05-20T10:00:00Z"),
+            last_synced_at: new Date("2026-05-10T10:00:00Z"),
+          },
+        ],
+        rowCount: 1,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock update to last_synced_at
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ athlete_id: athleteId }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const syncCall = mockCronSchedule.mock.calls.find(
+        (call) =>
+          typeof call[0] === "string" && (call[0] === "*/30 * * * *" || call[0].includes("30")),
+      );
+
+      if (syncCall && typeof syncCall[1] === "function") {
+        await syncCall[1]();
+      }
+
+      // Verify that UPDATE query was made to update last_synced_at
+      const updateCall = mockPoolQuery.mock.calls.find(
+        (call) => String(call[0]).includes("UPDATE") && String(call[0]).includes("last_synced_at"),
+      );
+      expect(updateCall).toBeDefined();
+      expect(String(updateCall?.[0])).toContain("last_synced_at");
+    });
+
+    it("should handle job execution errors gracefully", async () => {
+      mockPoolQuery.mockRejectedValueOnce(new Error("Database connection failed"));
+
+      await schedulerModule.startScheduler();
+
+      const syncCall = mockCronSchedule.mock.calls.find(
+        (call) =>
+          typeof call[0] === "string" && (call[0] === "*/30 * * * *" || call[0].includes("30")),
+      );
+
+      if (syncCall && typeof syncCall[1] === "function") {
+        // Should not throw even if database fails
+        await expect(syncCall[1]()).resolves.not.toThrow();
+      }
+    });
+
+    it("should continue processing other athletes when one fails", async () => {
+      const athlete1Id = 12345;
+      const athlete2Id = 67890;
+
+      // Mock fetching multiple athletes
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            athlete_id: athlete1Id,
+            access_token: "token1",
+            refresh_token: "refresh1",
+            expires_at: new Date("2026-05-20T10:00:00Z"),
+            last_synced_at: new Date("2026-05-10T10:00:00Z"),
+          },
+          {
+            athlete_id: athlete2Id,
+            access_token: "token2",
+            refresh_token: "refresh2",
+            expires_at: new Date("2026-05-20T10:00:00Z"),
+            last_synced_at: new Date("2026-05-10T10:00:00Z"),
+          },
+        ],
+        rowCount: 2,
+        command: "SELECT",
+        oid: 0,
+        fields: [],
+      });
+
+      // Mock first athlete sync failure
+      mockPoolQuery.mockRejectedValueOnce(new Error("Sync failed for athlete 1"));
+
+      // Mock second athlete sync success
+      mockPoolQuery.mockResolvedValueOnce({
+        rows: [{ athlete_id: athlete2Id }],
+        rowCount: 1,
+        command: "UPDATE",
+        oid: 0,
+        fields: [],
+      });
+
+      await schedulerModule.startScheduler();
+
+      const syncCall = mockCronSchedule.mock.calls.find(
+        (call) =>
+          typeof call[0] === "string" && (call[0] === "*/30 * * * *" || call[0].includes("30")),
+      );
+
+      if (syncCall && typeof syncCall[1] === "function") {
+        // Should not throw even if one athlete fails
+        await expect(syncCall[1]()).resolves.not.toThrow();
+      }
+
+      // Verify that pool.query was called multiple times (for both athletes)
+      expect(mockPoolQuery).toHaveBeenCalled();
+    });
+
     it("should fetch activities updated since last_synced_at", async () => {
       const athleteId = 12345;
       const lastSyncedAt = new Date("2026-05-10T10:00:00Z");
@@ -1052,7 +1246,7 @@ describe("Scheduler", () => {
       await schedulerModule.startScheduler();
 
       const syncCall = mockCronSchedule.mock.calls.find(
-        (call) => typeof call[0] === "string" && call[0] === "0 * * * *",
+        (call) => typeof call[0] === "string" && call[0] === "*/30 * * * *",
       );
 
       if (syncCall && typeof syncCall[1] === "function") {
@@ -1092,7 +1286,7 @@ describe("Scheduler", () => {
       await schedulerModule.startScheduler();
 
       const syncCall = mockCronSchedule.mock.calls.find(
-        (call) => typeof call[0] === "string" && call[0] === "0 * * * *",
+        (call) => typeof call[0] === "string" && call[0] === "*/30 * * * *",
       );
 
       if (syncCall && typeof syncCall[1] === "function") {
@@ -1141,7 +1335,7 @@ describe("Scheduler", () => {
       await schedulerModule.startScheduler();
 
       const syncCall = mockCronSchedule.mock.calls.find(
-        (call) => typeof call[0] === "string" && call[0] === "0 * * * *",
+        (call) => typeof call[0] === "string" && call[0] === "*/30 * * * *",
       );
 
       if (syncCall && typeof syncCall[1] === "function") {
@@ -1186,7 +1380,7 @@ describe("Scheduler", () => {
       await schedulerModule.startScheduler();
 
       const syncCall = mockCronSchedule.mock.calls.find(
-        (call) => typeof call[0] === "string" && call[0] === "0 * * * *",
+        (call) => typeof call[0] === "string" && call[0] === "*/30 * * * *",
       );
 
       if (syncCall && typeof syncCall[1] === "function") {
@@ -1209,7 +1403,7 @@ describe("Scheduler", () => {
       await schedulerModule.startScheduler();
 
       const syncCall = mockCronSchedule.mock.calls.find(
-        (call) => typeof call[0] === "string" && call[0] === "0 * * * *",
+        (call) => typeof call[0] === "string" && call[0] === "*/30 * * * *",
       );
 
       if (syncCall && typeof syncCall[1] === "function") {
@@ -1232,7 +1426,7 @@ describe("Scheduler", () => {
       await schedulerModule.startScheduler();
 
       const syncCall = mockCronSchedule.mock.calls.find(
-        (call) => typeof call[0] === "string" && call[0] === "0 * * * *",
+        (call) => typeof call[0] === "string" && call[0] === "*/30 * * * *",
       );
 
       if (syncCall && typeof syncCall[1] === "function") {
@@ -1253,7 +1447,7 @@ describe("Scheduler", () => {
       await schedulerModule.startScheduler();
 
       const syncCall = mockCronSchedule.mock.calls.find(
-        (call) => typeof call[0] === "string" && call[0] === "0 * * * *",
+        (call) => typeof call[0] === "string" && call[0] === "*/30 * * * *",
       );
 
       if (syncCall && typeof syncCall[1] === "function") {

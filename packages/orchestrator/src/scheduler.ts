@@ -113,7 +113,7 @@ async function evaluateNudges(): Promise<void> {
             [
               {
                 text: "Dismiss",
-                callback_data: `dismiss:${nudge.id}`,
+                callback_data: `dismiss_nudge_${nudge.id}`,
               },
             ],
           ],
@@ -426,8 +426,8 @@ export async function startScheduler(): Promise<void> {
       await evaluateNudges();
     });
 
-    // Schedule Strava sync job to run every hour
-    const stravaSyncJob = cron.schedule("0 * * * *", async () => {
+    // Schedule Strava sync job to run every 30 minutes
+    const stravaSyncJob = cron.schedule("*/30 * * * *", async () => {
       await syncStravaActivities();
     });
 
@@ -437,7 +437,7 @@ export async function startScheduler(): Promise<void> {
 
     log.info("Scheduler initialized successfully");
     log.info("Nudge evaluator scheduled to run every 15 minutes");
-    log.info("Strava sync scheduled to run every hour");
+    log.info("Strava sync scheduled to run every 30 minutes");
   } catch (err) {
     log.error({ err: String(err) }, "Failed to initialize scheduler");
     throw err;
