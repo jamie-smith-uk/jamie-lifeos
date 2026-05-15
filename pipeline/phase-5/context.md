@@ -38,3 +38,10 @@
 - **FormData and file handling** — Tests verify proper FormData construction for OpenAI API requests including model parameter ("whisper-1") and file blob creation. This approach should be used for other file upload scenarios.
 
 ---
+## task-4a — Implement pending voice intent creation and reading
+
+**Files:** packages/orchestrator/src/tools/voice.ts
+
+⚠ task-4a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
