@@ -88,7 +88,7 @@ async function evaluateNudges(): Promise<void> {
             [
               {
                 text: "Dismiss",
-                callback_data: `dismiss_nudge_${nudge.id}`,
+                callback_data: `dismiss:${nudge.id}`,
               },
             ],
           ],
