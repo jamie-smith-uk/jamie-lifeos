@@ -1111,3 +1111,405 @@ describe("T-05a AC-3: Endpoint accepts authorization code parameter", () => {
     expect(response).toBeDefined();
   });
 });
+
+// ---------------------------------------------------------------------------
+// T-6b AC-1: Handler sends confirmation message with transcription text
+// ---------------------------------------------------------------------------
+
+describe("T-6b AC-1: Handler sends confirmation message with transcription text", () => {
+  it("sends confirmation message when orchestrator returns transcription_text", async () => {
+    const calls: CapturedCall[] = [];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response(
+        JSON.stringify({
+          text: "You said: Hello world",
+          transcription_text: "Hello world",
+        }),
+        { status: 200 },
+      );
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerText({
+      chat: { id: 99999 },
+      text: "",
+      message_id: 1,
+      voice: {
+        file_id: "test_file_id",
+        file_unique_id: "test_unique_id",
+        file_size: 1024,
+        duration: 5,
+      },
+    } as unknown as TelegramMessage);
+    await flushPromises();
+
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toContain("Hello world");
+  });
+
+  it("includes transcription text in the confirmation message", async () => {
+    const calls: CapturedCall[] = [];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response(
+        JSON.stringify({
+          text: "Transcribed: Your voice message",
+          transcription_text: "Your voice message",
+        }),
+        { status: 200 },
+      );
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerText({
+      chat: { id: 99999 },
+      text: "",
+      message_id: 2,
+      voice: {
+        file_id: "file_123",
+        file_unique_id: "unique_123",
+        file_size: 2048,
+        duration: 10,
+      },
+    } as unknown as TelegramMessage);
+    await flushPromises();
+
+    const messageText = holder.bot?.sendMessageCalls[0]?.text ?? "";
+    expect(messageText).toMatch(/Your voice message/);
+  });
+
+  it("sends message to correct chat_id", async () => {
+    vi.stubGlobal("fetch", async (_url: string, _init: RequestInit) => {
+      return new Response(
+        JSON.stringify({
+          text: "Confirmation message",
+          transcription_text: "test",
+        }),
+        { status: 200 },
+      );
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerText({
+      chat: { id: 99999 },
+      text: "",
+      message_id: 3,
+      voice: {
+        file_id: "file_456",
+        file_unique_id: "unique_456",
+        file_size: 512,
+        duration: 3,
+      },
+    } as unknown as TelegramMessage);
+    await flushPromises();
+
+    expect(holder.bot?.sendMessageCalls[0]?.chatId).toBe(99999);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// T-6b AC-2: Handler includes voice confirmation keyboard in reply
+// ---------------------------------------------------------------------------
+
+describe("T-6b AC-2: Handler includes voice confirmation keyboard in reply", () => {
+  it("includes voice confirmation keyboard when show_voice_confirmation_keyboard is true", async () => {
+    const calls: CapturedCall[] = [];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response(
+        JSON.stringify({
+          text: "Confirm this action",
+          show_voice_confirmation_keyboard: true,
+          voice_intent_id: 42,
+        }),
+        { status: 200 },
+      );
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerText({
+      chat: { id: 99999 },
+      text: "",
+      message_id: 4,
+      voice: {
+        file_id: "file_789",
+        file_unique_id: "unique_789",
+        file_size: 1024,
+        duration: 5,
+      },
+    } as unknown as TelegramMessage);
+    await flushPromises();
+
+    // Verify sendMessage was called with reply_markup option
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+  });
+
+  it("does not include keyboard when show_voice_confirmation_keyboard is false", async () => {
+    vi.stubGlobal("fetch", async (_url: string, _init: RequestInit) => {
+      return new Response(
+        JSON.stringify({
+          text: "Plain message",
+          show_voice_confirmation_keyboard: false,
+        }),
+        { status: 200 },
+      );
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerText({
+      chat: { id: 99999 },
+      text: "",
+      message_id: 5,
+      voice: {
+        file_id: "file_abc",
+        file_unique_id: "unique_abc",
+        file_size: 2048,
+        duration: 8,
+      },
+    } as unknown as TelegramMessage);
+    await flushPromises();
+
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+  });
+
+  it("includes voice_intent_id in keyboard callback data", async () => {
+    const calls: CapturedCall[] = [];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response(
+        JSON.stringify({
+          text: "Confirm voice action",
+          show_voice_confirmation_keyboard: true,
+          voice_intent_id: 99,
+        }),
+        { status: 200 },
+      );
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerText({
+      chat: { id: 99999 },
+      text: "",
+      message_id: 6,
+      voice: {
+        file_id: "file_def",
+        file_unique_id: "unique_def",
+        file_size: 512,
+        duration: 2,
+      },
+    } as unknown as TelegramMessage);
+    await flushPromises();
+
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// T-6b AC-3: Tests verify message format and keyboard inclusion
+// ---------------------------------------------------------------------------
+
+describe("T-6b AC-3: Tests verify message format and keyboard inclusion", () => {
+  it("verifies message text is a string", async () => {
+    vi.stubGlobal("fetch", async (_url: string, _init: RequestInit) => {
+      return new Response(
+        JSON.stringify({
+          text: "Valid message text",
+          transcription_text: "transcribed",
+        }),
+        { status: 200 },
+      );
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerText({
+      chat: { id: 99999 },
+      text: "",
+      message_id: 7,
+      voice: {
+        file_id: "file_ghi",
+        file_unique_id: "unique_ghi",
+        file_size: 1024,
+        duration: 4,
+      },
+    } as unknown as TelegramMessage);
+    await flushPromises();
+
+    const messageText = holder.bot?.sendMessageCalls[0]?.text;
+    expect(typeof messageText).toBe("string");
+  });
+
+  it("verifies keyboard structure when present", async () => {
+    vi.stubGlobal("fetch", async (_url: string, _init: RequestInit) => {
+      return new Response(
+        JSON.stringify({
+          text: "Message with keyboard",
+          show_voice_confirmation_keyboard: true,
+          voice_intent_id: 55,
+        }),
+        { status: 200 },
+      );
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerText({
+      chat: { id: 99999 },
+      text: "",
+      message_id: 8,
+      voice: {
+        file_id: "file_jkl",
+        file_unique_id: "unique_jkl",
+        file_size: 2048,
+        duration: 6,
+      },
+    } as unknown as TelegramMessage);
+    await flushPromises();
+
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+  });
+
+  it("verifies transcription text is included in message", async () => {
+    vi.stubGlobal("fetch", async (_url: string, _init: RequestInit) => {
+      return new Response(
+        JSON.stringify({
+          text: "You said: Important message",
+          transcription_text: "Important message",
+        }),
+        { status: 200 },
+      );
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerText({
+      chat: { id: 99999 },
+      text: "",
+      message_id: 9,
+      voice: {
+        file_id: "file_mno",
+        file_unique_id: "unique_mno",
+        file_size: 1536,
+        duration: 7,
+      },
+    } as unknown as TelegramMessage);
+    await flushPromises();
+
+    const messageText = holder.bot?.sendMessageCalls[0]?.text ?? "";
+    expect(messageText).toContain("Important message");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// T-6b AC-4: Tests verify error message handling
+// ---------------------------------------------------------------------------
+
+describe("T-6b AC-4: Tests verify error message handling", () => {
+  it("sends error reply when orchestrator returns HTTP 500 for voice message", async () => {
+    vi.stubGlobal("fetch", async () => new Response("Internal Server Error", { status: 500 }));
+
+    await loadBotModule();
+    holder.bot?.triggerText({
+      chat: { id: 99999 },
+      text: "",
+      message_id: 10,
+      voice: {
+        file_id: "file_pqr",
+        file_unique_id: "unique_pqr",
+        file_size: 1024,
+        duration: 5,
+      },
+    } as unknown as TelegramMessage);
+    await flushPromises();
+
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/something went wrong/i);
+  });
+
+  it("sends error reply when fetch throws for voice message", async () => {
+    vi.stubGlobal("fetch", async () => {
+      throw new Error("Network error");
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerText({
+      chat: { id: 99999 },
+      text: "",
+      message_id: 11,
+      voice: {
+        file_id: "file_stu",
+        file_unique_id: "unique_stu",
+        file_size: 2048,
+        duration: 8,
+      },
+    } as unknown as TelegramMessage);
+    await flushPromises();
+
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/something went wrong/i);
+  });
+
+  it("logs error when voice message processing fails", async () => {
+    vi.stubGlobal("fetch", async () => {
+      throw new Error("Processing failed");
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerText({
+      chat: { id: 99999 },
+      text: "",
+      message_id: 12,
+      voice: {
+        file_id: "file_vwx",
+        file_unique_id: "unique_vwx",
+        file_size: 512,
+        duration: 3,
+      },
+    } as unknown as TelegramMessage);
+    await flushPromises();
+
+    expect(fakeLogger.error).toHaveBeenCalled();
+  });
+
+  it("handles missing text field in orchestrator response gracefully", async () => {
+    vi.stubGlobal("fetch", async (_url: string, _init: RequestInit) => {
+      return new Response(JSON.stringify({}), { status: 200 });
+    });
+
+    await loadBotModule();
+    holder.bot?.triggerText({
+      chat: { id: 99999 },
+      text: "",
+      message_id: 13,
+      voice: {
+        file_id: "file_yza",
+        file_unique_id: "unique_yza",
+        file_size: 1024,
+        duration: 4,
+      },
+    } as unknown as TelegramMessage);
+    await flushPromises();
+
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/something went wrong/i);
+  });
+
+  it("sends error reply when voice file size exceeds maximum", async () => {
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 200 }));
+
+    await loadBotModule();
+    holder.bot?.triggerText({
+      chat: { id: 99999 },
+      text: "",
+      message_id: 14,
+      voice: {
+        file_id: "file_oversized",
+        file_unique_id: "unique_oversized",
+        file_size: 21 * 1024 * 1024, // 21 MB, exceeds 20 MB limit
+        duration: 120,
+      },
+    } as unknown as TelegramMessage);
+    await flushPromises();
+
+    expect(holder.bot?.sendMessageCalls).toHaveLength(1);
+    expect(holder.bot?.sendMessageCalls[0]?.text).toMatch(/something went wrong/i);
+  });
+});

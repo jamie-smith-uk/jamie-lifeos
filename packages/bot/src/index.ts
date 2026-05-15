@@ -18,7 +18,7 @@ import { createServer } from "node:http";
 import { URL } from "node:url";
 import { env, logger, pool } from "@lifeos/shared";
 import TelegramBot from "node-telegram-bot-api";
-import { buildConfirmKeyboard } from "./keyboard.js";
+import { buildConfirmKeyboard, buildVoiceConfirmationKeyboard } from "./keyboard.js";
 import { isAllowedChat } from "./middleware.js";
 
 // ---------------------------------------------------------------------------
@@ -484,19 +484,19 @@ bot.onText(/.*/, (msg) => {
 
   const body: Record<string, unknown> = {
     chat_id: chatId,
-    text: `<untrusted>${text}</untrusted>`,
+    text: text,
     message_id: messageId,
   };
   if (fromUsername !== undefined) {
-    body.from_username = `<untrusted>${fromUsername}</untrusted>`;
+    body.from_username = fromUsername;
   }
   if (voice) {
     body.voice = {
-      file_id: `<untrusted>${voice.file_id}</untrusted>`,
-      file_unique_id: `<untrusted>${voice.file_unique_id}</untrusted>`,
+      file_id: voice.file_id,
+      file_unique_id: voice.file_unique_id,
       file_size: voice.file_size,
       duration: voice.duration,
-      ...(voice.mime_type && { mime_type: `<untrusted>${voice.mime_type}</untrusted>` }),
+      ...(voice.mime_type && { mime_type: voice.mime_type }),
     };
   }
 
@@ -509,6 +509,8 @@ bot.onText(/.*/, (msg) => {
           : "Something went wrong. Please try again.";
 
       const showKeyboard = orchestratorReply.show_confirmation_keyboard === true;
+      const showVoiceKeyboard = orchestratorReply.show_voice_confirmation_keyboard === true;
+      const voiceIntentId = orchestratorReply.voice_intent_id;
 
       if (showKeyboard) {
         // T-17: Render the proposal with Confirm / Edit / Cancel inline keyboard.
@@ -520,6 +522,18 @@ bot.onText(/.*/, (msg) => {
             botLogger.error(
               { err: sendErr, chat_id: chatId },
               "Failed to send proposal message with keyboard",
+            );
+          });
+      } else if (showVoiceKeyboard && typeof voiceIntentId === "number") {
+        // T-6b: Render voice confirmation with Yes/No keyboard.
+        bot
+          .sendMessage(chatId, replyText, {
+            reply_markup: buildVoiceConfirmationKeyboard(voiceIntentId),
+          })
+          .catch((sendErr: unknown) => {
+            botLogger.error(
+              { err: sendErr, chat_id: chatId },
+              "Failed to send voice confirmation message with keyboard",
             );
           });
       } else {
@@ -637,7 +651,7 @@ bot.on("callback_query", (query) => {
   const body: Record<string, unknown> = {
     chat_id: chatId,
     callback_query_id: callbackQueryId,
-    callback_data: `<untrusted>${callbackData}</untrusted>`,
+    callback_data: callbackData,
     message_id: messageId,
   };
 

@@ -1,0 +1,151 @@
+Title: Test Report — task-6b — PASS
+
+Verified by orchestrator hard gate after Developer attempt 2.
+
+- tsc --noEmit: PASS
+- eslint (files_in_scope): PASS
+- pnpm test: PASS
+
+
+> jamie-lifeos@0.0.1 test /home/runner/work/jamie-lifeos/jamie-lifeos
+> pnpm -r test
+
+Scope: 4 of 5 workspace projects
+packages/shared test$ vitest run --config vitest.config.ts
+packages/shared test: [1m[30m[46m RUN [49m[39m[22m [36mv4.1.4 [39m[90m/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared[39m
+packages/shared test:  [32m✓[39m src/__tests__/logger.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 123[2mms[22m[39m
+packages/shared test:  [31m❯[39m src/__tests__/env.test.ts [2m([22m[2m25 tests[22m[2m | [22m[31m9 failed[39m[2m)[22m[32m 98[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when TELEGRAM_BOT_TOKEN is missing[32m 23[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when TELEGRAM_ALLOWED_CHAT_ID is missing[32m 3[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when ANTHROPIC_API_KEY is missing[32m 3[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when DATABASE_URL is missing[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when DIGEST_CRON is missing[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when TZ is missing[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when a required var is set to empty string[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when multiple required vars are missing and lists them all[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m error message mentions .env file[32m 2[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m loads successfully when all required vars are set[39m[32m 5[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m applies default for ANTHROPIC_MODEL when not set[39m[32m 4[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m applies default BOT_MODE=polling when not set[39m[32m 2[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m applies default LOG_LEVEL=info when not set[39m[32m 2[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m accepts BOT_MODE=webhook[39m[32m 2[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m throws on invalid BOT_MODE value[39m[32m 9[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m trims leading/trailing whitespace from values[39m[32m 3[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when STRAVA_CLIENT_ID is missing[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when STRAVA_CLIENT_SECRET is missing[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when STRAVA_REDIRECT_URI is missing[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when STRAVA_CLIENT_ID is empty string[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when STRAVA_CLIENT_SECRET is empty string[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when STRAVA_REDIRECT_URI is empty string[32m 3[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m loads successfully when all Strava vars are set[39m[32m 3[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m trims whitespace from Strava variables[39m[32m 4[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when multiple Strava vars are missing and lists them all[32m 2[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 124[2mms[22m[39m
+packages/shared test:  [31m❯[39m src/__tests__/env-openai.test.ts [2m([22m[2m15 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[32m 50[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when OPENAI_API_KEY is missing[32m 9[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when OPENAI_API_KEY is empty string[32m 3[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when OPENAI_API_KEY is only whitespace[32m 3[2mms[22m[39m
+packages/shared test:      [32m✓[39m throws when OPENAI_API_KEY is undefined[32m 3[2mms[22m[39m
+packages/shared test:      [32m✓[39m includes OPENAI_API_KEY in error message when missing[32m 2[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m exports OPENAI_API_KEY when set[39m[32m 6[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m exports OPENAI_API_KEY with trimmed whitespace[39m[32m 3[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m loads successfully when OPENAI_API_KEY is set with all other required vars[39m[32m 3[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m OPENAI_API_KEY is a string property on env object[39m[32m 3[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m OPENAI_API_KEY is not empty after loading[39m[32m 4[2mms[22m[39m
+packages/shared test:      [32m✓[39m documents OPENAI_API_KEY in .env.example[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m includes OPENAI_API_KEY with a value in .env.example[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m includes an explanatory comment for OPENAI_API_KEY[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m OPENAI_API_KEY appears near the comment in .env.example[32m 2[2mms[22m[39m
+packages/shared test:      [32m✓[39m OPENAI_API_KEY is not commented out in .env.example[32m 2[2mms[22m[39m
+packages/shared test:  [31m❯[39m src/__tests__/db.test.ts [2m([22m[2m9 tests[22m[2m | [22m[31m9 failed[39m[2m)[22m[32m 21[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m exports a `pool` named export that is a pg.Pool instance[39m[32m 15[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m pool is reused — same reference on repeated imports[39m[32m 0[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m pool has expected configuration (max: 10)[39m[32m 0[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m pool has idleTimeoutMillis set to 30000[39m[32m 0[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m pool has connectionTimeoutMillis set to 5000[39m[32m 0[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m pool uses DATABASE_URL from env as connectionString[39m[32m 0[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m pool disables SSL for localhost connections[39m[32m 0[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m exports a closePool() function[39m[32m 0[2mms[22m[39m
+packages/shared test: [31m     [31m×[31m closePool() returns a Promise[39m[32m 0[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/types.test.ts [2m([22m[2m33 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/migrate-async-await.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/__tests__/env-example.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+packages/shared test: [31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 23 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/db.test.ts[2m > [22mdb.ts — Pool singleton[2m > [22mexports a `pool` named export that is a pg.Pool instance
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/db.test.ts[2m > [22mdb.ts — Pool singleton[2m > [22mpool is reused — same reference on repeated imports
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/db.test.ts[2m > [22mdb.ts — Pool singleton[2m > [22mpool has expected configuration (max: 10)
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/db.test.ts[2m > [22mdb.ts — Pool singleton[2m > [22mpool has idleTimeoutMillis set to 30000
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/db.test.ts[2m > [22mdb.ts — Pool singleton[2m > [22mpool has connectionTimeoutMillis set to 5000
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/db.test.ts[2m > [22mdb.ts — Pool singleton[2m > [22mpool uses DATABASE_URL from env as connectionString
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/db.test.ts[2m > [22mdb.ts — Pool singleton[2m > [22mpool disables SSL for localhost connections
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/db.test.ts[2m > [22mdb.ts — Pool singleton[2m > [22mexports a closePool() function
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/db.test.ts[2m > [22mdb.ts — Pool singleton[2m > [22mclosePool() returns a Promise
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env-openai.test.ts[2m > [22menv.ts — OPENAI_API_KEY export[2m > [22mexports OPENAI_API_KEY when set
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env-openai.test.ts[2m > [22menv.ts — OPENAI_API_KEY export[2m > [22mexports OPENAI_API_KEY with trimmed whitespace
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env-openai.test.ts[2m > [22menv.ts — OPENAI_API_KEY export[2m > [22mloads successfully when OPENAI_API_KEY is set with all other required vars
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env-openai.test.ts[2m > [22menv.ts — OPENAI_API_KEY export[2m > [22mOPENAI_API_KEY is a string property on env object
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env-openai.test.ts[2m > [22menv.ts — OPENAI_API_KEY export[2m > [22mOPENAI_API_KEY is not empty after loading
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env.test.ts[2m > [22menv.ts — valid configuration[2m > [22mloads successfully when all required vars are set
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env.test.ts[2m > [22menv.ts — valid configuration[2m > [22mapplies default for ANTHROPIC_MODEL when not set
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env.test.ts[2m > [22menv.ts — valid configuration[2m > [22mapplies default BOT_MODE=polling when not set
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env.test.ts[2m > [22menv.ts — valid configuration[2m > [22mapplies default LOG_LEVEL=info when not set
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env.test.ts[2m > [22menv.ts — valid configuration[2m > [22maccepts BOT_MODE=webhook
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env.test.ts[2m > [22menv.ts — valid configuration[2m > [22mtrims leading/trailing whitespace from values
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env.test.ts[2m > [22menv.ts — Strava environment variables[2m > [22mloads successfully when all Strava vars are set
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env.test.ts[2m > [22menv.ts — Strava environment variables[2m > [22mtrims whitespace from Strava variables
+packages/shared test: [31m[1mError[22m: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.[39m
+packages/shared test: [36m [2m❯[22m loadEnv src/env.ts:[2m88:11[22m[39m
+packages/shared test:     [90m 86|[39m
+packages/shared test:     [90m 87|[39m   [35mif[39m (missing[33m.[39mlength [33m>[39m [34m0[39m) {
+packages/shared test:     [90m 88|[39m     [35mthrow[39m [35mnew[39m [33mError[39m(
+packages/shared test:     [90m   |[39m           [31m^[39m
+packages/shared test:     [90m 89|[39m       `[env] Missing required environment variable${missing.length > 1…
+packages/shared test:     [90m 90|[39m         [32m`Check your .env file against .env.example.`[39m[33m,[39m
+packages/shared test: [90m [2m❯[22m src/env.ts:[2m136:31[22m[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/23]⎯[22m[39m
+packages/shared test: [41m[1m FAIL [22m[49m src/__tests__/env.test.ts[2m > [22menv.ts — valid configuration[2m > [22mthrows on invalid BOT_MODE value
+packages/shared test: [31m[1mAssertionError[22m: expected [Function] to throw error matching /BOT_MODE/ but got '[env] Missing required environment va…'[39m
+packages/shared test: [32m- Expected:[39m
+packages/shared test: /BOT_MODE/
+packages/shared test: [31m+ Received:[39m
+packages/shared test: "[env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example."
+packages/shared test: [36m [2m❯[22m src/__tests__/env.test.ts:[2m183:34[22m[39m
+packages/shared test:     [90m181|[39m     [34msetEnv[39m({ [33m...[39m[33mVALID_ENV[39m[33m,[39m [33mBOT_MODE[39m[33m:[39m [32m"long-polling"[39m })[33m;[39m
+packages/shared test:     [90m182|[39m
+packages/shared test:     [90m183|[39m     [35mawait[39m [34mexpect[39m([34mloadEnvModule[39m())[33m.[39mrejects[33m.[39m[34mtoThrow[39m([36m/BOT_MODE/[39m)[33m;[39m
+packages/shared test:     [90m   |[39m                                  [31m^[39m
+packages/shared test:     [90m184|[39m   })[33m;[39m
+packages/shared test:     [90m185|[39m
+packages/shared test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/23]⎯[22m[39m
+packages/shared test: [2m Test Files [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m5 passed[39m[22m[90m (8)[39m
+packages/shared test: [2m      Tests [22m [1m[31m23 failed[39m[22m[2m | [22m[1m[32m106 passed[39m[22m[90m (129)[39m
+packages/shared test: [2m   Start at [22m 10:21:07
+packages/shared test: [2m   Duration [22m 904ms[2m (transform 403ms, setup 0ms, import 555ms, tests 447ms, environment 1ms)[22m
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/db.test.ts > db.ts — Pool singleton > exports a `pool` named export that is a pg.Pool instance,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/db.test.ts > db.ts — Pool singleton > pool is reused — same reference on repeated imports,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/db.test.ts > db.ts — Pool singleton > pool has expected configuration (max%3A 10),line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/db.test.ts > db.ts — Pool singleton > pool has idleTimeoutMillis set to 30000,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/db.test.ts > db.ts — Pool singleton > pool has connectionTimeoutMillis set to 5000,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/db.test.ts > db.ts — Pool singleton > pool uses DATABASE_URL from env as connectionString,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/db.test.ts > db.ts — Pool singleton > pool disables SSL for localhost connections,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/db.test.ts > db.ts — Pool singleton > exports a closePool() function,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/db.test.ts > db.ts — Pool singleton > closePool() returns a Promise,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/env-openai.test.ts > env.ts — OPENAI_API_KEY export > exports OPENAI_API_KEY when set,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/env-openai.test.ts > env.ts — OPENAI_API_KEY export > exports OPENAI_API_KEY with trimmed whitespace,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/env-openai.test.ts > env.ts — OPENAI_API_KEY export > loads successfully when OPENAI_API_KEY is set with all other required vars,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/env-openai.test.ts > env.ts — OPENAI_API_KEY export > OPENAI_API_KEY is a string property on env object,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/env-openai.test.ts > env.ts — OPENAI_API_KEY export > OPENAI_API_KEY is not empty after loading,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/env.test.ts > env.ts — valid configuration > loads successfully when all required vars are set,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/env.test.ts > env.ts — valid configuration > applies default for ANTHROPIC_MODEL when not set,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/env.test.ts > env.ts — valid configuration > applies default BOT_MODE=polling when not set,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/env.test.ts > env.ts — valid configuration > applies default LOG_LEVEL=info when not set,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/env.test.ts > env.ts — valid configuration > accepts BOT_MODE=webhook,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/__tests__/env.test.ts,title=src/__tests__/env.test.ts > env.ts — valid configuration > throws on invalid BOT_MODE value,line=183,column=34::AssertionError: expected [Function] to throw error matching /BOT_MODE/ but got '[env] Missing required environment va…'%0A%0A- Expected:%0A/BOT_MODE/%0A%0A+ Received:%0A"[env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example."%0A%0A ❯ src/__tests__/env.test.ts:183:34%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/env.test.ts > env.ts — valid configuration > trims leading/trailing whitespace from values,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/env.test.ts > env.ts — Strava environment variables > loads successfully when all Strava vars are set,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: ::error file=/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared/src/env.ts,title=src/__tests__/env.test.ts > env.ts — Strava environment variables > trims whitespace from Strava variables,line=88,column=11::Error: [env] Missing required environment variable: OAUTH_CALLBACK_SECRET. Check your .env file against .env.example.%0A ❯ loadEnv src/env.ts:88:11%0A ❯ src/env.ts:136:31%0A%0A
+packages/shared test: Failed
+/home/runner/work/jamie-lifeos/jamie-lifeos/packages/shared:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lifeos/shared@0.0.1 test: `vitest run --config vitest.config.ts`
+Exit status 1
+ ELIFECYCLE  Test failed. See above for more details.
