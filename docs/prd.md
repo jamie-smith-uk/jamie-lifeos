@@ -137,32 +137,7 @@ EP-10
 
 ---
 
-## Phase 5 — Morning Digest and Day Planning
-
-### Exit criteria
-- Morning digest fires automatically at configured time every day
-- Digest includes: today's calendar events, priority tasks, upcoming life events, suggested day shape
-- User can ask "plan my day" and receive a time-blocked suggestion
-- User can ask "what should I do next?" and receive a single clear recommendation
-- User can paste a multi-intent snippet and all implied actions are extracted and proposed
-- Smart nudges fire with a maximum of 3 per hour
-- Nudge messages include a Dismiss button
-- Dismissed nudges do not re-fire
-
-### Smoke tests
-1. Wait for 7am — digest arrives in Telegram
-2. Verify digest has all four sections
-3. Send "plan my day" — time-blocked plan returned respecting calendar
-4. Send "what should I do next?" — single recommendation returned
-5. Paste "Dinner with Jess Friday 8pm at Dishoom" — calendar event proposed and Jess linked
-6. Receive a nudge — tap Dismiss — confirm it does not re-fire
-
-### Epics in scope
-EP-07 (full), EP-08
-
----
-
-## Phase 6 — Voice Message Input
+## Phase 5 — Voice Message Input
 
 ### Exit criteria
 - User can send a Telegram voice message and receive a transcription confirmation within 3 seconds
@@ -185,6 +160,31 @@ EP-07 (full), EP-08
 
 ### Epics in scope
 EP-11
+
+---
+
+## Phase 6 — Morning Digest and Day Planning
+
+### Exit criteria
+- Morning digest fires automatically at configured time every day
+- Digest includes: today's calendar events, priority tasks, upcoming life events, suggested day shape
+- User can ask "plan my day" and receive a time-blocked suggestion
+- User can ask "what should I do next?" and receive a single clear recommendation
+- User can paste a multi-intent snippet and all implied actions are extracted and proposed
+- Smart nudges fire with a maximum of 3 per hour
+- Nudge messages include a Dismiss button
+- Dismissed nudges do not re-fire
+
+### Smoke tests
+1. Wait for 7am — digest arrives in Telegram
+2. Verify digest has all four sections
+3. Send "plan my day" — time-blocked plan returned respecting calendar
+4. Send "what should I do next?" — single recommendation returned
+5. Paste "Dinner with Jess Friday 8pm at Dishoom" — calendar event proposed and Jess linked
+6. Receive a nudge — tap Dismiss — confirm it does not re-fire
+
+### Epics in scope
+EP-07 (full), EP-08
 
 ---
 
