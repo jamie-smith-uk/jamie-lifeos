@@ -5,11 +5,21 @@
  *   AC-1: buildConfirmKeyboard returns valid InlineKeyboardMarkup with three buttons
  *   AC-2: buildDismissKeyboard returns InlineKeyboardMarkup with a single Dismiss button
  *   AC-3: callback_data values are exactly 'confirm', 'edit', 'cancel', 'dismiss:<nudgeId>'
+ *
+ * task-5a Acceptance Criteria:
+ *   AC-1: buildVoiceConfirmationKeyboard function creates inline keyboard
+ *   AC-2: Keyboard contains 'Yes, do it' button with callback_data voice_yes_{id}
+ *   AC-3: Keyboard contains 'No, cancel' button with callback_data voice_no_{id}
+ *   AC-4: Function accepts intent ID parameter and embeds it in callback data
  */
 
 import type { InlineKeyboardMarkup } from "node-telegram-bot-api";
 import { describe, expect, it } from "vitest";
-import { buildConfirmKeyboard, buildDismissKeyboard } from "../keyboard.js";
+import {
+  buildConfirmKeyboard,
+  buildDismissKeyboard,
+  buildVoiceConfirmationKeyboard,
+} from "../keyboard.js";
 
 // ---------------------------------------------------------------------------
 // AC-1: buildConfirmKeyboard returns valid InlineKeyboardMarkup with three buttons
@@ -187,5 +197,193 @@ describe("AC-3: callback_data values match exact specification", () => {
     const row = result.inline_keyboard[0]!;
     const callbackValues = row.map((b) => b.callback_data);
     expect(callbackValues).toEqual(["confirm", "edit", "cancel"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// task-5a AC-1: buildVoiceConfirmationKeyboard function creates inline keyboard
+// ---------------------------------------------------------------------------
+
+describe("task-5a AC-1: buildVoiceConfirmationKeyboard function creates inline keyboard", () => {
+  it("returns an object with inline_keyboard property", () => {
+    const result = buildVoiceConfirmationKeyboard(1);
+    expect(result).toBeDefined();
+    expect(typeof result).toBe("object");
+    expect(result).toHaveProperty("inline_keyboard");
+  });
+
+  it("inline_keyboard is an array", () => {
+    const result = buildVoiceConfirmationKeyboard(1);
+    expect(Array.isArray(result.inline_keyboard)).toBe(true);
+  });
+
+  it("has exactly one row", () => {
+    const result = buildVoiceConfirmationKeyboard(1);
+    expect(result.inline_keyboard).toHaveLength(1);
+  });
+
+  it("row contains exactly two buttons", () => {
+    const result = buildVoiceConfirmationKeyboard(1);
+    const row = result.inline_keyboard[0];
+    expect(row).toHaveLength(2);
+  });
+
+  it("each button has text and callback_data properties", () => {
+    const result = buildVoiceConfirmationKeyboard(1);
+    const row = result.inline_keyboard[0]!;
+    for (const button of row) {
+      expect(button).toHaveProperty("text");
+      expect(button).toHaveProperty("callback_data");
+    }
+  });
+
+  it("conforms to InlineKeyboardMarkup shape (TypeScript structural check at runtime)", () => {
+    const result: InlineKeyboardMarkup = buildVoiceConfirmationKeyboard(1);
+    // If we reach here, TypeScript was satisfied; verify runtime shape as well
+    expect(result.inline_keyboard).toBeDefined();
+    expect(Array.isArray(result.inline_keyboard)).toBe(true);
+  });
+
+  it("returns a fresh object on each call (not a cached reference)", () => {
+    const result1 = buildVoiceConfirmationKeyboard(1);
+    const result2 = buildVoiceConfirmationKeyboard(1);
+    expect(result1).not.toBe(result2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// task-5a AC-2: Keyboard contains 'Yes, do it' button with callback_data voice_yes_{id}
+// ---------------------------------------------------------------------------
+
+describe("task-5a AC-2: Keyboard contains 'Yes, do it' button with callback_data voice_yes_{id}", () => {
+  it("first button text is 'Yes, do it'", () => {
+    const result = buildVoiceConfirmationKeyboard(1);
+    expect(result.inline_keyboard[0]?.[0]?.text).toBe("Yes, do it");
+  });
+
+  it("first button callback_data is 'voice_yes_1' for intent ID 1", () => {
+    const result = buildVoiceConfirmationKeyboard(1);
+    expect(result.inline_keyboard[0]?.[0]?.callback_data).toBe("voice_yes_1");
+  });
+
+  it("first button callback_data is 'voice_yes_42' for intent ID 42", () => {
+    const result = buildVoiceConfirmationKeyboard(42);
+    expect(result.inline_keyboard[0]?.[0]?.callback_data).toBe("voice_yes_42");
+  });
+
+  it("first button callback_data is 'voice_yes_0' for intent ID 0", () => {
+    const result = buildVoiceConfirmationKeyboard(0);
+    expect(result.inline_keyboard[0]?.[0]?.callback_data).toBe("voice_yes_0");
+  });
+
+  it("first button callback_data is 'voice_yes_999999' for large intent ID", () => {
+    const result = buildVoiceConfirmationKeyboard(999999);
+    expect(result.inline_keyboard[0]?.[0]?.callback_data).toBe("voice_yes_999999");
+  });
+
+  it("first button callback_data follows 'voice_yes_<id>' pattern exactly", () => {
+    const intentId = 7;
+    const result = buildVoiceConfirmationKeyboard(intentId);
+    const callbackData = result.inline_keyboard[0]?.[0]?.callback_data;
+    expect(callbackData).toMatch(/^voice_yes_\d+$/);
+    expect(callbackData).toBe(`voice_yes_${intentId}`);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// task-5a AC-3: Keyboard contains 'No, cancel' button with callback_data voice_no_{id}
+// ---------------------------------------------------------------------------
+
+describe("task-5a AC-3: Keyboard contains 'No, cancel' button with callback_data voice_no_{id}", () => {
+  it("second button text is 'No, cancel'", () => {
+    const result = buildVoiceConfirmationKeyboard(1);
+    expect(result.inline_keyboard[0]?.[1]?.text).toBe("No, cancel");
+  });
+
+  it("second button callback_data is 'voice_no_1' for intent ID 1", () => {
+    const result = buildVoiceConfirmationKeyboard(1);
+    expect(result.inline_keyboard[0]?.[1]?.callback_data).toBe("voice_no_1");
+  });
+
+  it("second button callback_data is 'voice_no_42' for intent ID 42", () => {
+    const result = buildVoiceConfirmationKeyboard(42);
+    expect(result.inline_keyboard[0]?.[1]?.callback_data).toBe("voice_no_42");
+  });
+
+  it("second button callback_data is 'voice_no_0' for intent ID 0", () => {
+    const result = buildVoiceConfirmationKeyboard(0);
+    expect(result.inline_keyboard[0]?.[1]?.callback_data).toBe("voice_no_0");
+  });
+
+  it("second button callback_data is 'voice_no_999999' for large intent ID", () => {
+    const result = buildVoiceConfirmationKeyboard(999999);
+    expect(result.inline_keyboard[0]?.[1]?.callback_data).toBe("voice_no_999999");
+  });
+
+  it("second button callback_data follows 'voice_no_<id>' pattern exactly", () => {
+    const intentId = 7;
+    const result = buildVoiceConfirmationKeyboard(intentId);
+    const callbackData = result.inline_keyboard[0]?.[1]?.callback_data;
+    expect(callbackData).toMatch(/^voice_no_\d+$/);
+    expect(callbackData).toBe(`voice_no_${intentId}`);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// task-5a AC-4: Function accepts intent ID parameter and embeds it in callback data
+// ---------------------------------------------------------------------------
+
+describe("task-5a AC-4: Function accepts intent ID parameter and embeds it in callback data", () => {
+  it("accepts an intent ID parameter", () => {
+    expect(() => buildVoiceConfirmationKeyboard(1)).not.toThrow();
+  });
+
+  it("embeds intent ID in both callback_data values", () => {
+    const intentId = 123;
+    const result = buildVoiceConfirmationKeyboard(intentId);
+    const yesCallback = result.inline_keyboard[0]?.[0]?.callback_data;
+    const noCallback = result.inline_keyboard[0]?.[1]?.callback_data;
+    expect(yesCallback).toContain("123");
+    expect(noCallback).toContain("123");
+  });
+
+  it("different intent IDs produce different callback_data", () => {
+    const r1 = buildVoiceConfirmationKeyboard(1);
+    const r2 = buildVoiceConfirmationKeyboard(2);
+    expect(r1.inline_keyboard[0]?.[0]?.callback_data).not.toBe(
+      r2.inline_keyboard[0]?.[0]?.callback_data,
+    );
+    expect(r1.inline_keyboard[0]?.[1]?.callback_data).not.toBe(
+      r2.inline_keyboard[0]?.[1]?.callback_data,
+    );
+  });
+
+  it("same intent ID produces consistent callback_data across calls", () => {
+    const intentId = 50;
+    const r1 = buildVoiceConfirmationKeyboard(intentId);
+    const r2 = buildVoiceConfirmationKeyboard(intentId);
+    expect(r1.inline_keyboard[0]?.[0]?.callback_data).toBe(
+      r2.inline_keyboard[0]?.[0]?.callback_data,
+    );
+    expect(r1.inline_keyboard[0]?.[1]?.callback_data).toBe(
+      r2.inline_keyboard[0]?.[1]?.callback_data,
+    );
+  });
+
+  it("callback_data values contain the exact intent ID without modification", () => {
+    const intentId = 12345;
+    const result = buildVoiceConfirmationKeyboard(intentId);
+    const yesCallback = result.inline_keyboard[0]?.[0]?.callback_data;
+    const noCallback = result.inline_keyboard[0]?.[1]?.callback_data;
+    expect(yesCallback).toBe(`voice_yes_${intentId}`);
+    expect(noCallback).toBe(`voice_no_${intentId}`);
+  });
+
+  it("no button has an unexpected callback_data value", () => {
+    const intentId = 99;
+    const result = buildVoiceConfirmationKeyboard(intentId);
+    const row = result.inline_keyboard[0]!;
+    const callbackValues = row.map((b) => b.callback_data);
+    expect(callbackValues).toEqual([`voice_yes_${intentId}`, `voice_no_${intentId}`]);
   });
 });

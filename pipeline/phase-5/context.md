@@ -52,3 +52,10 @@
 ⚠ task-4b: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
 
 ---
+## task-5a — Implement voice confirmation keyboard builder
+
+**Files:** packages/bot/src/keyboard.ts
+
+⚠ task-5a: self-assessment.md is missing the '## Notes for future agents' section — future tasks will have no context from this task.
+
+---
