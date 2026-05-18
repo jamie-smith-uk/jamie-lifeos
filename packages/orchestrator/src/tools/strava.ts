@@ -15,6 +15,13 @@ import { env, logger, pool, telegramBot } from "@lifeos/shared";
 export async function get_strava_oauth_url(_params: Record<string, unknown>): Promise<string> {
   const log = logger.child({ function: "get_strava_oauth_url" });
 
+  // Guard: fail fast with a clear message if Strava env vars aren't configured
+  if (!env.STRAVA_CLIENT_ID || !env.STRAVA_CLIENT_SECRET || !env.STRAVA_REDIRECT_URI) {
+    throw new Error(
+      "Strava integration is not configured. Set STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET, and STRAVA_REDIRECT_URI environment variables.",
+    );
+  }
+
   try {
     // Generate a cryptographically secure state token
     const stateToken = randomBytes(32).toString("hex");
@@ -302,34 +309,55 @@ async function ensureValidToken(athleteId: number): Promise<{
 
     const credentials = credentialsResult.rows[0];
     const now = new Date();
+    const bufferMs = 5 * 60 * 1000; // 5-minute buffer before expiry
 
-    // Check if token is still valid
-    if (credentials.expires_at > now) {
+    // Check if token is still valid (with buffer)
+    if (credentials.expires_at.getTime() > now.getTime() + bufferMs) {
       log.info("Access token is still valid");
       return credentials;
     }
 
-    // Token is expired, need to refresh
-    log.info("Access token expired, refreshing");
+    // Token is expired or about to expire — refresh via Strava API
+    log.info({ athlete_id: athleteId }, "Access token expired, refreshing via Strava API");
 
-    // In a real implementation, we would call the Strava API to refresh the token
-    // For now, we'll simulate a successful refresh by updating the expires_at
-    const newExpiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000); // 6 hours from now
+    const refreshResponse = await fetch("https://www.strava.com/oauth/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: env.STRAVA_CLIENT_ID,
+        client_secret: env.STRAVA_CLIENT_SECRET,
+        grant_type: "refresh_token",
+        refresh_token: credentials.refresh_token,
+      }),
+    });
 
-    const updateQuery = `
-      UPDATE strava_credentials
-      SET expires_at = $1, updated_at = NOW()
-      WHERE athlete_id = $2
-      RETURNING athlete_id, access_token, refresh_token, expires_at
-    `;
-
-    const updateResult = await pool.query(updateQuery, [newExpiresAt, athleteId]);
-
-    if (updateResult.rowCount === 0) {
-      throw new Error("Failed to update token expiration");
+    if (!refreshResponse.ok) {
+      throw new Error(
+        `Token refresh failed: ${refreshResponse.status} ${refreshResponse.statusText}`,
+      );
     }
 
-    log.info("Token refresh completed");
+    const tokenData = (await refreshResponse.json()) as {
+      access_token: string;
+      refresh_token: string;
+      expires_in: number;
+    };
+
+    const newExpiresAt = new Date(Date.now() + tokenData.expires_in * 1000);
+
+    const updateResult = await pool.query(
+      `UPDATE strava_credentials
+       SET access_token = $1, refresh_token = $2, expires_at = $3, updated_at = NOW()
+       WHERE athlete_id = $4
+       RETURNING athlete_id, access_token, refresh_token, expires_at`,
+      [tokenData.access_token, tokenData.refresh_token, newExpiresAt, athleteId],
+    );
+
+    if (updateResult.rowCount === 0) {
+      throw new Error(`Failed to update credentials for athlete ${athleteId}`);
+    }
+
+    log.info({ athlete_id: athleteId }, "Token refreshed successfully");
     return updateResult.rows[0];
   } catch (error) {
     log.error(

@@ -313,17 +313,13 @@ async function storeStravaCredentials(
       updated_at = NOW()
   `;
 
-  const result = await pool.query(insertQuery, [
+  await pool.query(insertQuery, [
     tokenData.athlete.id,
     tokenData.access_token,
     tokenData.refresh_token,
     expiresAt,
     "activity:read_all",
   ]);
-
-  if (result.rowCount === 0) {
-    throw new Error("Failed to store Strava credentials");
-  }
 
   logger.info({ athlete_id: tokenData.athlete.id }, "Strava credentials stored successfully");
 }
@@ -373,13 +369,15 @@ async function handleOAuthCallback(
       return;
     }
 
-    // Authenticate the OAuth callback request
-    const oauthSecret = url.searchParams.get("secret");
-    if (oauthSecret !== env.OAUTH_CALLBACK_SECRET) {
-      oauthLogger.warn("Unauthorized OAuth callback attempt");
-      res.writeHead(401, { "Content-Type": "text/plain" });
-      res.end("Unauthorized");
-      return;
+    // Authenticate the OAuth callback request (only enforced if OAUTH_CALLBACK_SECRET is set)
+    if (env.OAUTH_CALLBACK_SECRET) {
+      const oauthSecret = url.searchParams.get("secret");
+      if (oauthSecret !== env.OAUTH_CALLBACK_SECRET) {
+        oauthLogger.warn("Unauthorized OAuth callback attempt");
+        res.writeHead(401, { "Content-Type": "text/plain" });
+        res.end("Unauthorized");
+        return;
+      }
     }
 
     // Validate state token

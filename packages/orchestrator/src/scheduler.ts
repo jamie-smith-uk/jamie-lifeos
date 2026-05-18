@@ -165,6 +165,88 @@ async function evaluateNudges(): Promise<void> {
 // Strava Sync Job
 // ---------------------------------------------------------------------------
 
+/**
+ * Maps a raw Strava API activity object to database column values and upserts it.
+ */
+interface StravaApiActivity {
+  id: number;
+  name: string;
+  sport_type?: string;
+  type?: string;
+  start_date: string;
+  distance?: number;
+  moving_time?: number;
+  elapsed_time?: number;
+  total_elevation_gain?: number;
+  average_speed?: number;
+  max_speed?: number;
+  average_heartrate?: number;
+  max_heartrate?: number;
+  average_watts?: number;
+  kilojoules?: number;
+  suffer_score?: number;
+}
+
+async function persistStravaActivities(
+  athleteId: number,
+  activities: unknown[],
+): Promise<number> {
+  const log = logger.child({ function: "persistStravaActivities" });
+  let count = 0;
+
+  for (const raw of activities) {
+    const a = raw as StravaApiActivity;
+    await pool.query(
+      `INSERT INTO strava_activities (
+        strava_id, athlete_id, name, sport_type, start_date,
+        distance_m, moving_time_s, elapsed_time_s, total_elevation_gain,
+        average_speed_ms, max_speed_ms, average_heartrate, max_heartrate,
+        average_watts, kilojoules, suffer_score, synced_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW()
+      )
+      ON CONFLICT (strava_id) DO UPDATE SET
+        name = EXCLUDED.name,
+        sport_type = EXCLUDED.sport_type,
+        start_date = EXCLUDED.start_date,
+        distance_m = EXCLUDED.distance_m,
+        moving_time_s = EXCLUDED.moving_time_s,
+        elapsed_time_s = EXCLUDED.elapsed_time_s,
+        total_elevation_gain = EXCLUDED.total_elevation_gain,
+        average_speed_ms = EXCLUDED.average_speed_ms,
+        max_speed_ms = EXCLUDED.max_speed_ms,
+        average_heartrate = EXCLUDED.average_heartrate,
+        max_heartrate = EXCLUDED.max_heartrate,
+        average_watts = EXCLUDED.average_watts,
+        kilojoules = EXCLUDED.kilojoules,
+        suffer_score = EXCLUDED.suffer_score,
+        synced_at = NOW()`,
+      [
+        a.id,
+        athleteId,
+        a.name,
+        a.sport_type ?? a.type ?? "Unknown",
+        new Date(a.start_date),
+        a.distance ?? null,
+        a.moving_time ?? null,
+        a.elapsed_time ?? null,
+        a.total_elevation_gain ?? null,
+        a.average_speed ?? null,
+        a.max_speed ?? null,
+        a.average_heartrate ?? null,
+        a.max_heartrate ?? null,
+        a.average_watts ?? null,
+        a.kilojoules ?? null,
+        a.suffer_score ?? null,
+      ],
+    );
+    count++;
+  }
+
+  log.info({ athlete_id: athleteId, count }, "Persisted activities to database");
+  return count;
+}
+
 interface StravaCredentials {
   athlete_id: number;
   access_token: string;
@@ -320,30 +402,26 @@ async function syncSingleAthlete(credentials: StravaCredentials): Promise<void> 
   const validCredentials = await ensureValidStravaToken(credentials);
 
   // Fetch new activities from Strava API
-  const activities = await fetchNewStravaActivities(validCredentials);
+  const rawActivities = await fetchNewStravaActivities(validCredentials);
+
+  // Guard against unexpected non-array API responses
+  const activities = Array.isArray(rawActivities) ? rawActivities : [];
+
+  // Always update last_synced_at to record when we last checked, even if nothing new
+  await pool.query(
+    `UPDATE strava_credentials SET last_synced_at = NOW(), updated_at = NOW() WHERE athlete_id = $1`,
+    [validCredentials.athlete_id],
+  );
 
   if (activities.length === 0) {
-    log.info({ athlete_id: credentials.athlete_id }, "No new activities to sync");
+    log.info({ athlete_id: validCredentials.athlete_id }, "No new activities to sync");
     return;
   }
 
-  // Store activities in database (simplified for this implementation)
-  // In a real implementation, we would parse and store the activity data
-  log.info(
-    { athlete_id: credentials.athlete_id, activity_count: activities.length },
-    "Would store activities in database",
-  );
+  // Persist activities to the database
+  const persistedCount = await persistStravaActivities(validCredentials.athlete_id, activities);
 
-  // Update last_synced_at timestamp
-  const updateSyncQuery = `
-    UPDATE strava_credentials
-    SET last_synced_at = NOW(), updated_at = NOW()
-    WHERE athlete_id = $1
-  `;
-
-  await pool.query(updateSyncQuery, [credentials.athlete_id]);
-
-  log.info({ athlete_id: credentials.athlete_id }, "Completed sync for athlete");
+  log.info({ athlete_id: validCredentials.athlete_id, persisted: persistedCount }, "Completed sync for athlete");
 }
 
 /**
